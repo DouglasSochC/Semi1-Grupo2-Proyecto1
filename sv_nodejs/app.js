@@ -112,6 +112,20 @@ app.post('/artistas', (req, res) => {
     });
 });
 
+/** Obtener todos los artistas */
+app.get('/artistas', (req, res) => {
+    const query = 'SELECT * FROM ARTISTA';
+
+    db.query(query, (err, result) => {
+        if (err) {
+            console.error('Error al obtener los artistas:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener los artistas" });
+        } else {
+            res.json({ success: true, artistas: result });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
