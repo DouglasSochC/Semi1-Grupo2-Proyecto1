@@ -97,6 +97,21 @@ app.get('/usuarios/:correo/:contrasenia', (req, res) => {
 
 });
 
+/** Crear un nuevo artista */
+app.post('/artistas', (req, res) => {
+    const { nombre, fotografia, fecha_nacimiento } = req.body;
+    const query = 'INSERT INTO ARTISTA (nombre, fotografia, fecha_nacimiento) VALUES (?, ?, ?)';
+
+    db.query(query, [nombre, fotografia, fecha_nacimiento], (err, result) => {
+        if (err) {
+            console.error('Error al insertar el artista:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al insertar el artista" });
+        } else {
+            res.json({ success: true, mensaje: "Artista creado correctamente" });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
