@@ -144,6 +144,23 @@ app.put('/artistas/:id', (req, res) => {
 
 });
 
+/** Eliminar un artista por su ID */
+app.delete('/artistas/:id', (req, res) => {
+
+    const id_artista = req.params.id;
+    const query = 'DELETE FROM ARTISTA WHERE id = ?';
+
+    db.query(query, [id_artista], (err, result) => {
+        if (err) {
+            console.error('Error al eliminar el artista:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar el artista" });
+        } else {
+            res.json({ success: true, mensaje: "Artista eliminado correctamente" });
+        }
+    });
+
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
