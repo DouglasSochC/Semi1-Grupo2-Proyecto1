@@ -23,6 +23,7 @@ app.post('/usuarios', (req, res) => {
     // Debido a que la encriptacion devuelve una promesa es necesario realizarlo de la siguiente forma
     util.hashPassword(parametro.contrasenia)
         .then(hashedPassword => {
+
             // Ordenando los parametros
             const values = [
                 parametro.correo,
@@ -33,8 +34,10 @@ app.post('/usuarios', (req, res) => {
                 parametro.fecha_nacimiento,
                 parametro.es_administrador
             ];
+
             // Se define el query que hara la insercion del usuario
             const query = 'INSERT INTO USUARIO (correo, contrasenia, nombres, apellidos, foto, fecha_nacimiento, es_administrador) VALUES (?)';
+
             // Se ejecuta el query
             db.query(query, [values], (err, result) => {
                 if (err) {
@@ -44,11 +47,54 @@ app.post('/usuarios', (req, res) => {
                     res.json({ success: true, mensaje: "Usuario creado correctamente", id_insertado: result.insertId });
                 }
             });
+
         })
         .catch(error => {
             console.error("Error al encriptar contraseña:", error);
             res.json({ success: false, mensaje: "Ha ocurrido un error al encriptar la contraseña" });
         });
+
+});
+
+/** Obtener un solo usuario */
+app.get('/usuarios/:correo/:contrasenia', (req, res) => {
+
+    // Se recibe los parametros
+    const correo = req.params.correo;
+    const contrasenia = req.params.contrasenia;
+
+    // Se define el query que obtendra la contrasenia encriptada
+    const query = 'SELECT id, contrasenia FROM USUARIO WHERE correo = ?';
+
+    // Se ejecuta el query y se realiza la comparacion de contrasenia para verificar que el inicio de sesion sea correcto
+    db.query(query, [correo], (err, result) => {
+
+        if (err) {
+            console.error('Error al obtener usuario:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener el usuario" });
+        } else {
+
+            if (result.length <= 0) {
+                res.json({ success: false, mensaje: "Credenciales incorrectas" });
+            } else {
+                util.comparePassword(contrasenia, result[0].contrasenia)
+                    .then(esCorrecta => {
+                        if (esCorrecta) {
+                            res.json({ success: true, mensaje: "Bienvenido", extra: result[0].id });
+                        } else {
+                            res.json({ success: false, mensaje: "Credenciales incorrectas" });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al comparar contraseñas:', error);
+                        res.json({ success: false, mensaje: "Ha ocurrido un error al desencriptar la contraseña" });
+                    });
+            }
+
+        }
+
+    });
+
 });
 
 /** Inicia el servidor y hace que escuche en el puerto especificado */
