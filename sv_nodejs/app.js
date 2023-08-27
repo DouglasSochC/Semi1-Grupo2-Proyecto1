@@ -126,6 +126,24 @@ app.get('/artistas', (req, res) => {
     });
 });
 
+/** Actualizar un artista por su ID */
+app.put('/artistas/:id', (req, res) => {
+
+    const id_artista = req.params.id;
+    const { nombre, fotografia, fecha_nacimiento } = req.body;
+    const query = 'UPDATE ARTISTA SET nombre = ?, fotografia = ?, fecha_nacimiento = ? WHERE id = ?';
+
+    db.query(query, [nombre, fotografia, fecha_nacimiento, id_artista], (err, result) => {
+        if (err) {
+            console.error('Error al actualizar el artista:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el artista" });
+        } else {
+            res.json({ success: true, mensaje: "Artista actualizado correctamente" });
+        }
+    });
+
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
