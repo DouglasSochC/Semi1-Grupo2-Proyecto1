@@ -176,6 +176,22 @@ app.post('/albumes', (req, res) => {
     });
 });
 
+/** Actualizar un álbum por su ID */
+app.put('/albumes/:id', (req, res) => {
+    const albumId = req.params.id;
+    const { nombre, descripcion, imagen_portada, id_artista } = req.body;
+    const query = 'UPDATE ALBUM SET nombre = ?, descripcion = ?, imagen_portada = ?, id_artista = ? WHERE id = ?';
+
+    db.query(query, [nombre, descripcion, imagen_portada, id_artista, albumId], (err, result) => {
+        if (err) {
+            console.error('Error al actualizar el álbum:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el álbum" });
+        } else {
+            res.json({ success: true, mensaje: "Álbum actualizado correctamente" });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
