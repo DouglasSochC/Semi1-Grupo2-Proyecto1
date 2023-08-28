@@ -207,6 +207,21 @@ app.delete('/albumes/:id', (req, res) => {
     });
 });
 
+/** Crear una nueva canción */
+app.post('/canciones', (req, res) => {
+    const { nombre, fotografia, duracion, archivo_mp3, id_artista, id_album } = req.body;
+    const query = 'INSERT INTO CANCION (nombre, fotografia, duracion, archivo_mp3, id_artista, id_album) VALUES (?, ?, ?, ?, ?, ?)';
+
+    db.query(query, [nombre, fotografia, duracion, archivo_mp3, id_artista, id_album], (err, result) => {
+        if (err) {
+            console.error('Error al insertar la canción:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al insertar la canción" });
+        } else {
+            res.json({ success: true, mensaje: "Canción creada correctamente", id_insertado: result.insertId });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
