@@ -161,6 +161,21 @@ app.delete('/artistas/:id', (req, res) => {
 
 });
 
+/** Crear un nuevo álbum */
+app.post('/albumes', (req, res) => {
+    const { nombre, descripcion, imagen_portada, id_artista } = req.body;
+    const query = 'INSERT INTO ALBUM (nombre, descripcion, imagen_portada, id_artista) VALUES (?, ?, ?, ?)';
+
+    db.query(query, [nombre, descripcion, imagen_portada, id_artista], (err, result) => {
+        if (err) {
+            console.error('Error al insertar el álbum:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al insertar el álbum" });
+        } else {
+            res.json({ success: true, mensaje: "Álbum creado correctamente" });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
