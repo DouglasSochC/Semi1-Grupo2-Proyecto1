@@ -192,6 +192,21 @@ app.put('/albumes/:id', (req, res) => {
     });
 });
 
+/** Eliminar un álbum por su ID */
+app.delete('/albumes/:id', (req, res) => {
+    const albumId = req.params.id;
+    const query = 'DELETE FROM ALBUM WHERE id = ?';
+
+    db.query(query, [albumId], (err, result) => {
+        if (err) {
+            console.error('Error al eliminar el álbum:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar el álbum" });
+        } else {
+            res.json({ success: true, mensaje: "Álbum eliminado correctamente" });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
