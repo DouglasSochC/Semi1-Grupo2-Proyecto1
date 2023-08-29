@@ -217,7 +217,22 @@ app.post('/canciones', (req, res) => {
             console.error('Error al insertar la canción:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al insertar la canción" });
         } else {
-            res.json({ success: true, mensaje: "Canción creada correctamente", id_insertado: result.insertId });
+            res.json({ success: true, mensaje: "Canción creada correctamente" });
+        }
+    });
+});
+
+/** Obtener todas las canciones */
+app.get('/canciones', (req, res) => {
+
+    const query = 'SELECT * FROM CANCION';
+
+    db.query(query, (err, result) => {
+        if (err) {
+            console.error('Error al obtener las canciones:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener las canciones" });
+        } else {
+            res.json({ success: true, canciones: result });
         }
     });
 });
