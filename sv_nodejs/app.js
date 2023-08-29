@@ -237,6 +237,22 @@ app.get('/canciones', (req, res) => {
     });
 });
 
+/** Actualizar una canción por su ID */
+app.put('/canciones/:id', (req, res) => {
+    const cancionId = req.params.id;
+    const { nombre, fotografia, duracion, archivo_mp3, id_artista, id_album } = req.body;
+    const query = 'UPDATE CANCION SET nombre = ?, fotografia = ?, duracion = ?, archivo_mp3 = ?, id_artista = ?, id_album = ? WHERE id = ?';
+
+    db.query(query, [nombre, fotografia, duracion, archivo_mp3, id_artista, id_album, cancionId], (err, result) => {
+        if (err) {
+            console.error('Error al actualizar la canción:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar la canción" });
+        } else {
+            res.json({ success: true, mensaje: "Canción actualizada correctamente" });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
