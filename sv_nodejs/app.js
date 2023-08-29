@@ -298,6 +298,26 @@ app.get('/canciones-artista/:id_artista', (req, res) => {
 
 });
 
+/** Obtener todas las canciones que pertenezcan a un album */
+app.get('/canciones-album/:id_album', (req, res) => {
+
+    const id_album = req.params.id_album;
+    const query = `SELECT c.id, c.nombre, c.fotografia, c.duracion, a.nombre AS nombre_artista
+    FROM CANCION c
+    INNER JOIN ARTISTA a ON a.id = c.id_artista
+    WHERE c.id_album = ?`;
+
+    db.query(query, [id_album], (err, result) => {
+        if (err) {
+            console.error('Error al obtener las canciones:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener las canciones que contiene el album" });
+        } else {
+            res.json({ success: true, canciones_album: result });
+        }
+    });
+
+});
+
 /** Agregar una cancion a un album */
 app.put('/canciones-album/:id_cancion', (req, res) => {
 
