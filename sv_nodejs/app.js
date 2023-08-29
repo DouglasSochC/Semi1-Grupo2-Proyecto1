@@ -209,6 +209,7 @@ app.delete('/albumes/:id', (req, res) => {
 
 /** Crear una nueva canción */
 app.post('/canciones', (req, res) => {
+
     const { nombre, fotografia, duracion, archivo_mp3, id_artista, id_album } = req.body;
     const query = 'INSERT INTO CANCION (nombre, fotografia, duracion, archivo_mp3, id_artista, id_album) VALUES (?, ?, ?, ?, ?, ?)';
 
@@ -220,6 +221,7 @@ app.post('/canciones', (req, res) => {
             res.json({ success: true, mensaje: "Canción creada correctamente" });
         }
     });
+
 });
 
 /** Obtener todas las canciones */
@@ -235,20 +237,39 @@ app.get('/canciones', (req, res) => {
             res.json({ success: true, canciones: result });
         }
     });
+
 });
 
 /** Actualizar una canción por su ID */
 app.put('/canciones/:id', (req, res) => {
-    const cancionId = req.params.id;
+    
+    const id_cancion = req.params.id;
     const { nombre, fotografia, duracion, archivo_mp3, id_artista, id_album } = req.body;
     const query = 'UPDATE CANCION SET nombre = ?, fotografia = ?, duracion = ?, archivo_mp3 = ?, id_artista = ?, id_album = ? WHERE id = ?';
 
-    db.query(query, [nombre, fotografia, duracion, archivo_mp3, id_artista, id_album, cancionId], (err, result) => {
+    db.query(query, [nombre, fotografia, duracion, archivo_mp3, id_artista, id_album, id_cancion], (err, result) => {
         if (err) {
             console.error('Error al actualizar la canción:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar la canción" });
         } else {
             res.json({ success: true, mensaje: "Canción actualizada correctamente" });
+        }
+    });
+
+});
+
+/** Eliminar una canción por su ID */
+app.delete('/canciones/:id', (req, res) => {
+    
+    const id_cancion = req.params.id;
+    const query = 'DELETE FROM CANCION WHERE id = ?';
+
+    db.query(query, [id_cancion], (err, result) => {
+        if (err) {
+            console.error('Error al eliminar la canción:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la canción" });
+        } else {
+            res.json({ success: true, mensaje: "Canción eliminada correctamente" });
         }
     });
 });
