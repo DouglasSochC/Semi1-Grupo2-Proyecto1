@@ -242,7 +242,7 @@ app.get('/canciones', (req, res) => {
 
 /** Actualizar una canción por su ID */
 app.put('/canciones/:id', (req, res) => {
-    
+
     const id_cancion = req.params.id;
     const { nombre, fotografia, duracion, archivo_mp3, id_artista, id_album } = req.body;
     const query = 'UPDATE CANCION SET nombre = ?, fotografia = ?, duracion = ?, archivo_mp3 = ?, id_artista = ?, id_album = ? WHERE id = ?';
@@ -260,7 +260,7 @@ app.put('/canciones/:id', (req, res) => {
 
 /** Eliminar una canción por su ID */
 app.delete('/canciones/:id', (req, res) => {
-    
+
     const id_cancion = req.params.id;
     const query = 'DELETE FROM CANCION WHERE id = ?';
 
@@ -272,6 +272,26 @@ app.delete('/canciones/:id', (req, res) => {
             res.json({ success: true, mensaje: "Canción eliminada correctamente" });
         }
     });
+});
+
+/** Obtener todas las canciones que pertenezcan al artista y que no estén agregadas a otro álbum */
+app.get('/canciones-artista/:id', (req, res) => {
+
+    const id_album = req.params.id;
+    const query = `SELECT c.id, c.nombre, c.fotografia, c.duracion, a.nombre AS nombre_artista
+    FROM CANCION c
+    INNER JOIN ARTISTA a ON a.id = c.id_artista
+    WHERE c.id_artista = ? AND c.id_album IS NULL`;
+
+    db.query(query, [id_album], (err, result) => {
+        if (err) {
+            console.error('Error al obtener las canciones:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener las canciones que contiene el artista" });
+        } else {
+            res.json({ success: true, detalle_album: result });
+        }
+    });
+
 });
 
 /** Inicia el servidor y hace que escuche en el puerto especificado */
