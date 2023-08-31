@@ -97,6 +97,24 @@ app.get('/usuarios/:correo/:contrasenia', (req, res) => {
 
 });
 
+/** Actualizar un usuario por su ID */
+app.put('/usuarios/:id_usuario', (req, res) => {
+
+    const id_usuario = req.params.id_usuario;
+    const { nombres, apellidos, foto, correo } = req.body;
+    const query = 'UPDATE USUARIO SET nombres = ?, apellidos = ?, foto = ?, correo = ? WHERE id = ?;';
+
+    db.query(query, [nombres, apellidos, foto, correo, id_usuario], (err, result) => {
+        if (err) {
+            console.error('Error al actualizar el usuario:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el usuario" });
+        } else {
+            res.json({ success: true, mensaje: "Usuario actualizado correctamente" });
+        }
+    });
+
+});
+
 /** Crear un nuevo artista */
 app.post('/artistas', (req, res) => {
     const { nombre, fotografia, fecha_nacimiento } = req.body;
