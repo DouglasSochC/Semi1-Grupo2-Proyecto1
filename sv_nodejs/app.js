@@ -98,21 +98,52 @@ app.get('/usuarios/:correo/:contrasenia', (req, res) => {
 });
 
 /** Actualizar un usuario por su ID */
-app.put('/usuarios/:id_usuario', (req, res) => {
+app.put('/usuarios/:id_usuario/:contrasenia', (req, res) => {
 
     const id_usuario = req.params.id_usuario;
+    const contrasenia = req.params.contrasenia;
     const { nombres, apellidos, foto, correo } = req.body;
-    const query = 'UPDATE USUARIO SET nombres = ?, apellidos = ?, foto = ?, correo = ? WHERE id = ?;';
 
-    db.query(query, [nombres, apellidos, foto, correo, id_usuario], (err, result) => {
+    // Se define el query que obtendra la contrasenia encriptada
+    const query_contrasenia = 'SELECT contrasenia FROM USUARIO WHERE id = ?';
+
+    // Se ejecuta el query y se realiza la comparacion de contrasenia para realizar la actualizacion del usuario
+    db.query(query_contrasenia, [id_usuario], (err, result) => {
+
         if (err) {
-            console.error('Error al actualizar el usuario:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el usuario" });
+            console.error('Error al verificar usuario:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al verificar el usuario" });
         } else {
-            res.json({ success: true, mensaje: "Usuario actualizado correctamente" });
-        }
-    });
 
+            if (result.length <= 0) {
+                res.json({ success: false, mensaje: "Credencial incorrecta" });
+            } else {
+                util.comparePassword(contrasenia, result[0].contrasenia)
+                    .then(esCorrecta => {
+                        if (esCorrecta) {
+                            const query = 'UPDATE USUARIO SET nombres = ?, apellidos = ?, foto = ?, correo = ? WHERE id = ?;';
+
+                            db.query(query, [nombres, apellidos, foto, correo, id_usuario], (err, result) => {
+                                if (err) {
+                                    console.error('Error al actualizar el usuario:', err);
+                                    res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el usuario" });
+                                } else {
+                                    res.json({ success: true, mensaje: "Usuario actualizado correctamente" });
+                                }
+                            });
+                        } else {
+                            res.json({ success: false, mensaje: "Credencial incorrecta" });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al comparar contraseñas:', error);
+                        res.json({ success: false, mensaje: "Ha ocurrido un error al desencriptar la contraseña" });
+                    });
+            }
+
+        }
+
+    });
 });
 
 /** Crear un nuevo artista */
