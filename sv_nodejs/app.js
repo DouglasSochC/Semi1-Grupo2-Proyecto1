@@ -401,6 +401,21 @@ app.delete('/canciones-album/:id_cancion', (req, res) => {
     });
 });
 
+/** Agregar una canción a favoritos para un usuario */
+app.post('/favoritos', (req, res) => {
+    const { id_cancion, id_usuario } = req.body;
+    const query = 'INSERT INTO FAVORITO (id_cancion, id_usuario) VALUES (?, ?)';
+
+    db.query(query, [id_cancion, id_usuario], (err, result) => {
+        if (err) {
+            console.error('Error al agregar la canción a favoritos:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al agregar la canción a favoritos" });
+        } else {
+            res.json({ success: true, mensaje: "Canción agregada a favoritos correctamente" });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
