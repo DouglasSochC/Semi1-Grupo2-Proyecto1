@@ -416,6 +416,25 @@ app.post('/favoritos', (req, res) => {
     });
 });
 
+/** Obtener todas las canciones favoritas de un usuario */
+app.get('/favoritos/:id_usuario', (req, res) => {
+    const id_usuario = req.params.id_usuario;
+    const query = `SELECT c.id, c.nombre, c.fotografia, c.duracion, a.nombre AS nombre_artista
+    FROM FAVORITO f
+    INNER JOIN CANCION c ON c.id = f.id_cancion
+    INNER JOIN ARTISTA a ON a.id = c.id_artista
+    WHERE f.id_usuario = ?`;
+
+    db.query(query, [id_usuario], (err, result) => {
+        if (err) {
+            console.error('Error al obtener las canciones favoritas:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener las canciones favoritas" });
+        } else {
+            res.json({ success: true, canciones_favoritas: result });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
