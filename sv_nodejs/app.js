@@ -210,7 +210,7 @@ app.delete('/artistas/:id_artista', (req, res) => {
 
 });
 
-/** Crear un nuevo álbum */
+/** Crear un nuevo album */
 app.post('/albumes', (req, res) => {
     const { nombre, descripcion, imagen_portada, id_artista } = req.body;
     const query = 'INSERT INTO ALBUM (nombre, descripcion, imagen_portada, id_artista) VALUES (?, ?, ?, ?)';
@@ -225,7 +225,7 @@ app.post('/albumes', (req, res) => {
     });
 });
 
-/** Actualizar un álbum por su ID */
+/** Actualizar un album por su ID */
 app.put('/albumes/:id_album', (req, res) => {
 
     const id_album = req.params.id_album;
@@ -243,7 +243,7 @@ app.put('/albumes/:id_album', (req, res) => {
 
 });
 
-/** Eliminar un álbum por su ID */
+/** Eliminar un album por su ID */
 app.delete('/albumes/:id_album', (req, res) => {
 
     const id_album = req.params.id;
@@ -260,7 +260,7 @@ app.delete('/albumes/:id_album', (req, res) => {
 
 });
 
-/** Crear una nueva canción */
+/** Crear una nueva cancion */
 app.post('/canciones', (req, res) => {
 
     const { nombre, fotografia, duracion, archivo_mp3, id_artista, id_album } = req.body;
@@ -293,7 +293,7 @@ app.get('/canciones', (req, res) => {
 
 });
 
-/** Actualizar una canción por su ID */
+/** Actualizar una cancion por su ID */
 app.put('/canciones/:id_cancion', (req, res) => {
 
     const id_cancion = req.params.id_cancion;
@@ -311,7 +311,7 @@ app.put('/canciones/:id_cancion', (req, res) => {
 
 });
 
-/** Eliminar una canción por su ID */
+/** Eliminar una cancion por su ID */
 app.delete('/canciones/:id_cancion', (req, res) => {
 
     const id_cancion = req.params.id;
@@ -327,7 +327,7 @@ app.delete('/canciones/:id_cancion', (req, res) => {
     });
 });
 
-/** Obtener todas las canciones que pertenezcan al artista y que no estén agregadas a otro álbum */
+/** Obtener todas las canciones que pertenezcan al artista y que no estén agregadas a otro album */
 app.get('/canciones-artista/:id_artista', (req, res) => {
 
     const id_artista = req.params.id_artista;
@@ -385,7 +385,7 @@ app.put('/canciones-album/:id_cancion', (req, res) => {
 
 });
 
-/** Eliminar una canción de un album */
+/** Eliminar una cancion de un album */
 app.delete('/canciones-album/:id_cancion', (req, res) => {
 
     const id_cancion = req.params.id_cancion;
@@ -401,7 +401,7 @@ app.delete('/canciones-album/:id_cancion', (req, res) => {
     });
 });
 
-/** Agregar una canción a favoritos para un usuario */
+/** Agregar una cancion a favoritos para un usuario */
 app.post('/favoritos', (req, res) => {
     const { id_cancion, id_usuario } = req.body;
     const query = 'INSERT INTO FAVORITO (id_cancion, id_usuario) VALUES (?, ?)';
@@ -435,7 +435,7 @@ app.get('/favoritos/:id_usuario', (req, res) => {
     });
 });
 
-/** Eliminar una canción de un album */
+/** Eliminar una cancion de un album */
 app.delete('/favoritos/:id_favorito', (req, res) => {
 
     const id_favorito = req.params.id_favorito;
@@ -451,7 +451,7 @@ app.delete('/favoritos/:id_favorito', (req, res) => {
     });
 });
 
-/** El usuario puede realizar la búsqueda de álbumes, canciones o artistas por medio de la entrada del usuario. */
+/** El usuario puede realizar la busqueda de albumes, canciones o artistas por medio de la entrada del usuario. */
 app.get('/buscar/:entrada', (req, res) => {
 
     const entrada = req.params.entrada;
@@ -567,7 +567,7 @@ app.post('/playlist-canciones', (req, res) => {
 
 /** Obtener el detalle de una playlist por su ID */
 app.get('/playlist-canciones/:id', (req, res) => {
-    
+
     const id_playlist = req.params.id;
     const query = `SELECT c.id, c.nombre, c.fotografia, c.archivo_mp3
         FROM PLAYLIST p
@@ -585,6 +585,22 @@ app.get('/playlist-canciones/:id', (req, res) => {
             } else {
                 res.json({ success: false, mensaje: "Playlist no encontrada" });
             }
+        }
+    });
+});
+
+/** Eliminar una cancion de una playlist por su ID */
+app.delete('/playlist-canciones/:id_cancion', (req, res) => {
+
+    const id_cancion = req.params.id_cancion;
+    const query = 'DELETE FROM DETALLE_PLAYLIST WHERE id = ?';
+
+    db.query(query, [id_cancion], (err, result) => {
+        if (err) {
+            console.error('Error al eliminar la cancion de la playlist:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la cancion de la playlist" });
+        } else {
+            res.json({ success: true, mensaje: "Cancion eliminada de la playlist correctamente" });
         }
     });
 });
