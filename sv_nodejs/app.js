@@ -620,6 +620,27 @@ app.post('/historicos', (req, res) => {
     });
 });
 
+/** Top 5 canciones más reproducidas */
+app.get('/top5', (req, res) => {
+
+    const query = `SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, c.fotografia, c.duracion, a.id AS id_artista, a.nombre AS nombre_artista, COUNT(h.id) AS cantidad
+        FROM HISTORICO h 
+        INNER JOIN CANCION c ON c.id = h.id_cancion 
+        INNER JOIN ARTISTA a ON a.id = c.id_artista 
+        GROUP BY c.id
+        ORDER BY cantidad DESC
+        LIMIT 5`;
+
+    db.query(query, [], (err, result) => {
+        if (err) {
+            console.error('Error al obtener los datos:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener los datos" });
+        } else {
+            res.json({ success: true, data: result });            
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
