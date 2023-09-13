@@ -535,6 +535,21 @@ app.put('/playlists/:id', (req, res) => {
     });
 });
 
+/** Agrega una cancion a una playlist */
+app.post('/playlist-canciones', (req, res) => {
+    const { id_playlist, id_cancion } = req.body;
+    const query = 'INSERT INTO DETALLE_PLAYLIST (id_playlist, id_cancion) VALUES (?, ?)';
+
+    db.query(query, [id_playlist, id_cancion], (err, result) => {
+        if (err) {
+            console.error('Error al agregar la cancion a la playlist:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al agregar la cancion a la playlist" });
+        } else {
+            res.json({ success: true, mensaje: "Cancion agregada correctamente a la playlist" });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
