@@ -504,6 +504,21 @@ app.get('/buscar/:entrada', (req, res) => {
     });
 });
 
+/** Crear una nueva playlist */
+app.post('/playlists', (req, res) => {
+    const { nombre, fondo_portada } = req.body;
+    const query = 'INSERT INTO PLAYLIST (nombre, fondo_portada) VALUES (?, ?)';
+
+    db.query(query, [nombre, fondo_portada], (err, result) => {
+        if (err) {
+            console.error('Error al insertar la playlist:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al insertar la playlist" });
+        } else {
+            res.json({ success: true, mensaje: "Playlist creada correctamente" });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
