@@ -519,6 +519,22 @@ app.post('/playlists', (req, res) => {
     });
 });
 
+/** Actualizar una playlist por su ID */
+app.put('/playlists/:id', (req, res) => {
+    const playlistId = req.params.id;
+    const { nombre, fondo_portada } = req.body;
+    const query = 'UPDATE PLAYLIST SET nombre = ?, fondo_portada = ? WHERE id = ?';
+
+    db.query(query, [nombre, fondo_portada, playlistId], (err, result) => {
+        if (err) {
+            console.error('Error al actualizar la playlist:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar la playlist" });
+        } else {
+            res.json({ success: true, mensaje: "Playlist actualizada correctamente" });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
