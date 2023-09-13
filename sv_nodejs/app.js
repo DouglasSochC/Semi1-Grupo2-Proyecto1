@@ -506,10 +506,10 @@ app.get('/buscar/:entrada', (req, res) => {
 
 /** Crear una nueva playlist */
 app.post('/playlists', (req, res) => {
-    const { nombre, fondo_portada } = req.body;
-    const query = 'INSERT INTO PLAYLIST (nombre, fondo_portada) VALUES (?, ?)';
+    const { nombre, fondo_portada, id_usuario } = req.body;
+    const query = 'INSERT INTO PLAYLIST (nombre, fondo_portada, id_usuario) VALUES (?, ?, ?)';
 
-    db.query(query, [nombre, fondo_portada], (err, result) => {
+    db.query(query, [nombre, fondo_portada, id_usuario], (err, result) => {
         if (err) {
             console.error('Error al insertar la playlist:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al insertar la playlist" });
