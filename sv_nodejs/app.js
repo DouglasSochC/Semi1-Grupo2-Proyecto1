@@ -605,6 +605,21 @@ app.delete('/playlist-canciones/:id_cancion', (req, res) => {
     });
 });
 
+/** Agrega una cancion a una playlist */
+app.post('/historicos', (req, res) => {
+    const { id_usuario, id_cancion } = req.body;
+    const query = 'INSERT INTO HISTORICO (id_usuario, id_cancion) VALUES (?, ?)';
+
+    db.query(query, [id_usuario, id_cancion], (err, result) => {
+        if (err) {
+            console.error('Error al agregar el historico:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al agregar el historico" });
+        } else {
+            res.json({ success: true, mensaje: "Historico agregado correctamente" });
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
