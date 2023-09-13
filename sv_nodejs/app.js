@@ -620,13 +620,13 @@ app.post('/historicos', (req, res) => {
     });
 });
 
-/** Top 5 canciones más reproducidas */
+/** Top 5 canciones mas reproducidas */
 app.get('/top5-canciones', (req, res) => {
 
     const query = `SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, c.fotografia, c.duracion, a.id AS id_artista, a.nombre AS nombre_artista, COUNT(h.id) AS cantidad
-        FROM HISTORICO h 
-        INNER JOIN CANCION c ON c.id = h.id_cancion 
-        INNER JOIN ARTISTA a ON a.id = c.id_artista 
+        FROM HISTORICO h
+        INNER JOIN CANCION c ON c.id = h.id_cancion
+        INNER JOIN ARTISTA a ON a.id = c.id_artista
         GROUP BY c.id
         ORDER BY cantidad DESC
         LIMIT 5`;
@@ -636,18 +636,18 @@ app.get('/top5-canciones', (req, res) => {
             console.error('Error al obtener los datos:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener los datos" });
         } else {
-            res.json({ success: true, data: result });            
+            res.json({ success: true, data: result });
         }
     });
 });
 
-/** Top 3 artistas más escuchados */
+/** Top 3 artistas mas escuchados */
 app.get('/top3-artistas', (req, res) => {
 
     const query = `SELECT a.id AS id_artista, a.nombre AS nombre_artista, COUNT(h.id) AS cantidad
-        FROM HISTORICO h 
-        INNER JOIN CANCION c ON c.id = h.id_cancion 
-        INNER JOIN ARTISTA a ON a.id = c.id_artista 
+        FROM HISTORICO h
+        INNER JOIN CANCION c ON c.id = h.id_cancion
+        INNER JOIN ARTISTA a ON a.id = c.id_artista
         GROUP BY a.id
         ORDER BY cantidad DESC
         LIMIT 3`;
@@ -657,7 +657,28 @@ app.get('/top3-artistas', (req, res) => {
             console.error('Error al obtener los datos:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener los datos" });
         } else {
-            res.json({ success: true, data: result });            
+            res.json({ success: true, data: result });
+        }
+    });
+});
+
+/** Top 5 albumes mas reproducidos */
+app.get('/top5-albumes', (req, res) => {
+
+    const query = `SELECT a.id AS id_album, a.nombre AS nombre_album, a.imagen_portada, COUNT(h.id) AS cantidad
+        FROM HISTORICO h
+        INNER JOIN CANCION c ON c.id = h.id_cancion
+        INNER JOIN ALBUM a ON a.id = c.id_album
+        GROUP BY a.id
+        ORDER BY cantidad DESC
+        LIMIT 5`;
+
+    db.query(query, [], (err, result) => {
+        if (err) {
+            console.error('Error al obtener los datos:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener los datos" });
+        } else {
+            res.json({ success: true, data: result });
         }
     });
 });
