@@ -435,6 +435,59 @@ app.get('/favoritos/:id_usuario', (req, res) => {
     });
 });
 
+/** El usuario puede realizar la búsqueda de álbumes, canciones o artistas por medio de la entrada del usuario. */
+app.get('/buscar/:entrada', (req, res) => {
+
+    const entrada = req.params.entrada;
+
+    const query_albumes = `SELECT a.id AS id_album, a.nombre AS nombre_album, a.descripcion, a2.id AS id_artista, a2.nombre AS nombre_artista,
+    JSON_ARRAYAGG(JSON_OBJECT('id_cancion', c.id ,'nombre_cancion', c.nombre, 'duracion_cancion', c.duracion)) as detalle_album
+    FROM ALBUM a
+    INNER JOIN ARTISTA a2 ON a2.id = a.id_artista
+    INNER JOIN CANCION c ON c.id_album = a.id
+    WHERE CONCAT(a.nombre,a.descripcion) LIKE '%` + entrada + `%'
+    GROUP BY a.id`;
+
+    db.query(query_albumes, [], (err, result) => {
+        if (err) {
+            console.error('Error al obtener las concidencias:', err);
+            res.json({ success: false, mensaje: "No se ha encontrado alguna concidencia" });
+        } else {
+
+            const albumes = result;
+
+            const query_artista = `SELECT c.id AS id_cancion, c.nombre, c.fotografia, c.duracion, c.archivo_mp3, a.id AS id_artista, a.nombre AS nombre_artista
+            FROM CANCION c
+            INNER JOIN ARTISTA a ON a.id = c.id_artista
+            WHERE a.nombre LIKE '%` + entrada + `%'`;
+            db.query(query_artista, [], (err, result) => {
+                if (err) {
+                    console.error('Error al obtener las concidencias:', err);
+                    res.json({ success: false, mensaje: "No se ha encontrado alguna concidencia" });
+                } else {
+
+                    const canciones_artista = result;
+
+                    const query_artista = `SELECT c.id AS id_cancion, c.nombre, c.fotografia, c.duracion, c.archivo_mp3, a.id AS id_artista, a.nombre AS nombre_artista
+                    FROM CANCION c
+                    INNER JOIN ARTISTA a ON a.id = c.id_artista
+                    WHERE c.nombre LIKE '%` + entrada + `%'`;
+                    db.query(query_artista, [], (err, result) => {
+                        if (err) {
+                            console.error('Error al obtener las concidencias:', err);
+                            res.json({ success: false, mensaje: "No se ha encontrado alguna concidencia" });
+                        } else {
+                            res.json({ success: true, albumes: albumes, canciones_artista: canciones_artista, canciones: result });
+                        }
+                    });
+
+                }
+            });
+
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
