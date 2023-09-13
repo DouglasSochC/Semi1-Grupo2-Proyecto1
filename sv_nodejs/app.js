@@ -605,7 +605,7 @@ app.delete('/playlist-canciones/:id_cancion', (req, res) => {
     });
 });
 
-/** Agrega una cancion a una playlist */
+/** Agrega una cancion al historial del usuario */
 app.post('/historicos', (req, res) => {
     const { id_usuario, id_cancion } = req.body;
     const query = 'INSERT INTO HISTORICO (id_usuario, id_cancion) VALUES (?, ?)';
@@ -672,6 +672,23 @@ app.get('/top5-albumes', (req, res) => {
         GROUP BY a.id
         ORDER BY cantidad DESC
         LIMIT 5`;
+
+    db.query(query, [], (err, result) => {
+        if (err) {
+            console.error('Error al obtener los datos:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener los datos" });
+        } else {
+            res.json({ success: true, data: result });
+        }
+    });
+});
+
+/** Historial de canciones reproducidas */
+app.get('/historial', (req, res) => {
+
+    const query = `SELECT c.id AS id_cancion, c.nombre, c.fotografia, c.duracion, h.fecha_registro
+        FROM HISTORICO h
+        INNER JOIN CANCION c ON c.id = h.id_cancion`;
 
     db.query(query, [], (err, result) => {
         if (err) {
