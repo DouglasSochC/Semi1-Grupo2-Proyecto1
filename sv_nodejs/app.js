@@ -435,6 +435,22 @@ app.get('/favoritos/:id_usuario', (req, res) => {
     });
 });
 
+/** Eliminar una canción de un album */
+app.delete('/favoritos/:id_favorito', (req, res) => {
+
+    const id_favorito = req.params.id_favorito;
+    const query = "DELETE FROM FAVORITO WHERE id = ?";
+
+    db.query(query, [id_favorito], (err, result) => {
+        if (err) {
+            console.error('Error al eliminar la canción de favoritos:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la canción de favoritos" });
+        } else {
+            res.json({ success: true, mensaje: "Canción eliminada de favoritos correctamente" });
+        }
+    });
+});
+
 /** El usuario puede realizar la búsqueda de álbumes, canciones o artistas por medio de la entrada del usuario. */
 app.get('/buscar/:entrada', (req, res) => {
 
