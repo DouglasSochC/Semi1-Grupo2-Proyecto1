@@ -1,13 +1,16 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const db = require('./db');
 const util = require('./util');
 const host = process.env.SV_HOST;
 const port = process.env.SV_PORT;
 
-// Middleware para manejar JSON
-app.use(express.json());
+// Configuracion
+app.use(express.urlencoded({ limit: '10mb', extended: true })); // Middleware
+app.use(express.json({ limit: '10mb' })); // Middleware para manejar JSON y tamanio maximo del JSON
+app.use(cors({ origin: '*' })); // CORS
 
 /** Endpoint inicial */
 app.get('/', (req, res) => {
