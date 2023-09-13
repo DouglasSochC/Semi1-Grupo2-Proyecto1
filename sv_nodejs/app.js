@@ -521,16 +521,31 @@ app.post('/playlists', (req, res) => {
 
 /** Actualizar una playlist por su ID */
 app.put('/playlists/:id', (req, res) => {
-    const playlistId = req.params.id;
+    const id_playlist = req.params.id;
     const { nombre, fondo_portada } = req.body;
     const query = 'UPDATE PLAYLIST SET nombre = ?, fondo_portada = ? WHERE id = ?';
 
-    db.query(query, [nombre, fondo_portada, playlistId], (err, result) => {
+    db.query(query, [nombre, fondo_portada, id_playlist], (err, result) => {
         if (err) {
             console.error('Error al actualizar la playlist:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar la playlist" });
         } else {
             res.json({ success: true, mensaje: "Playlist actualizada correctamente" });
+        }
+    });
+});
+
+/** Eliminar una playlist por su ID */
+app.delete('/playlists/:id', (req, res) => {
+    const id = req.params.id;
+    const query = 'DELETE FROM PLAYLIST WHERE id = ?';
+
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Error al eliminar la playlist:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la playlist" });
+        } else {
+            res.json({ success: true, mensaje: "Playlist eliminada correctamente" });
         }
     });
 });
