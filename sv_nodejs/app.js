@@ -565,6 +565,30 @@ app.post('/playlist-canciones', (req, res) => {
     });
 });
 
+/** Obtener el detalle de una playlist por su ID */
+app.get('/playlist-canciones/:id', (req, res) => {
+    
+    const id_playlist = req.params.id;
+    const query = `SELECT c.id, c.nombre, c.fotografia, c.archivo_mp3
+        FROM PLAYLIST p
+        INNER JOIN DETALLE_PLAYLIST dp ON dp.id_playlist = p.id
+        INNER JOIN CANCION c ON c.id = dp.id_cancion
+        WHERE p.id = ?`;
+
+    db.query(query, [id_playlist], (err, result) => {
+        if (err) {
+            console.error('Error al obtener la playlist:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la playlist" });
+        } else {
+            if (result.length > 0) {
+                res.json({ success: true, playlist: result });
+            } else {
+                res.json({ success: false, mensaje: "Playlist no encontrada" });
+            }
+        }
+    });
+});
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
