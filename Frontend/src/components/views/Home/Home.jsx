@@ -1,16 +1,14 @@
-import { renderRoutes } from '../../../routes/RouteUtils'
+//import { renderRoutes } from '../../../routes/RouteUtils'
 import React, { useEffect, useRef, useState } from "react";
 import Sidebar from "../../Layout/Home_user/Sidebar";
-import styled from "../../Layout/Home_user/styled-components";
+import styled from "styled-components";
 import Footer from "../../Layout/Home_user/Footer";
 import Navbar from "../../Layout/Home_user/Navbar";
-import axios from "axios";
-import { useStateProvider } from "../utils/StateProvider";
-import Body from "./Body";
-import { reducerCases } from "../utils/Constants";
+import Body from "../../Layout/Home_user/Body";
+
 
 const Home = () => {
-  const [{ token }, dispatch] = useStateProvider();
+
   const [navBackground, setNavBackground] = useState(false);
   const [headerBackground, setHeaderBackground] = useState(false);
   const bodyRef = useRef();
@@ -22,38 +20,7 @@ const Home = () => {
       ? setHeaderBackground(true)
       : setHeaderBackground(false);
   };
-  useEffect(() => {
-    const getUserInfo = async () => {
-      const { data } = await axios.get("https://api.spotify.com/v1/me", {
-        headers: {
-          Authorization: "Bearer " + token,
-          "Content-Type": "application/json",
-        },
-      });
-      const userInfo = {
-        userId: data.id,
-        userUrl: data.external_urls.spotify,
-        name: data.display_name,
-      };
-      dispatch({ type: reducerCases.SET_USER, userInfo });
-    };
-    getUserInfo();
-  }, [dispatch, token]);
-  useEffect(() => {
-    const getPlaybackState = async () => {
-      const { data } = await axios.get("https://api.spotify.com/v1/me/player", {
-        headers: {
-          Authorization: "Bearer " + token,
-          "Content-Type": "application/json",
-        },
-      });
-      dispatch({
-        type: reducerCases.SET_PLAYER_STATE,
-        playerState: data.is_playing,
-      });
-    };
-    getPlaybackState();
-  }, [dispatch, token]);
+
   return (
     <Container>
       <div className="spotify__body">
@@ -100,3 +67,4 @@ const Container = styled.div`
   }
 `;
 
+export default Home;

@@ -26,13 +26,12 @@ const routes = [
     {
         path: "/app",
         render: props => <RouteController component={Home} {...props} />,
-        routes: [
-            {
-                path: "/app",
-                exact: true,
-                render: props => <RouteController component={Dashboard} {...props} />
-            }
-        ]
+       
+    },
+    {
+        path: "/home",
+        exact: true,
+        render: props => <RouteController component={Home} {...props} />
     }
 
 ]
