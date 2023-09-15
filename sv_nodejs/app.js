@@ -4,6 +4,7 @@ const cors = require('cors');
 const app = express();
 const db = require('./db');
 const util = require('./util');
+const path = require('path');
 const host = process.env.SV_HOST;
 const port = process.env.SV_PORT;
 
@@ -11,6 +12,38 @@ const port = process.env.SV_PORT;
 app.use(express.urlencoded({ limit: '10mb', extended: true })); // Middleware
 app.use(express.json({ limit: '10mb' })); // Middleware para manejar JSON y tamanio maximo del JSON
 app.use(cors({ origin: '*' })); // CORS
+
+// Dependencias para AWS
+const { S3Client } = require('@aws-sdk/client-s3');
+const multer = require('multer');
+const multerS3 = require('multer-s3');
+
+// Configura las credenciales y la región de AWS
+let s3 = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+    sslEnabled: false,
+    s3ForcePathStyle: true,
+    signatureVersion: 'v4',
+});
+
+const upload = multer({
+    storage: multerS3({
+        s3: s3,
+        bucket: process.env.AWS_BUCKET_NAME,
+        contentType: multerS3.AUTO_CONTENT_TYPE,
+        acl: 'public-read',
+        metadata: function (req, file, cb) {
+            cb(null, { fieldName: file.fieldname });
+        },
+        key: function (req, file, cb) {
+            cb(null, process.env.AWS_BUCKET_FOLDER_FOTOS + "/" + Date.now().toString() + path.extname(file.originalname));
+        },
+    }),
+});
 
 /** Endpoint inicial */
 app.get('/', (req, res) => {
@@ -60,47 +93,43 @@ app.post('/usuarios/register', (req, res) => {
 });
 
 app.post('/usuarios/login', (req, res) => {
-// Se recibe los parametros
-console.log("BODY")
-console.log(req.body);
-const parametro = req.body;
-const correo = parametro.correo;
-const contrasenia = parametro.contrasenia;
-console.log(correo, contrasenia);
-// Se define el query que obtendra la contrasenia encriptada
-const query = 'SELECT id, contrasenia FROM semi1_p1.USUARIO WHERE correo = ?';
+    // Se recibe los parametros
+    const correo = req.params.correo;
+    const contrasenia = req.params.contrasenia;
 
-// Se ejecuta el query y se realiza la comparacion de contrasenia para verificar que el inicio de sesion sea correcto
-db.query(query, [correo], (err, result) => {
-    console.log(result);
-    if (err) {
-        console.error('Error al obtener usuario:', err);
-        res.json({ success: false, mensaje: "Ha ocurrido un error al obtener el usuario" });
-    } else {
-        console.log(result[0].contrasenia);
-        if (result.length <= 0) {
-            res.json({ success: false, mensaje: "Credenciales incorrectas" });
+    // Se define el query que obtendra la contrasenia encriptada
+    const query = 'SELECT id, contrasenia FROM USUARIO WHERE correo = ?';
+
+    // Se ejecuta el query y se realiza la comparacion de contrasenia para verificar que el inicio de sesion sea correcto
+    db.query(query, [correo], (err, result) => {
+
+        if (err) {
+            console.error('Error al obtener usuario:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener el usuario" });
         } else {
-            util.comparePassword(contrasenia, result[0].contrasenia)
-                .then(esCorrecta => {
-                    if (esCorrecta) {
-                        res.json({ success: true, mensaje: "Bienvenido", extra: result[0].id });
-                    } else {
-                        res.json({ success: false, mensaje: "Credenciales incorrectas" });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al comparar contraseñas:', error);
-                    res.json({ success: false, mensaje: "Ha ocurrido un error al desencriptar la contraseña" });
-                });
+
+            if (result.length <= 0) {
+                res.json({ success: false, mensaje: "Credenciales incorrectas" });
+            } else {
+                util.comparePassword(contrasenia, result[0].contrasenia)
+                    .then(esCorrecta => {
+                        if (esCorrecta) {
+                            res.json({ success: true, mensaje: "Bienvenido", extra: result[0].id });
+                        } else {
+                            res.json({ success: false, mensaje: "Credenciales incorrectas" });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al comparar contraseñas:', error);
+                        res.json({ success: false, mensaje: "Ha ocurrido un error al desencriptar la contraseña" });
+                    });
+            }
+
         }
 
-    }
+    });
 
 });
-
-});
-
 
 /** Actualizar un usuario por su ID */
 app.put('/usuarios/:id_usuario/:contrasenia', (req, res) => {
@@ -152,11 +181,13 @@ app.put('/usuarios/:id_usuario/:contrasenia', (req, res) => {
 });
 
 /** Crear un nuevo artista */
-app.post('/artistas', (req, res) => {
-    const { nombre, fotografia, fecha_nacimiento } = req.body;
+app.post('/artistas', upload.single('fotografia'), (req, res) => {
+    const { nombre, fecha_nacimiento } = req.body;
+    const fotografiaURL = req.file.key;
+
     const query = 'INSERT INTO ARTISTA (nombre, fotografia, fecha_nacimiento) VALUES (?, ?, ?)';
 
-    db.query(query, [nombre, fotografia, fecha_nacimiento], (err, result) => {
+    db.query(query, [nombre, fotografiaURL, fecha_nacimiento], (err, result) => {
         if (err) {
             console.error('Error al insertar el artista:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al insertar el artista" });
