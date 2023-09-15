@@ -12,7 +12,7 @@ const Header = ({ setOpen }) => {
                 <IconButton edge='start' color='inherit' onClick={() => setOpen(true)}>
                     <MenuIcon />
                 </IconButton>
-                <Typography style={{ flexGrow: 1 }}>Samus App</Typography>
+                <Typography style={{ flexGrow: 1 }}>Sounds Stream</Typography>
                 <Button variant='text' color='inherit' onClick={() => {
                     localStorage.clear()
                     history.push('/login')
