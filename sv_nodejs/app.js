@@ -59,46 +59,48 @@ app.post('/usuarios', (req, res) => {
 
 });
 
-/** Obtener un solo usuario */
-app.get('/usuarios/:correo/:contrasenia', (req, res) => {
+app.post('/usuarios/login', (req, res) => {
+// Se recibe los parametros
+console.log("BODY")
+console.log(req.body);
+const parametro = req.body;
+const correo = parametro.correo;
+const contrasenia = parametro.contrasenia;
+console.log(correo, contrasenia);
+// Se define el query que obtendra la contrasenia encriptada
+const query = 'SELECT id, contrasenia FROM semi1_p1.USUARIO WHERE correo = ?';
 
-    // Se recibe los parametros
-    const correo = req.params.correo;
-    const contrasenia = req.params.contrasenia;
-
-    // Se define el query que obtendra la contrasenia encriptada
-    const query = 'SELECT id, contrasenia FROM USUARIO WHERE correo = ?';
-
-    // Se ejecuta el query y se realiza la comparacion de contrasenia para verificar que el inicio de sesion sea correcto
-    db.query(query, [correo], (err, result) => {
-
-        if (err) {
-            console.error('Error al obtener usuario:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener el usuario" });
+// Se ejecuta el query y se realiza la comparacion de contrasenia para verificar que el inicio de sesion sea correcto
+db.query(query, [correo], (err, result) => {
+    console.log(result);
+    if (err) {
+        console.error('Error al obtener usuario:', err);
+        res.json({ success: false, mensaje: "Ha ocurrido un error al obtener el usuario" });
+    } else {
+        console.log(result[0].contrasenia);
+        if (result.length <= 0) {
+            res.json({ success: false, mensaje: "Credenciales incorrectas" });
         } else {
-
-            if (result.length <= 0) {
-                res.json({ success: false, mensaje: "Credenciales incorrectas" });
-            } else {
-                util.comparePassword(contrasenia, result[0].contrasenia)
-                    .then(esCorrecta => {
-                        if (esCorrecta) {
-                            res.json({ success: true, mensaje: "Bienvenido", extra: result[0].id });
-                        } else {
-                            res.json({ success: false, mensaje: "Credenciales incorrectas" });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error al comparar contraseñas:', error);
-                        res.json({ success: false, mensaje: "Ha ocurrido un error al desencriptar la contraseña" });
-                    });
-            }
-
+            util.comparePassword(contrasenia, result[0].contrasenia)
+                .then(esCorrecta => {
+                    if (esCorrecta) {
+                        res.json({ success: true, mensaje: "Bienvenido", extra: result[0].id });
+                    } else {
+                        res.json({ success: false, mensaje: "Credenciales incorrectas" });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al comparar contraseñas:', error);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al desencriptar la contraseña" });
+                });
         }
 
-    });
+    }
 
 });
+
+});
+
 
 /** Actualizar un usuario por su ID */
 app.put('/usuarios/:id_usuario/:contrasenia', (req, res) => {
