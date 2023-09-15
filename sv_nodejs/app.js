@@ -18,7 +18,7 @@ app.get('/', (req, res) => {
 });
 
 /** Creacion de un usuario */
-app.post('/usuarios', (req, res) => {
+app.post('/usuarios/register', (req, res) => {
 
     // Se recibe los parametros que posee esta entidad
     const parametro = req.body;
