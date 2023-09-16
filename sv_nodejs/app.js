@@ -262,23 +262,27 @@ app.delete('/artistas/:id_artista', (req, res) => {
 
         } else {
 
-            const key = result[0].fotografia;
-            deleteFile(key, (err, data) => {
-                if (err) {
-                    console.error('Error al eliminar la imagen de S3:', err);
-                    res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
-                } else {
-                    const deleteQuery = 'DELETE FROM ARTISTA WHERE id = ?';
-                    db.query(deleteQuery, [id_artista], (err, result) => {
-                        if (err) {
-                            console.error('Error al eliminar el artista:', err);
-                            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar el artista" });
-                        } else {
-                            res.json({ success: true, mensaje: "Artista eliminado correctamente" });
-                        }
-                    });
-                }
-            });
+            if (result.length <= 0) {
+                res.json({ success: true, mensaje: "Artista eliminado correctamente" });
+            } else {
+                const key = result[0].fotografia;
+                deleteFile(key, (err, data) => {
+                    if (err) {
+                        console.error('Error al eliminar la imagen de S3:', err);
+                        res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
+                    } else {
+                        const deleteQuery = 'DELETE FROM ARTISTA WHERE id = ?';
+                        db.query(deleteQuery, [id_artista], (err, result) => {
+                            if (err) {
+                                console.error('Error al eliminar el artista:', err);
+                                res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar el artista" });
+                            } else {
+                                res.json({ success: true, mensaje: "Artista eliminado correctamente" });
+                            }
+                        });
+                    }
+                });
+            }
 
         }
     });
