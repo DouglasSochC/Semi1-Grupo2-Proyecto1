@@ -440,7 +440,11 @@ app.post('/canciones', upload.fields([{ name: 'imagen_portada', maxCount: 1 }, {
 /** Obtener todas las canciones */
 app.get('/canciones', (req, res) => {
 
-    const query = 'SELECT * FROM CANCION';
+    const query = `SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, c.duracion, a.id AS id_artista, a.nombre AS nombre_artista,
+    CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen,
+    CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.archivo_mp3) AS url_audio
+    FROM CANCION c
+    INNER JOIN ARTISTA a ON a.id = c.id_artista`;
 
     db.query(query, (err, result) => {
         if (err) {
