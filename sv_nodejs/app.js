@@ -317,16 +317,24 @@ app.delete('/artistas/:id_artista', (req, res) => {
 });
 
 /** Crear un nuevo album */
-app.post('/albumes', (req, res) => {
-    const { nombre, descripcion, imagen_portada, id_artista } = req.body;
-    const query = 'INSERT INTO ALBUM (nombre, descripcion, imagen_portada, id_artista) VALUES (?, ?, ?, ?)';
-
-    db.query(query, [nombre, descripcion, imagen_portada, id_artista], (err, result) => {
+app.post('/albumes', upload.single('archivo'), (req, res) => {
+    const { nombre, descripcion, id_artista } = req.body;
+    uploadImagetoS3(req.file, null, (err, data) => {
         if (err) {
-            console.error('Error al insertar el álbum:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al insertar el álbum" });
+            console.error('Error al subir el archivo a S3:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
         } else {
-            res.json({ success: true, mensaje: "Álbum creado correctamente" });
+            const url_imagen = data;
+            const query = 'INSERT INTO ALBUM (nombre, descripcion, imagen_portada, id_artista) VALUES (?, ?, ?, ?)';
+
+            db.query(query, [nombre, descripcion, url_imagen, id_artista], (err, result) => {
+                if (err) {
+                    console.error('Error al insertar el álbum:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al insertar el álbum" });
+                } else {
+                    res.json({ success: true, mensaje: "Álbum creado correctamente" });
+                }
+            });
         }
     });
 });
