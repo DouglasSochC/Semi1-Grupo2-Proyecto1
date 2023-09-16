@@ -119,8 +119,8 @@ app.post('/usuarios/register', upload.single('archivo'), (req, res) => {
 /** Verificacion del usuario */
 app.post('/usuarios/login', (req, res) => {
     // Se recibe los parametros
-    const correo = req.params.correo;
-    const contrasenia = req.params.contrasenia;
+    const correo = req.body.correo;
+    const contrasenia = req.body.contrasenia;
 
     // Se define el query que obtendra la contrasenia encriptada
     const query = 'SELECT id, contrasenia FROM USUARIO WHERE correo = ?';
