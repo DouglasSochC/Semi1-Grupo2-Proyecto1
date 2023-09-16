@@ -32,9 +32,9 @@ let s3 = new S3Client({
 // Configuración de multer para manejar archivos multipart
 const upload = multer();
 
-const uploadFiletoS3 = (file, current_name, folder_name, callback) => {
+const uploadFiletoS3 = (file, folder_name, callback) => {
 
-    const key = current_name ? current_name : `${folder_name}/${Date.now().toString()}${path.extname(file.originalname)}`;
+    const key = `${folder_name}/${Date.now().toString()}${path.extname(file.originalname)}`;
 
     const params = {
         Bucket: process.env.AWS_BUCKET_NAME,
@@ -89,7 +89,7 @@ app.post('/usuarios/register', upload.single('archivo'), (req, res) => {
         .then(hashedPassword => {
 
             const hashed = hashedPassword;
-            uploadFiletoS3(req.file, null, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
+            uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
                 if (err) {
                     console.error('Error al subir el archivo de S3:', err);
                     res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
@@ -157,49 +157,55 @@ app.post('/usuarios/login', (req, res) => {
 });
 
 /** Actualizar un usuario por su ID */
-app.put('/usuarios/:id_usuario/:contrasenia', (req, res) => {
+app.put('/usuarios/:id_usuario/:contrasenia', upload.single('archivo'), (req, res) => {
 
+    // Se obtienen los parametros a utilizar para actualizar los datos de un usuario
     const id_usuario = req.params.id_usuario;
     const contrasenia = req.params.contrasenia;
-    const { nombres, apellidos, foto, correo } = req.body;
+    const { nombres, apellidos, correo } = req.body;
 
-    // Se define el query que obtendra la contrasenia encriptada
-    const query_contrasenia = 'SELECT contrasenia FROM USUARIO WHERE id = ?';
-
-    // Se ejecuta el query y se realiza la comparacion de contrasenia para realizar la actualizacion del usuario
-    db.query(query_contrasenia, [id_usuario], (err, result) => {
-
+    const query_select = 'SELECT foto, contrasenia FROM USUARIO WHERE id = ?';
+    db.query(query_select, [id_usuario], (err, result) => {
         if (err) {
-            console.error('Error al verificar usuario:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al verificar el usuario" });
+            console.error('Error al obtener al usuario:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener al usuario" });
         } else {
+            util.comparePassword(contrasenia, result[0].contrasenia)
+                .then(esCorrecta => {
+                    if (esCorrecta) {
 
-            if (result.length <= 0) {
-                res.json({ success: false, mensaje: "Credencial incorrecta" });
-            } else {
-                util.comparePassword(contrasenia, result[0].contrasenia)
-                    .then(esCorrecta => {
-                        if (esCorrecta) {
-                            const query = 'UPDATE USUARIO SET nombres = ?, apellidos = ?, foto = ?, correo = ? WHERE id = ?;';
-
-                            db.query(query, [nombres, apellidos, foto, correo, id_usuario], (err, result) => {
-                                if (err) {
-                                    console.error('Error al actualizar el usuario:', err);
-                                    res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el usuario" });
-                                } else {
-                                    res.json({ success: true, mensaje: "Usuario actualizado correctamente" });
-                                }
-                            });
-                        } else {
-                            res.json({ success: false, mensaje: "Credencial incorrecta" });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error al comparar contraseñas:', error);
-                        res.json({ success: false, mensaje: "Ha ocurrido un error al desencriptar la contraseña" });
-                    });
-            }
-
+                        deleteFiletoS3(result[0].foto, (err, data) => {
+                            if (err) {
+                                console.error('Error al eliminar la imagen de S3:', err);
+                                res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
+                            } else {
+                                uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
+                                    if (err) {
+                                        console.error('Error al subir el archivo de S3:', err);
+                                        res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
+                                    } else {
+                                        const url_imagen = data;
+                                        const query = 'UPDATE USUARIO SET nombres = ?, apellidos = ?, foto = ?, correo = ? WHERE id = ?;';
+                                        db.query(query, [nombres, apellidos, url_imagen, correo, id_usuario], (err, result) => {
+                                            if (err) {
+                                                console.error('Error al actualizar el usuario:', err);
+                                                res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el usuario" });
+                                            } else {
+                                                res.json({ success: true, mensaje: "Usuario actualizado correctamente" });
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        res.json({ success: false, mensaje: "Contraseña incorrecta" });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al comparar contraseñas:', error);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al desencriptar la contraseña" });
+                });
         }
 
     });

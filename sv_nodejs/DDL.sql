@@ -13,10 +13,6 @@ CREATE TABLE USUARIO (
     es_administrador BOOLEAN
 );
 
--- Usuario administrador
-INSERT INTO USUARIO (correo, contrasenia, nombres, apellidos, es_administrador) 
-VALUES ('admin@gmail.com', '123456', 'Administrador', 'Sistema', TRUE);
-
 CREATE TABLE ARTISTA (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(255) NOT NULL,
