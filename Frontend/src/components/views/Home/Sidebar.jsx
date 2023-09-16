@@ -9,8 +9,8 @@ export default function Sidebar() {
       <div className="top__links">
         <div className="logo">
           <img
-            src="../stream.png"
-            alt="spotify"
+            src="./stream.png"
+            alt="Sound Stream"
           />
         </div>
         <ul>
@@ -44,11 +44,7 @@ const Container = styled.div`
     flex-direction: column;
     .logo {
       text-align: center;
-      margin: 1rem 0;
-      img {
-        max-inline-size: 80%;
-        block-size: auto;
-      }
+      
     }
     ul {
       list-style-type: none;

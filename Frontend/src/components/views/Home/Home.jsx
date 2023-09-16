@@ -1,19 +1,30 @@
-import React from 'react'
+import React from "react";
 //import { Typography } from '@material-ui/core'
 import Sidebar from "./Sidebar";
 import styled from "styled-components";
+import Navbar from "./Navbar";
+import Footer from "./Footer";
+import Body from "./Body";
 
 const Home = () => {
-    return (
-        <Container>
-          <div className="spotify__body">
-            <Sidebar />
-        
+  const headerBackground = "https://i.imgur.com/2nCt3Sbl.jpg";
+  return (
+    <Container>
+      <div className="spotify__body">
+        <Sidebar />
+        <div className="body" >
+          <Navbar />
+          <div className="body__contents">
+            <Body headerBackground={headerBackground} />
           </div>
-        </Container>
-      );
-}
-
+        </div>
+      </div>
+      <div className="spotify__footer">
+        <Footer />
+      </div>
+    </Container>
+  );
+};
 
 const Container = styled.div`
   max-width: 100vw;
@@ -26,8 +37,12 @@ const Container = styled.div`
     grid-template-columns: 15vw 85vw;
     height: 100%;
     width: 100%;
-    background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(78,9,121,1) 35%, rgba(0,212,255,1) 100%);
-    background-color: rgb(32, 87, 100);
+    background: linear-gradient(
+      0deg,
+      rgba(34, 193, 195, 1) 0%,
+      rgba(45, 17, 112, 1) 100%
+    );
+    background-color: rgb(34, 193, 195);
     .body {
       height: 100%;
       width: 100%;
@@ -52,4 +67,4 @@ const Dashboard = () => {
     )
 }
 */
-export default Home
+export default Home;
