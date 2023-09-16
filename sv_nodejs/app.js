@@ -14,7 +14,7 @@ app.use(express.json({ limit: '10mb' })); // Middleware para manejar JSON y tama
 app.use(cors({ origin: '*' })); // CORS
 
 // Dependencias para AWS
-const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 
@@ -30,22 +30,32 @@ let s3 = new S3Client({
     signatureVersion: 'v4',
 });
 
-const uploadFile = multer({
-    storage: multerS3({
-        s3: s3,
-        bucket: process.env.AWS_BUCKET_NAME,
-        contentType: multerS3.AUTO_CONTENT_TYPE,
-        acl: 'private',
-        metadata: function (req, file, cb) {
-            cb(null, { fieldName: file.fieldname });
-        },
-        key: function (req, file, cb) {
-            cb(null, process.env.AWS_BUCKET_FOLDER_FOTOS + "/" + Date.now().toString() + path.extname(file.originalname));
-        },
-    }),
-});
+// Configuración de multer para manejar archivos multipart
+const upload = multer();
 
-const deleteFile = (key, callback) => {
+const uploadImagetoS3 = (file, callback) => {
+
+    const key = `${process.env.AWS_BUCKET_FOLDER_FOTOS}/${Date.now().toString()}${path.extname(file.originalname)}`;
+
+    const params = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+    };
+
+    const putCommand = new PutObjectCommand(params);
+
+    s3.send(putCommand, (err, data) => {
+        if (err) {
+            callback(err);
+        } else {
+            callback(null, key);
+        }
+    });
+};
+
+const deleteFiletoS3 = (key, callback) => {
 
     const params = {
         Bucket: process.env.AWS_BUCKET_NAME,
@@ -200,20 +210,27 @@ app.put('/usuarios/:id_usuario/:contrasenia', (req, res) => {
 });
 
 /** Crear un nuevo artista */
-app.post('/artistas', uploadFile.single('fotografia'), (req, res) => {
+app.post('/artistas', upload.single('archivo'), (req, res) => {
+
     const { nombre, fecha_nacimiento } = req.body;
-    const fotografiaURL = req.file.key;
-
-    const query = 'INSERT INTO ARTISTA (nombre, fotografia, fecha_nacimiento) VALUES (?, ?, ?)';
-
-    db.query(query, [nombre, fotografiaURL, fecha_nacimiento], (err, result) => {
+    uploadImagetoS3(req.file, (err, data) => {
         if (err) {
-            console.error('Error al insertar el artista:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al insertar el artista" });
+            console.error('Error al subir el archivo de S3:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
         } else {
-            res.json({ success: true, mensaje: "Artista creado correctamente" });
+            const url_archivo = data;
+            const query_insert = 'INSERT INTO ARTISTA (nombre, fotografia, fecha_nacimiento) VALUES (?, ?, ?)';
+            db.query(query_insert, [nombre, url_archivo, fecha_nacimiento], (err, result) => {
+                if (err) {
+                    console.error('Error al insertar el artista:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al insertar el artista" });
+                } else {
+                    res.json({ success: true, mensaje: "Artista creado correctamente" });
+                }
+            });
         }
     });
+
 });
 
 /** Obtener todos los artistas */
@@ -252,9 +269,9 @@ app.put('/artistas/:id_artista', (req, res) => {
 app.delete('/artistas/:id_artista', (req, res) => {
 
     const id_artista = req.params.id_artista;
-    const obtenerURLQuery = 'SELECT fotografia FROM ARTISTA WHERE id = ?';
+    const query_select_fotografia = 'SELECT fotografia FROM ARTISTA WHERE id = ?';
 
-    db.query(obtenerURLQuery, [id_artista], (err, result) => {
+    db.query(query_select_fotografia, [id_artista], (err, result) => {
         if (err) {
 
             console.error('Error al obtener la URL de la imagen:', err);
@@ -266,7 +283,7 @@ app.delete('/artistas/:id_artista', (req, res) => {
                 res.json({ success: true, mensaje: "Artista eliminado correctamente" });
             } else {
                 const key = result[0].fotografia;
-                deleteFile(key, (err, data) => {
+                deleteFiletoS3(key, (err, data) => {
                     if (err) {
                         console.error('Error al eliminar la imagen de S3:', err);
                         res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
