@@ -212,7 +212,7 @@ app.put('/usuarios/:id_usuario/:contrasenia', (req, res) => {
 app.post('/artistas', upload.single('archivo'), (req, res) => {
 
     const { nombre, fecha_nacimiento } = req.body;
-    uploadImagetoS3(req.file, (err, data) => {
+    uploadImagetoS3(req.file, null, (err, data) => {
         if (err) {
             console.error('Error al subir el archivo de S3:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
