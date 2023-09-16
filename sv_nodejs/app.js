@@ -215,7 +215,7 @@ app.put('/usuarios/:id_usuario/:contrasenia', upload.single('archivo'), (req, re
 app.post('/artistas', upload.single('archivo'), (req, res) => {
 
     const { nombre, fecha_nacimiento } = req.body;
-    uploadFiletoS3(req.file, null, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
+    uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
         if (err) {
             console.error('Error al subir el archivo de S3:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
@@ -261,19 +261,26 @@ app.put('/artistas/:id_artista', upload.single('archivo'), (req, res) => {
             console.error('Error al obtener la URL del archivo:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL del archivo" });
         } else {
-            const url_archivo = result[0].fotografia;
-            uploadFiletoS3(req.file, url_archivo, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
+            deleteFiletoS3(result[0].fotografia, (err, data) => {
                 if (err) {
-                    console.error('Error al subir el archivo de S3:', err);
-                    res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
+                    console.error('Error al eliminar la imagen de S3:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
                 } else {
-                    const query = 'UPDATE ARTISTA SET nombre = ?, fecha_nacimiento = ? WHERE id = ?';
-                    db.query(query, [nombre, fecha_nacimiento, id_artista], (err, result) => {
+                    uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
                         if (err) {
-                            console.error('Error al actualizar el artista:', err);
-                            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el artista" });
+                            console.error('Error al subir el archivo de S3:', err);
+                            res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
                         } else {
-                            res.json({ success: true, mensaje: "Artista actualizado correctamente" });
+                            const url_imagen = data;
+                            const query = 'UPDATE ARTISTA SET nombre = ?, fotografia = ?, fecha_nacimiento = ? WHERE id = ?';
+                            db.query(query, [nombre, url_imagen, fecha_nacimiento, id_artista], (err, result) => {
+                                if (err) {
+                                    console.error('Error al actualizar el artista:', err);
+                                    res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el artista" });
+                                } else {
+                                    res.json({ success: true, mensaje: "Artista actualizado correctamente" });
+                                }
+                            });
                         }
                     });
                 }
