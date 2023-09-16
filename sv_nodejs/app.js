@@ -425,14 +425,14 @@ app.delete('/albumes/:id_album', (req, res) => {
 app.post('/canciones', upload.fields([{ name: 'imagen_portada', maxCount: 1 }, { name: 'archivo_mp3', maxCount: 1 }]), (req, res) => {
     const { nombre, duracion, id_artista, id_album } = req.body;
 
-    uploadFiletoS3(req.files.imagen_portada[0], null, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
+    uploadFiletoS3(req.files.imagen_portada[0], process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
         if (err) {
             console.error('Error al subir la imagen a S3:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al subir la imagen" });
         } else {
 
             const url_imagen = data;
-            uploadFiletoS3(req.files.archivo_mp3[0], null, process.env.AWS_BUCKET_FOLDER_CANCIONES, (err, data) => {
+            uploadFiletoS3(req.files.archivo_mp3[0], process.env.AWS_BUCKET_FOLDER_CANCIONES, (err, data) => {
                 if (err) {
                     console.error('Error al subir el audio a S3:', err);
                     res.json({ success: false, mensaje: "Ha ocurrido un error al subir el audio" });
@@ -475,35 +475,98 @@ app.get('/canciones', (req, res) => {
 });
 
 /** Actualizar una cancion por su ID */
-app.put('/canciones/:id_cancion', (req, res) => {
+app.put('/canciones/:id_cancion', upload.fields([{ name: 'fotografia', maxCount: 1 }, { name: 'archivo_mp3', maxCount: 1 }]), (req, res) => {
 
     const id_cancion = req.params.id_cancion;
-    const { nombre, fotografia, duracion, archivo_mp3, id_artista, id_album } = req.body;
-    const query = 'UPDATE CANCION SET nombre = ?, fotografia = ?, duracion = ?, archivo_mp3 = ?, id_artista = ?, id_album = ? WHERE id = ?';
+    const { nombre, duracion, id_artista, id_album } = req.body;
 
-    db.query(query, [nombre, fotografia, duracion, archivo_mp3, id_artista, id_album, id_cancion], (err, result) => {
+    const query_select = 'SELECT fotografia, archivo_mp3 FROM CANCION WHERE id = ?';
+
+    db.query(query_select, [id_cancion], (err, result) => {
         if (err) {
-            console.error('Error al actualizar la canción:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar la canción" });
+            console.error('Error al obtener la URL de los archivos a modificar:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL de los archivos a modificar" });
         } else {
-            res.json({ success: true, mensaje: "Canción actualizada correctamente" });
+
+            deleteFiletoS3(result[0].fotografia, (err, data) => {
+                if (err) {
+                    console.error('Error al eliminar la imagen anterior de S3:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen anterior" });
+                } else {
+                    deleteFiletoS3(result[0].archivo_mp3, (err, data) => {
+                        if (err) {
+                            console.error('Error al eliminar el archivo MP3 anterior de S3:', err);
+                            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar el archivo MP3 anterior" });
+                        } else {
+                            uploadFiletoS3(req.files.fotografia[0], process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
+                                if (err) {
+                                    console.error('Error al subir el nuevo archivo de imagen a S3:', err);
+                                    res.json({ success: false, mensaje: "Ha ocurrido un error al subir el nuevo archivo de imagen" });
+                                } else {
+                                    const url_fotografia = data;
+                                    uploadFiletoS3(req.files.archivo_mp3[0], process.env.AWS_BUCKET_FOLDER_CANCIONES, (err, data) => {
+                                        if (err) {
+                                            console.error('Error al subir el nuevo archivo de imagen a S3:', err);
+                                            res.json({ success: false, mensaje: "Ha ocurrido un error al subir el nuevo archivo de imagen" });
+                                        } else {
+                                            const url_archivo_mp3 = data;
+                                            const query = 'UPDATE CANCION SET nombre = ?, fotografia = ?, duracion = ?, archivo_mp3 = ?, id_artista = ?, id_album = ? WHERE id = ?';
+                                            db.query(query, [nombre, url_fotografia, duracion, url_archivo_mp3, id_artista, id_album, id_cancion], (err, result) => {
+                                                if (err) {
+                                                    console.error('Error al actualizar la canción:', err);
+                                                    res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar la canción" });
+                                                } else {
+                                                    res.json({ success: true, mensaje: "Canción actualizada correctamente" });
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
         }
     });
-
 });
 
 /** Eliminar una cancion por su ID */
 app.delete('/canciones/:id_cancion', (req, res) => {
 
-    const id_cancion = req.params.id;
-    const query = 'DELETE FROM CANCION WHERE id_cancion = ?';
+    const id_cancion = req.params.id_cancion;
+    const query_select = 'SELECT fotografia, archivo_mp3 FROM CANCION WHERE id = ?';
 
-    db.query(query, [id_cancion], (err, result) => {
+    db.query(query_select, [id_cancion], (err, result) => {
         if (err) {
-            console.error('Error al eliminar la canción:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la canción" });
+            console.error('Error al obtener la URL los archivos a eliminar:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL los archivos a eliminar" });
         } else {
-            res.json({ success: true, mensaje: "Canción eliminada correctamente" });
+
+            deleteFiletoS3(result[0].archivo_mp3, (err, data) => {
+                if (err) {
+                    console.error('Error al eliminar el archivo MP3 de S3:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar el archivo MP3" });
+                } else {
+                    deleteFiletoS3(result[0].fotografia, (err, data) => {
+                        if (err) {
+                            console.error('Error al eliminar la imagen de S3:', err);
+                            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
+                        } else {
+                            const query = 'DELETE FROM CANCION WHERE id = ?';
+                            db.query(query, [id_cancion], (err, result) => {
+                                if (err) {
+                                    console.error('Error al eliminar la canción:', err);
+                                    res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la canción" });
+                                } else {
+                                    res.json({ success: true, mensaje: "Canción eliminada correctamente" });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
         }
     });
 });
