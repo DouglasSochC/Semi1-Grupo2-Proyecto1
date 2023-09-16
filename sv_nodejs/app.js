@@ -16,7 +16,6 @@ app.use(cors({ origin: '*' })); // CORS
 // Dependencias para AWS
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const multer = require('multer');
-const multerS3 = require('multer-s3');
 
 // Configura las credenciales y la región de AWS
 let s3 = new S3Client({
@@ -33,9 +32,9 @@ let s3 = new S3Client({
 // Configuración de multer para manejar archivos multipart
 const upload = multer();
 
-const uploadImagetoS3 = (file, callback) => {
+const uploadImagetoS3 = (file, current_name, callback) => {
 
-    const key = `${process.env.AWS_BUCKET_FOLDER_FOTOS}/${Date.now().toString()}${path.extname(file.originalname)}`;
+    const key = current_name ? current_name : `${process.env.AWS_BUCKET_FOLDER_FOTOS}/${Date.now().toString()}${path.extname(file.originalname)}`;
 
     const params = {
         Bucket: process.env.AWS_BUCKET_NAME,
@@ -248,18 +247,34 @@ app.get('/artistas', (req, res) => {
 });
 
 /** Actualizar un artista por su ID */
-app.put('/artistas/:id_artista', (req, res) => {
+app.put('/artistas/:id_artista', upload.single('archivo'), (req, res) => {
 
     const id_artista = req.params.id_artista;
-    const { nombre, fotografia, fecha_nacimiento } = req.body;
-    const query = 'UPDATE ARTISTA SET nombre = ?, fotografia = ?, fecha_nacimiento = ? WHERE id = ?';
+    const { nombre, fecha_nacimiento } = req.body;
+    const query_select_fotografia = 'SELECT fotografia FROM ARTISTA WHERE id = ?';
 
-    db.query(query, [nombre, fotografia, fecha_nacimiento, id_artista], (err, result) => {
+    db.query(query_select_fotografia, [id_artista], (err, result) => {
         if (err) {
-            console.error('Error al actualizar el artista:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el artista" });
+            console.error('Error al obtener la URL de la imagen:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL de la imagen" });
         } else {
-            res.json({ success: true, mensaje: "Artista actualizado correctamente" });
+            const url_archivo = result[0].fotografia;
+            uploadImagetoS3(req.file, url_archivo, (err, data) => {
+                if (err) {
+                    console.error('Error al subir el archivo de S3:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
+                } else {
+                    const query = 'UPDATE ARTISTA SET nombre = ?, fecha_nacimiento = ? WHERE id = ?';
+                    db.query(query, [nombre, fecha_nacimiento, id_artista], (err, result) => {
+                        if (err) {
+                            console.error('Error al actualizar el artista:', err);
+                            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el artista" });
+                        } else {
+                            res.json({ success: true, mensaje: "Artista actualizado correctamente" });
+                        }
+                    });
+                }
+            });
         }
     });
 
@@ -273,12 +288,9 @@ app.delete('/artistas/:id_artista', (req, res) => {
 
     db.query(query_select_fotografia, [id_artista], (err, result) => {
         if (err) {
-
             console.error('Error al obtener la URL de la imagen:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL de la imagen" });
-
         } else {
-
             if (result.length <= 0) {
                 res.json({ success: true, mensaje: "Artista eliminado correctamente" });
             } else {
@@ -300,7 +312,6 @@ app.delete('/artistas/:id_artista', (req, res) => {
                     }
                 });
             }
-
         }
     });
 });
