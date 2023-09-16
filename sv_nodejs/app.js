@@ -14,7 +14,7 @@ app.use(express.json({ limit: '10mb' })); // Middleware para manejar JSON y tama
 app.use(cors({ origin: '*' })); // CORS
 
 // Dependencias para AWS
-const { S3Client } = require('@aws-sdk/client-s3');
+const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 
@@ -44,6 +44,24 @@ const uploadFile = multer({
         },
     }),
 });
+
+const deleteFile = (key, callback) => {
+
+    const params = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: key,
+    };
+
+    const deleteCommand = new DeleteObjectCommand(params);
+
+    s3.send(deleteCommand, (err, data) => {
+        if (err) {
+            callback(err);
+        } else {
+            callback(null, data);
+        }
+    });
+};
 
 /** Endpoint inicial */
 app.get('/', (req, res) => {
@@ -234,17 +252,36 @@ app.put('/artistas/:id_artista', (req, res) => {
 app.delete('/artistas/:id_artista', (req, res) => {
 
     const id_artista = req.params.id_artista;
-    const query = 'DELETE FROM ARTISTA WHERE id = ?';
+    const obtenerURLQuery = 'SELECT fotografia FROM ARTISTA WHERE id = ?';
 
-    db.query(query, [id_artista], (err, result) => {
+    db.query(obtenerURLQuery, [id_artista], (err, result) => {
         if (err) {
-            console.error('Error al eliminar el artista:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar el artista" });
+
+            console.error('Error al obtener la URL de la imagen:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL de la imagen" });
+
         } else {
-            res.json({ success: true, mensaje: "Artista eliminado correctamente" });
+
+            const key = result[0].fotografia;
+            deleteFile(key, (err, data) => {
+                if (err) {
+                    console.error('Error al eliminar la imagen de S3:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
+                } else {
+                    const deleteQuery = 'DELETE FROM ARTISTA WHERE id = ?';
+                    db.query(deleteQuery, [id_artista], (err, result) => {
+                        if (err) {
+                            console.error('Error al eliminar el artista:', err);
+                            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar el artista" });
+                        } else {
+                            res.json({ success: true, mensaje: "Artista eliminado correctamente" });
+                        }
+                    });
+                }
+            });
+
         }
     });
-
 });
 
 /** Crear un nuevo album */
