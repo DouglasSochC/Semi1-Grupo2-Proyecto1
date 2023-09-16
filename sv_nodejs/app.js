@@ -373,19 +373,35 @@ app.put('/albumes/:id_album', upload.single('archivo'), (req, res) => {
 
 /** Eliminar un album por su ID */
 app.delete('/albumes/:id_album', (req, res) => {
+    const id_album = req.params.id_album;
+    const query_select_imagen = 'SELECT imagen_portada FROM ALBUM WHERE id = ?';
 
-    const id_album = req.params.id;
-    const query = 'DELETE FROM ALBUM WHERE id = ?';
-
-    db.query(query, [id_album], (err, result) => {
+    db.query(query_select_imagen, [id_album], (err, result) => {
         if (err) {
-            console.error('Error al eliminar el álbum:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar el álbum" });
+            console.error('Error al obtener la URL del archivo:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL del archivo" });
         } else {
-            res.json({ success: true, mensaje: "Álbum eliminado correctamente" });
+            const url_imagen = result[0].imagen_portada;
+
+            deleteFiletoS3(url_imagen, (err, data) => {
+                if (err) {
+                    console.error('Error al eliminar el archivo de S3:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar el archivo" });
+                } else {
+                    const query = 'DELETE FROM ALBUM WHERE id = ?';
+
+                    db.query(query, [id_album], (err, result) => {
+                        if (err) {
+                            console.error('Error al eliminar el álbum:', err);
+                            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar el álbum" });
+                        } else {
+                            res.json({ success: true, mensaje: "Álbum eliminado correctamente" });
+                        }
+                    });
+                }
+            });
         }
     });
-
 });
 
 /** Crear una nueva cancion */
