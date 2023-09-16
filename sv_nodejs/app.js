@@ -30,12 +30,12 @@ let s3 = new S3Client({
     signatureVersion: 'v4',
 });
 
-const upload = multer({
+const uploadFile = multer({
     storage: multerS3({
         s3: s3,
         bucket: process.env.AWS_BUCKET_NAME,
         contentType: multerS3.AUTO_CONTENT_TYPE,
-        acl: 'public-read',
+        acl: 'private',
         metadata: function (req, file, cb) {
             cb(null, { fieldName: file.fieldname });
         },
@@ -92,6 +92,7 @@ app.post('/usuarios/register', (req, res) => {
 
 });
 
+/** Verificacion del usuario */
 app.post('/usuarios/login', (req, res) => {
     // Se recibe los parametros
     const correo = req.params.correo;
@@ -181,7 +182,7 @@ app.put('/usuarios/:id_usuario/:contrasenia', (req, res) => {
 });
 
 /** Crear un nuevo artista */
-app.post('/artistas', upload.single('fotografia'), (req, res) => {
+app.post('/artistas', uploadFile.single('fotografia'), (req, res) => {
     const { nombre, fecha_nacimiento } = req.body;
     const fotografiaURL = req.file.key;
 
