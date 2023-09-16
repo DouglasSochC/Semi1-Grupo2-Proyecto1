@@ -258,8 +258,8 @@ app.put('/artistas/:id_artista', upload.single('archivo'), (req, res) => {
 
     db.query(query_select_fotografia, [id_artista], (err, result) => {
         if (err) {
-            console.error('Error al obtener la URL del archivo:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL del archivo" });
+            console.error('Error al obtener la URL del archivo a modificar:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL del archivo a modificar" });
         } else {
             deleteFiletoS3(result[0].fotografia, (err, data) => {
                 if (err) {
@@ -329,7 +329,7 @@ app.delete('/artistas/:id_artista', (req, res) => {
 /** Crear un nuevo album */
 app.post('/albumes', upload.single('archivo'), (req, res) => {
     const { nombre, descripcion, id_artista } = req.body;
-    uploadFiletoS3(req.file, null, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
+    uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
         if (err) {
             console.error('Error al subir el archivo a S3:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
@@ -357,22 +357,29 @@ app.put('/albumes/:id_album', upload.single('archivo'), (req, res) => {
 
     db.query(query_select_imagen, [id_album], (err, result) => {
         if (err) {
-            console.error('Error al obtener la URL del archivo:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL del archivo" });
+            console.error('Error al obtener la URL del archivo a modificar:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL del archivo a modificar" });
         } else {
-            const url_imagen_anterior = result[0].imagen_portada;
-            uploadFiletoS3(req.file, url_imagen_anterior, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
+            deleteFiletoS3(result[0].imagen_portada, (err, data) => {
                 if (err) {
-                    console.error('Error al subir el archivo a S3:', err);
-                    res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
+                    console.error('Error al eliminar la imagen de S3:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
                 } else {
-                    const query = 'UPDATE ALBUM SET nombre = ?, descripcion = ?, id_artista = ? WHERE id = ?';
-                    db.query(query, [nombre, descripcion, id_artista, id_album], (err, result) => {
+                    uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
                         if (err) {
-                            console.error('Error al actualizar el álbum:', err);
-                            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el álbum" });
+                            console.error('Error al subir el archivo a S3:', err);
+                            res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
                         } else {
-                            res.json({ success: true, mensaje: "Álbum actualizado correctamente" });
+                            const url_imagen = data;
+                            const query = 'UPDATE ALBUM SET nombre = ?, descripcion = ?, imagen_portada = ?, id_artista = ? WHERE id = ?';
+                            db.query(query, [nombre, descripcion, url_imagen, id_artista, id_album], (err, result) => {
+                                if (err) {
+                                    console.error('Error al actualizar el álbum:', err);
+                                    res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el álbum" });
+                                } else {
+                                    res.json({ success: true, mensaje: "Álbum actualizado correctamente" });
+                                }
+                            });
                         }
                     });
                 }
