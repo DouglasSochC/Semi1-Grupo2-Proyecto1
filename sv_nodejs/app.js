@@ -32,9 +32,9 @@ let s3 = new S3Client({
 // Configuración de multer para manejar archivos multipart
 const upload = multer();
 
-const uploadImagetoS3 = (file, current_name, callback) => {
+const uploadFiletoS3 = (file, current_name, folder_name, callback) => {
 
-    const key = current_name ? current_name : `${process.env.AWS_BUCKET_FOLDER_FOTOS}/${Date.now().toString()}${path.extname(file.originalname)}`;
+    const key = current_name ? current_name : `${folder_name}/${Date.now().toString()}${path.extname(file.originalname)}`;
 
     const params = {
         Bucket: process.env.AWS_BUCKET_NAME,
@@ -212,7 +212,7 @@ app.put('/usuarios/:id_usuario/:contrasenia', (req, res) => {
 app.post('/artistas', upload.single('archivo'), (req, res) => {
 
     const { nombre, fecha_nacimiento } = req.body;
-    uploadImagetoS3(req.file, null, (err, data) => {
+    uploadFiletoS3(req.file, null, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
         if (err) {
             console.error('Error al subir el archivo de S3:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
@@ -259,7 +259,7 @@ app.put('/artistas/:id_artista', upload.single('archivo'), (req, res) => {
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL del archivo" });
         } else {
             const url_archivo = result[0].fotografia;
-            uploadImagetoS3(req.file, url_archivo, (err, data) => {
+            uploadFiletoS3(req.file, url_archivo, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
                 if (err) {
                     console.error('Error al subir el archivo de S3:', err);
                     res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
@@ -319,7 +319,7 @@ app.delete('/artistas/:id_artista', (req, res) => {
 /** Crear un nuevo album */
 app.post('/albumes', upload.single('archivo'), (req, res) => {
     const { nombre, descripcion, id_artista } = req.body;
-    uploadImagetoS3(req.file, null, (err, data) => {
+    uploadFiletoS3(req.file, null, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
         if (err) {
             console.error('Error al subir el archivo a S3:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
@@ -351,7 +351,7 @@ app.put('/albumes/:id_album', upload.single('archivo'), (req, res) => {
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL del archivo" });
         } else {
             const url_imagen_anterior = result[0].imagen_portada;
-            uploadImagetoS3(req.file, url_imagen_anterior, (err, data) => {
+            uploadFiletoS3(req.file, url_imagen_anterior, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
                 if (err) {
                     console.error('Error al subir el archivo a S3:', err);
                     res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
@@ -405,20 +405,36 @@ app.delete('/albumes/:id_album', (req, res) => {
 });
 
 /** Crear una nueva cancion */
-app.post('/canciones', (req, res) => {
+app.post('/canciones', upload.fields([{ name: 'imagen_portada', maxCount: 1 }, { name: 'archivo_mp3', maxCount: 1 }]), (req, res) => {
+    const { nombre, duracion, id_artista, id_album } = req.body;
 
-    const { nombre, fotografia, duracion, archivo_mp3, id_artista, id_album } = req.body;
-    const query = 'INSERT INTO CANCION (nombre, fotografia, duracion, archivo_mp3, id_artista, id_album) VALUES (?, ?, ?, ?, ?, ?)';
-
-    db.query(query, [nombre, fotografia, duracion, archivo_mp3, id_artista, id_album], (err, result) => {
+    uploadFiletoS3(req.files.imagen_portada[0], null, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
         if (err) {
-            console.error('Error al insertar la canción:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al insertar la canción" });
+            console.error('Error al subir la imagen a S3:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al subir la imagen" });
         } else {
-            res.json({ success: true, mensaje: "Canción creada correctamente" });
+
+            const url_imagen = data;
+            uploadFiletoS3(req.files.archivo_mp3[0], null, process.env.AWS_BUCKET_FOLDER_CANCIONES, (err, data) => {
+                if (err) {
+                    console.error('Error al subir el audio a S3:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al subir el audio" });
+                } else {
+                    const url_audio = data;
+                    const query = 'INSERT INTO CANCION (nombre, fotografia, duracion, archivo_mp3, id_artista, id_album) VALUES (?, ?, ?, ?, ?, ?)';
+                    db.query(query, [nombre, url_imagen, duracion, url_audio, id_artista, id_album], (err, result) => {
+                        if (err) {
+                            console.error('Error al insertar la canción:', err);
+                            res.json({ success: false, mensaje: "Ha ocurrido un error al insertar la canción" });
+                        } else {
+                            res.json({ success: true, mensaje: "Canción creada correctamente" });
+                        }
+                    });
+                }
+            });
+
         }
     });
-
 });
 
 /** Obtener todas las canciones */
