@@ -255,8 +255,8 @@ app.put('/artistas/:id_artista', upload.single('archivo'), (req, res) => {
 
     db.query(query_select_fotografia, [id_artista], (err, result) => {
         if (err) {
-            console.error('Error al obtener la URL de la imagen:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL de la imagen" });
+            console.error('Error al obtener la URL del archivo:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL del archivo" });
         } else {
             const url_archivo = result[0].fotografia;
             uploadImagetoS3(req.file, url_archivo, (err, data) => {
@@ -340,21 +340,35 @@ app.post('/albumes', upload.single('archivo'), (req, res) => {
 });
 
 /** Actualizar un album por su ID */
-app.put('/albumes/:id_album', (req, res) => {
-
+app.put('/albumes/:id_album', upload.single('archivo'), (req, res) => {
     const id_album = req.params.id_album;
-    const { nombre, descripcion, imagen_portada, id_artista } = req.body;
-    const query = 'UPDATE ALBUM SET nombre = ?, descripcion = ?, imagen_portada = ?, id_artista = ? WHERE id = ?';
+    const { nombre, descripcion, id_artista } = req.body;
+    const query_select_imagen = 'SELECT imagen_portada FROM ALBUM WHERE id = ?';
 
-    db.query(query, [nombre, descripcion, imagen_portada, id_artista, id_album], (err, result) => {
+    db.query(query_select_imagen, [id_album], (err, result) => {
         if (err) {
-            console.error('Error al actualizar el álbum:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el álbum" });
+            console.error('Error al obtener la URL del archivo:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL del archivo" });
         } else {
-            res.json({ success: true, mensaje: "Álbum actualizado correctamente" });
+            const url_imagen_anterior = result[0].imagen_portada;
+            uploadImagetoS3(req.file, url_imagen_anterior, (err, data) => {
+                if (err) {
+                    console.error('Error al subir el archivo a S3:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
+                } else {
+                    const query = 'UPDATE ALBUM SET nombre = ?, descripcion = ?, id_artista = ? WHERE id = ?';
+                    db.query(query, [nombre, descripcion, id_artista, id_album], (err, result) => {
+                        if (err) {
+                            console.error('Error al actualizar el álbum:', err);
+                            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el álbum" });
+                        } else {
+                            res.json({ success: true, mensaje: "Álbum actualizado correctamente" });
+                        }
+                    });
+                }
+            });
         }
     });
-
 });
 
 /** Eliminar un album por su ID */
