@@ -78,36 +78,33 @@ app.get('/', (req, res) => {
 });
 
 /** Creacion de un usuario */
-app.post('/usuarios/register', (req, res) => {
+app.post('/usuarios/register', upload.single('archivo'), (req, res) => {
 
     // Se recibe los parametros que posee esta entidad
     const parametro = req.body;
 
     // Debido a que la encriptacion devuelve una promesa es necesario realizarlo de la siguiente forma
     util.hashPassword(parametro.contrasenia)
+
         .then(hashedPassword => {
 
-            // Ordenando los parametros
-            const values = [
-                parametro.correo,
-                hashedPassword,
-                parametro.nombres,
-                parametro.apellidos,
-                parametro.foto,
-                parametro.fecha_nacimiento,
-                parametro.es_administrador
-            ];
-
-            // Se define el query que hara la insercion del usuario
-            const query = 'INSERT INTO USUARIO (correo, contrasenia, nombres, apellidos, foto, fecha_nacimiento, es_administrador) VALUES (?)';
-
-            // Se ejecuta el query
-            db.query(query, [values], (err, result) => {
+            const hashed = hashedPassword;
+            uploadFiletoS3(req.file, null, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
                 if (err) {
-                    console.error('Error al insertar el mensaje:', err);
-                    res.json({ success: false, mensaje: "Ha ocurrido un error al insertar el usuario" });
+                    console.error('Error al subir el archivo de S3:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
                 } else {
-                    res.json({ success: true, mensaje: "Usuario creado correctamente", id_insertado: result.insertId });
+                    const url_archivo = data;
+                    parametro.es_administrador = (String(parametro.es_administrador).toLowerCase() === 'true');
+                    const query = 'INSERT INTO USUARIO (correo, contrasenia, nombres, apellidos, foto, fecha_nacimiento, es_administrador) VALUES (?, ?, ?, ?, ?, ?, ?)';
+                    db.query(query, [parametro.correo, hashed, parametro.nombres, parametro.apellidos, url_archivo, parametro.fecha_nacimiento, parametro.es_administrador], (err, result) => {
+                        if (err) {
+                            console.error('Error al insertar el mensaje:', err);
+                            res.json({ success: false, mensaje: "Ha ocurrido un error al insertar el usuario" });
+                        } else {
+                            res.json({ success: true, mensaje: "Usuario creado correctamente", id_insertado: result.insertId });
+                        }
+                    });
                 }
             });
 
