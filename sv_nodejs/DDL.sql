@@ -32,9 +32,9 @@ CREATE TABLE ALBUM (
 CREATE TABLE CANCION (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(255) NOT NULL,
-    fotografia VARCHAR(255),
-    duracion TIME,
-    archivo_mp3 VARCHAR(255),
+    fotografia VARCHAR(255) NOT NULL,
+    duracion TIME NOT NULL,
+    archivo_mp3 VARCHAR(255) NOT NULL,
     id_artista INT NOT NULL,
     id_album INT,
     FOREIGN KEY (id_artista) REFERENCES ARTISTA(id) ON DELETE CASCADE,

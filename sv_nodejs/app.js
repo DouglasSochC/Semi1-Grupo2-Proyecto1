@@ -575,7 +575,7 @@ app.delete('/canciones/:id_cancion', (req, res) => {
 app.get('/canciones-artista/:id_artista', (req, res) => {
 
     const id_artista = req.params.id_artista;
-    const query = `SELECT c.id, c.nombre, CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen, c.duracion, a.nombre AS nombre_artista
+    const query = `SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion, c.duracion AS duracion_cancion, a.nombre AS nombre_artista
     FROM CANCION c
     INNER JOIN ARTISTA a ON a.id = c.id_artista
     WHERE c.id_artista = ? AND c.id_album IS NULL`;
@@ -595,7 +595,7 @@ app.get('/canciones-artista/:id_artista', (req, res) => {
 app.get('/canciones-album/:id_album', (req, res) => {
 
     const id_album = req.params.id_album;
-    const query = `SELECT c.id, c.nombre, CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen, c.duracion, a.nombre AS nombre_artista
+    const query = `SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion, c.duracion AS duracion_cancion, a.nombre AS nombre_artista
     FROM CANCION c
     INNER JOIN ARTISTA a ON a.id = c.id_artista
     WHERE c.id_album = ?`;
@@ -663,7 +663,8 @@ app.post('/favoritos', (req, res) => {
 /** Obtener todas las canciones favoritas de un usuario */
 app.get('/favoritos/:id_usuario', (req, res) => {
     const id_usuario = req.params.id_usuario;
-    const query = `SELECT c.id, c.nombre, c.fotografia, c.duracion, a.nombre AS nombre_artista
+    const query = `SELECT f.id AS id_favorito, c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion, 
+    c.duracion AS duracion_cancion, a.nombre AS nombre_artista
     FROM FAVORITO f
     INNER JOIN CANCION c ON c.id = f.id_cancion
     INNER JOIN ARTISTA a ON a.id = c.id_artista
