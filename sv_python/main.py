@@ -1,15 +1,64 @@
 import mysql.connector
 from flask import Flask, request, jsonify
+from dotenv import dotenv_values
+import boto3
+import os
+import mimetypes
+import time
+from util import check_password, hash_password, compare_password
 
 app = Flask(__name__)
 
+settings = dotenv_values()
+
 db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': '123',
-    'database': 'semi1_p1',
-    'port': 3306
+    'host': settings['DB_HOST'],
+    'user': settings['DB_USER'],
+    'password': settings['DB_PASSWORD'],
+    'database': settings['DB_DATABASE'],
+    'port': settings['DB_PORT']
 }
+
+# Dependecias para aws s3 aws-sdk/client-s3
+s3 = boto3.client(
+    's3',
+    region_name=os.environ.get('AWS_REGION'),
+    aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
+    use_ssl=False,
+    config=boto3.session.Config(signature_version='s3v4')
+)
+
+def upload_file_to_s3(file, folder_name):
+    try:
+        key = f"{folder_name}/{int(time.time())}_{file.filename}"
+        content_type = mimetypes.guess_type(key)[0] or 'application/octet-stream'
+
+        s3.upload_fileobj(
+            file,
+            os.environ.get('AWS_BUCKET_NAME'),
+            key,
+            ExtraArgs={'ContentType': content_type}
+        )
+
+        return key  # Devuelve la clave del archivo en S3
+    except Exception as e:
+        return str(e)
+
+def delete_file_from_s3(key):
+    try:
+        s3.delete_object(
+            Bucket=os.environ.get('AWS_BUCKET_NAME'),
+            Key=key
+        )
+
+        return "Archivo eliminado exitosamente"
+    except Exception as e:
+        return str(e)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'jpg', 'jpeg', 'png', 'gif'}
+
 
 db = mysql.connector.connect(**db_config)
 cursor = db.cursor()
@@ -21,18 +70,49 @@ def hello():
 @app.route('/usuarios/register', methods=['POST'])
 def register_user():
     try:
-        parametro = request.json
-        query = 'INSERT INTO USUARIO (correo, contrasenia, nombres, apellidos, foto, fecha_nacimiento, es_administrador) VALUES (%s, %s, %s, %s, %s, %s, %s)'
-        values = (parametro['correo'], parametro['contrasenia'], parametro['nombres'], parametro['apellidos'], parametro['foto'], parametro['fecha_nacimiento'], parametro['es_administrador'])
-        cursor.execute(query, values)
-        db.commit()
-
-        return jsonify({'success': True, 'mensaje': 'Usuario creado correctamente', 'id_insertado': cursor.lastrowid}), 200
-
-    except Exception as e:
-        print("Error:", e)
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al insertar el usuario'}), 500
+        # Se recibe los parámetros que posee esta entidad
+        parametro = request.form.to_dict()
+        print("Parametro")
+        print(parametro)
+        # Debido a que la encriptación devuelve una promesa, es necesario realizarlo de la siguiente forma
+        hashed_password = hash_password(parametro['contrasenia'])
     
+        if hashed_password:
+            parametro['contrasenia'] = hashed_password
+
+            file = request.files['archivo']
+
+            if file and allowed_file(file.filename):
+                folder_name = os.environ.get('AWS_BUCKET_FOLDER_FOTOS')
+                foto_key = upload_file_to_s3(file, folder_name)
+
+                if foto_key:
+                    parametro['foto'] = foto_key
+                    parametro['es_administrador'] = parametro['es_administrador'].lower() == 'true'
+                    
+                    query = 'INSERT INTO USUARIO (correo, contrasenia, nombres, apellidos, foto, fecha_nacimiento, es_administrador) VALUES (%s, %s, %s, %s, %s, %s, %s)'
+                    # Ejecuta la consulta de inserción en tu base de datos aquí
+                            #(parametro['correo'], parametro['contrasenia'], parametro['nombres'], parametro['apellidos'], parametro['foto'], parametro['fecha_nacimiento'], parametro['es_administrador'])
+                    values = (parametro['correo'], parametro['contrasenia'], parametro['nombres'], parametro['apellidos'], parametro['foto'], parametro['fecha_nacimiento'], parametro['es_administrador'])
+                    
+                    # Recorrer values para verificar que no existan valores vacios
+                    for value in values:
+                        print(value)
+
+                    cursor.execute(query, values)
+                    db.commit()
+
+                    # Devuelve la respuesta adecuada
+                    return jsonify({"success": True, "mensaje": "Usuario creado correctamente"})
+                else:
+                    return jsonify({"success": False, "mensaje": "Error al subir el archivo a S3"}), 500
+            else:
+                return jsonify({"success": False, "mensaje": "Formato de archivo no permitido"}), 400
+        else:
+            return jsonify({"success": False, "mensaje": "Ha ocurrido un error al encriptar la contraseña"}), 500
+    except Exception as e:
+        return jsonify({"success": False, "mensaje": str(e)}), 500
+
 @app.route('/usuarios/login', methods=['POST'])
 def login_user():
     try:
@@ -64,39 +144,39 @@ def login_user():
 @app.route('/usuarios/<int:id_usuario>/<contrasenia>', methods=['PUT'])
 def update_user(id_usuario, contrasenia):
     try:
-        # Obtén otros datos del cuerpo de la solicitud
-        data = request.json
-        nombres = data.get('nombres')
-        apellidos = data.get('apellidos')
-        foto = data.get('foto')
-        correo = data.get('correo')
+        # Se obtienen los parámetros a utilizar para actualizar los datos de un usuario
+        nombres = request.form['nombres']
+        apellidos = request.form['apellidos']
+        correo = request.form['correo']
 
-        # Se define el query que obtendrá la contraseña encriptada
-        query_contrasenia = 'SELECT contrasenia FROM USUARIO WHERE id = %s'
-
-        # Se ejecuta el query y se realiza la comparación de contrasenia para realizar la actualización del usuario
-        cursor.execute(query_contrasenia, (id_usuario,))
+        query_select = 'SELECT foto, contrasenia FROM USUARIO WHERE id = %s'
+        cursor.execute(query_select, (id_usuario,))
         result = cursor.fetchone()
 
-        if result is None:
-            return jsonify({'success': False, 'mensaje': 'Credencial incorrecta'}), 401
+        if result:
+            _, stored_password = result
 
-        # Obtén la contraseña almacenada en la base de datos
-        contrasenia_bd = result[0]
-        # Comparar contraseñas
-        if contrasenia == contrasenia_bd:
-            # Realizar la actualización del usuario
-            query = 'UPDATE USUARIO SET nombres = %s, apellidos = %s, foto = %s, correo = %s WHERE id = %s;'
-            cursor.execute(query, (nombres, apellidos, foto, correo, id_usuario))
-            db.commit()
+            if compare_password(contrasenia, stored_password):
+                # Elimina la imagen de S3
+                delete_file_from_s3(result[0])
 
-            return jsonify({'success': True, 'mensaje': 'Usuario actualizado correctamente'}), 200
-        else:
-            return jsonify({'success': False, 'mensaje': 'Credencial incorrecta'}), 401
+                # Sube el nuevo archivo a S3
+                url_imagen = upload_file_to_s3(request.files['archivo'], os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
+
+                if url_imagen:
+                    query = 'UPDATE USUARIO SET nombres = %s, apellidos = %s, foto = %s, correo = %s WHERE id = %s;'
+                    cursor.execute(query, (nombres, apellidos, url_imagen, correo, id_usuario))
+                    db.commit()
+                    return jsonify({"success": True, "mensaje": "Usuario actualizado correctamente"})
+
+                return jsonify({"success": False, "mensaje": "Ha ocurrido un error al subir el archivo"}), 500
+
+            return jsonify({"success": False, "mensaje": "Contraseña incorrecta"}), 400
+
+        return jsonify({"success": False, "mensaje": "Ha ocurrido un error al obtener al usuario"}), 500
 
     except Exception as e:
-        print("Error:", e)
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al actualizar el usuario'}), 500
+        return jsonify({"success": False, "mensaje": str(e)}), 500
 
 @app.route('/artistas', methods=['POST'])
 def create_artist():
