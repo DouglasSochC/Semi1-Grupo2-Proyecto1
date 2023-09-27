@@ -191,6 +191,142 @@ def create_album():
         print("Error:", e)
         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al insertar el álbum'}), 500
 
+@app.route('/albumes/<int:id_album>', methods=['PUT'])
+def update_album(id_album):
+    try:
+        # Obtén los datos del cuerpo de la solicitud
+        data = request.json
+        nombre = data.get('nombre')
+        descripcion = data.get('descripcion')
+        id_artista = data.get('id_artista')
+        imagen_portada = data.get('imagen_portada')
+        # Consulta para obtener la URL de la imagen actual del álbum
+        #query_select_imagen = 'SELECT imagen_portada FROM ALBUM WHERE id = %s'
+        #cursor.execute(query_select_imagen, (id_album,))
+        #result = cursor.fetchone()
+
+        #if result is None:
+        #    return jsonify({'success': False, 'mensaje': 'Álbum no encontrado'}), 404
+
+        #url_imagen_actual = result[0]
+
+        # Eliminar la imagen actual (Simulación, ya que en este ejemplo no se utiliza S3)
+        # deleteFiletoS3(url_imagen_actual, (err, data) => {
+        #     if err:
+        #         print('Error al eliminar la imagen:', err)
+        #         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al eliminar la imagen'}), 500
+        #     else:
+        # Subir la nueva imagen (Simulación, ya que en este ejemplo no se utiliza S3)
+        # uploadFiletoS3(req.files, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
+        #     if err:
+        #         print('Error al subir el archivo:', err)
+        #         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al subir la imagen'}), 500
+        #     else:
+        #         url_imagen = data
+
+        # Consulta para actualizar el álbum con la nueva imagen
+        query = 'UPDATE ALBUM SET nombre = %s, descripcion = %s, id_artista = %s, imagen_portada = %s WHERE id = %s'
+        values = (nombre, descripcion, id_artista, imagen_portada, id_album)
+        cursor.execute(query, values)
+        db.commit()
+
+        return jsonify({'success': True, 'mensaje': 'Álbum actualizado correctamente'}), 200
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al actualizar el álbum'}), 500
+
+@app.route('/albumes/<int:id_album>', methods=['DELETE'])
+def delete_album(id_album):
+    try:
+        # Consulta para obtener la URL de la imagen del álbum
+        query_select_imagen = 'SELECT imagen_portada FROM ALBUM WHERE id = %s'
+        cursor.execute(query_select_imagen, (id_album,))
+        result = cursor.fetchone()
+
+        if result is None:
+            return jsonify({'success': False, 'mensaje': 'Álbum no encontrado'}), 404
+
+        url_imagen = result[0]
+
+        # Eliminar la imagen (Simulación, ya que en este ejemplo no se utiliza S3)
+        # deleteFiletoS3(url_imagen, (err, data) => {
+        #     if err:
+        #         print('Error al eliminar la imagen:', err)
+        #         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al eliminar la imagen'}), 500
+        #     else:
+        # Consulta para eliminar el álbum
+        query = 'DELETE FROM ALBUM WHERE id = %s'
+        cursor.execute(query, (id_album,))
+        db.commit()
+
+        return jsonify({'success': True, 'mensaje': 'Álbum eliminado correctamente'}), 200
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al eliminar el álbum'}), 500
+
+@app.route('/canciones', methods=['POST'])
+def create_song():
+    try:
+        # Obtén los datos del cuerpo de la solicitud
+        nombre = request.json['nombre']
+        duracion = request.json['duracion']
+        id_artista = request.json['id_artista']
+        id_album = request.json['id_album']
+
+        # Subir la imagen a S3 (Simulación, ya que en este ejemplo no se utiliza S3)
+        url_imagen = request.json['fotografia']  # Reemplazar por la URL real después de la subida
+
+        # Subir el audio a S3 (Simulación, ya que en este ejemplo no se utiliza S3)
+        url_audio = request.json['archivo_mp3']  # Reemplazar por la URL real después de la subida
+
+        # Consulta para insertar una nueva canción
+        query = 'INSERT INTO CANCION (nombre, fotografia, duracion, archivo_mp3, id_artista, id_album) VALUES (%s, %s, %s, %s, %s, %s)'
+        values = (nombre, url_imagen, duracion, url_audio, id_artista, id_album)
+        cursor.execute(query, values)
+        db.commit()
+
+        return jsonify({'success': True, 'mensaje': 'Canción creada correctamente'}), 200
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al insertar la canción'}), 500
+
+@app.route('/canciones', methods=['GET'])
+def get_songs():
+    try:
+        # Consulta para obtener todas las canciones con información del artista
+        
+        query = """SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, c.duracion, a.id AS id_artista, a.nombre AS nombre_artista,
+                    CONCAT('https://{}/', c.fotografia) AS url_imagen,
+                    CONCAT('https://{}/', c.archivo_mp3) AS url_audio
+                    FROM CANCION c
+                    INNER JOIN ARTISTA a ON a.id = c.id_artista""".format(app.config['AWS_BUCKET_NAME'])
+
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        # Convertir el resultado a un formato JSON
+        songs = []
+        for song in result:
+            song_data = {
+                'id_cancion': song[0],
+                'nombre_cancion': song[1],
+                'duracion': song[2],
+                'id_artista': song[3],
+                'nombre_artista': song[4],
+                'url_imagen': song[5],
+                'url_audio': song[6]
+            }
+            songs.append(song_data)
+
+        return jsonify({'success': True, 'canciones': songs}), 200
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al obtener las canciones'}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
