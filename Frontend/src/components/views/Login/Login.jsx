@@ -59,8 +59,14 @@ const Login = () => {
         // http://localhost:3000/usuarios/login
         axios.post('http://localhost:3000/usuarios/login', body)
             .then(({ data }) => {
-                localStorage.setItem('auth', '"yes"')
-                push('/app')
+                if (data?.success) {
+                    localStorage.setItem('auth', '"yes"')
+                    if (data?.extra?.es_administrador === 1) {
+                        push('/app/admin')
+                    }
+                    push('/app')
+                }
+                alert(data?.mensaje)
             })
             .catch(({ response }) => {
                 console.log(response.data)

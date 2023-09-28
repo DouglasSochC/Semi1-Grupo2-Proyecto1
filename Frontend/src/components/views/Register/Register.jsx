@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
-import { Grid, Container, Paper, Avatar, Typography, TextField, Button, CssBaseline } from '@material-ui/core'
-import { makeStyles } from '@material-ui/core/styles'
-import fondo from './fondo.jpg'
-import { LockOutlined as LockOutlinedIcon } from '@material-ui/icons'
-import axios from 'axios'
-import { useHistory } from 'react-router'
+import React, { useState } from 'react';
+import { Grid, Container, Paper, Avatar, Typography, TextField, Button, CssBaseline } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+import fondo from './fondo.jpg';
+import { LockOutlined as LockOutlinedIcon } from '@material-ui/icons';
+import axios from 'axios';
+import { useHistory } from 'react-router';
 
 const useStyles = makeStyles(theme => ({
     root: {
@@ -40,77 +40,81 @@ const useStyles = makeStyles(theme => ({
     button: {
         margin: theme.spacing(3, 0, 2)
     }
-}))
+}));
 
-/**
- * Formulario de login
- * JSON
- * Formato de body para del registro de usuarios
-     * {
-	"correo": "admin@gmail.com",
-	"contrasenia": "123",
-	"nombres": "Nombre usuario 1",
-	"apellidos": "Apellido usuario 1",
-	"foto": "foto_usuario_1",
-	"fecha_nacimiento": "2023-01-01",
-	"es_administrador": true
-}
-     
- * @returns {JSX.Element}
- */
-const Login = () => {
-    const [body, setBody] = useState({ nombres: '', apellidos: '', fecha_nacimiento: '', correo: '', foto: '', contrasenia: '', confirmacion_contrasenia: '' })
-    
-    const { push } = useHistory()
-    const classes = useStyles()
+const Register = () => {
+    const [formData, setFormData] = useState({
+        nombres: '',
+        apellidos: '',
+        fecha_nacimiento: '',
+        correo: '',
+        contrasenia: '',
+        confirmacion_contrasenia: ''
+    });
 
-    const inputChange = ({ target }) => {
-        const { name, value } = target
-        setBody({
-            ...body,
+    const { push } = useHistory();
+    const classes = useStyles();
+
+    const handleInputChange = (event) => {
+        const { name, value } = event.target;
+        setFormData({
+            ...formData,
             [name]: value
-        })
-    }
+        });
+    };
+
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        setFormData({
+            ...formData,
+            archivo: file
+        });
+    };
 
     const onSubmit = () => {
-        // Validar que las contraseñas sean iguales
-        if (body.contrasenia !== body.confirmacion_contrasenia) {
-            alert('Las contraseñas no coinciden')
-            return
+        if (formData.contrasenia !== formData.confirmacion_contrasenia) {
+            alert('Las contraseñas no coinciden');
+            return;
         }
 
-        axios.post('http://localhost:3000/usuarios/register', body)
+        const formDataToSend = new FormData();
+        for (const key in formData) {
+            formDataToSend.append(key, formData[key]);
+        }
+
+        axios
+            .post('http://localhost:3000/usuarios/register', formDataToSend)
             .then(({ data }) => {
                 alert('Usuario registrado');
-                //localStorage.setItem('auth', '"yes"')
-                push('/login')
+                push('/login');
             })
             .catch(({ response }) => {
-                console.log(response.data)
-            })
-    }
+                console.log(response.data);
+            });
+    };
 
     return (
         <Grid container component='main' className={classes.root}>
             <CssBaseline />
             <Container component={Paper} elevation={5} maxWidth='xs' className={classes.container}>
                 <div className={classes.div}>
-                    
                     <Avatar className={classes.avatar}>
                         <LockOutlinedIcon />
                     </Avatar>
-                    <Typography component='h1' variant='h5'>Sign Up</Typography>
+                    <Typography component='h1' variant='h5'>
+                        Sign Up
+                    </Typography>
                     <form className={classes.form}>
-                    <TextField
+                        <TextField
                             fullWidth
                             autoFocus
                             color='primary'
                             margin='normal'
                             variant='outlined'
                             label='Nombres'
-                            value={body.nombres}
-                            onChange={inputChange}
                             name='nombres'
+                            value={formData.nombres}
+                            onChange={handleInputChange}
                         />
                         <TextField
                             fullWidth
@@ -119,9 +123,9 @@ const Login = () => {
                             margin='normal'
                             variant='outlined'
                             label='Apellidos'
-                            value={body.apellidos}
-                            onChange={inputChange}
                             name='apellidos'
+                            value={formData.apellidos}
+                            onChange={handleInputChange}
                         />
                         <TextField
                             fullWidth
@@ -130,9 +134,9 @@ const Login = () => {
                             margin='normal'
                             variant='outlined'
                             label='Fecha de nacimiento'
-                            value={body.fecha_nacimiento}
-                            onChange={inputChange}
                             name='fecha_nacimiento'
+                            value={formData.fecha_nacimiento}
+                            onChange={handleInputChange}
                         />
                         <TextField
                             fullWidth
@@ -141,21 +145,29 @@ const Login = () => {
                             margin='normal'
                             variant='outlined'
                             label='Correo'
-                            value={body.correo}
-                            onChange={inputChange}
                             name='correo'
+                            value={formData.correo}
+                            onChange={handleInputChange}
                         />
-                         <TextField
-                            fullWidth
-                            type='text'
-                            color='primary'
-                            margin='normal'
-                            variant='outlined'
-                            label='Foto'
-                            value={body.foto}
-                            onChange={inputChange}
-                            name='foto'
+                        <input
+                            type='file'
+                            accept='image/*'
+                            style={{ display: 'none' }}
+                            onChange={handleFileChange}
+                            id='foto-input'
+                            name='archivo'
                         />
+                        <label htmlFor='foto-input'>
+                            <Button
+                                fullWidth
+                                variant='outlined'
+                                color='primary'
+                                component='span'
+                                className={classes.button}
+                            >
+                                Subir Foto
+                            </Button>
+                        </label>
                         <TextField
                             fullWidth
                             type='password'
@@ -163,9 +175,9 @@ const Login = () => {
                             margin='normal'
                             variant='outlined'
                             label='Contraseña'
-                            value={body.contrasenia}
-                            onChange={inputChange}
                             name='contrasenia'
+                            value={formData.contrasenia}
+                            onChange={handleInputChange}
                         />
                         <TextField
                             fullWidth
@@ -173,10 +185,10 @@ const Login = () => {
                             color='primary'
                             margin='normal'
                             variant='outlined'
-                            label='Confirmacion Contraseña'
-                            value={body.confirmacion_contrasenia}
-                            onChange={inputChange}
+                            label='Confirmación Contraseña'
                             name='confirmacion_contrasenia'
+                            value={formData.confirmacion_contrasenia}
+                            onChange={handleInputChange}
                         />
                         <Button
                             fullWidth
@@ -185,14 +197,13 @@ const Login = () => {
                             className={classes.button}
                             onClick={onSubmit}
                         >
-                            Registrase
+                            Registrarse
                         </Button>
-
                     </form>
                 </div>
             </Container>
         </Grid>
-    )
-}
+    );
+};
 
-export default Login
+export default Register;
