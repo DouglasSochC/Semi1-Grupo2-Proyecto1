@@ -89,6 +89,7 @@ app.post('/usuarios/register', upload.single('archivo'), (req, res) => {
         .then(hashedPassword => {
 
             const hashed = hashedPassword;
+            
             uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
                 if (err) {
                     console.error('Error al subir el archivo de S3:', err);
