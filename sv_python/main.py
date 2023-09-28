@@ -130,7 +130,7 @@ def login_user():
 
         # Obtén la contraseña almacenada en la base de datos
         contrasenia_bd = result[1]
-
+        contrasenia = hash_password(contrasenia)
         # Comparar contraseñas
         if contrasenia == contrasenia_bd:
             return jsonify({'success': True, 'mensaje': 'Bienvenido', 'extra': result[0]}), 200
@@ -186,14 +186,19 @@ def create_artist():
         nombre = data.get('nombre')
         fecha_nacimiento = data.get('fecha_nacimiento')
         fotografiaURL = data.get('fotografia')
-        # Consulta para insertar un nuevo artista
-        query = 'INSERT INTO ARTISTA (nombre, fotografia, fecha_nacimiento) VALUES (%s, %s, %s)'
-        values = (nombre, fotografiaURL, fecha_nacimiento)
-        print(query)
-        print(values)
-        cursor.execute(query, values)
-        db.commit()
-
+        file = data.get('fotografia')
+        if file and allowed_file(file.filename):
+            folder_name = os.environ.get('AWS_BUCKET_FOLDER_FOTOS')
+            foto_key = upload_file_to_s3(file, folder_name)
+            if foto_key:
+                fotografiaURL = foto_key
+                query = 'INSERT INTO ARTISTA (nombre, fotografia, fecha_nacimiento) VALUES (%s, %s, %s)'
+                values = (nombre, fotografiaURL, fecha_nacimiento)
+                cursor.execute(query, values)
+                db.commit()
+                return jsonify({"success": True, "mensaje": "Usuario creado correctamente"})
+            else:
+                return jsonify({"success": False, "mensaje": "Error al subir el archivo a S3"}), 500
         return jsonify({'success': True, 'mensaje': 'Artista creado correctamente'}), 200
 
     except Exception as e:
@@ -224,12 +229,26 @@ def update_artist(id_artista):
         fecha_nacimiento = data.get('fecha_nacimiento')
 
         # Consulta para actualizar un artista
-        query = 'UPDATE ARTISTA SET nombre = %s, fotografia = %s, fecha_nacimiento = %s WHERE id = %s'
-        values = (nombre, fotografia, fecha_nacimiento, id_artista)
-        cursor.execute(query, values)
-        db.commit()
+ 
+        query_select = 'SELECT fotografia FROM ARTISTA WHERE id = %s'
+        cursor.execute(query_select, (id_artista,))
+        result = cursor.fetchone()
 
-        return jsonify({'success': True, 'mensaje': 'Artista actualizado correctamente'}), 200
+        if result:
+            delete_file_from_s3(result[0])
+            # Sube el nuevo archivo a S3
+            url_imagen = upload_file_to_s3(fotografia, os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
+
+            if url_imagen:
+                query = 'UPDATE ARTISTA SET nombre = %s, fotografia = %s, fecha_nacimiento = %s WHERE id = %s'
+                values = (nombre, fotografia, fecha_nacimiento, id_artista)
+                cursor.execute(query, values)
+                db.commit()
+                return jsonify({"success": True, "mensaje": "Usuario actualizado correctamente"})
+
+            return jsonify({"success": False, "mensaje": "Ha ocurrido un error al subir el archivo"}), 500
+
+        return jsonify({"success": False, "mensaje": "Ha ocurrido un error al obtener al usuario"}), 500
 
     except Exception as e:
         print("Error:", e)
@@ -239,11 +258,18 @@ def update_artist(id_artista):
 def delete_artist(id_artista):
     try:
         # Consulta para eliminar un artista por su ID
-        query = 'DELETE FROM ARTISTA WHERE id = %s'
-        cursor.execute(query, (id_artista,))
-        db.commit()
+        query_select = 'SELECT fotografia FROM ARTISTA WHERE id = %s'
+        cursor.execute(query_select, (id_artista,))
+        result = cursor.fetchone()
 
-        return jsonify({'success': True, 'mensaje': 'Artista eliminado correctamente'}), 200
+        if result:
+            delete_file_from_s3(result[0])
+            query = 'DELETE FROM ARTISTA WHERE id = %s'
+            cursor.execute(query, (id_artista,))
+            db.commit()
+            return jsonify({"success": True, "mensaje": "Usuario actualizado correctamente"})
+
+        return jsonify({"success": False, "mensaje": "Ha ocurrido un error al obtener al usuario"}), 500
 
     except Exception as e:
         print("Error:", e)
@@ -271,6 +297,8 @@ def create_album():
         print("Error:", e)
         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al insertar el álbum'}), 500
 
+#AQUI HACIA ABAJO FALTA S3
+
 @app.route('/albumes/<int:id_album>', methods=['PUT'])
 def update_album(id_album):
     try:
@@ -280,31 +308,6 @@ def update_album(id_album):
         descripcion = data.get('descripcion')
         id_artista = data.get('id_artista')
         imagen_portada = data.get('imagen_portada')
-        # Consulta para obtener la URL de la imagen actual del álbum
-        #query_select_imagen = 'SELECT imagen_portada FROM ALBUM WHERE id = %s'
-        #cursor.execute(query_select_imagen, (id_album,))
-        #result = cursor.fetchone()
-
-        #if result is None:
-        #    return jsonify({'success': False, 'mensaje': 'Álbum no encontrado'}), 404
-
-        #url_imagen_actual = result[0]
-
-        # Eliminar la imagen actual (Simulación, ya que en este ejemplo no se utiliza S3)
-        # deleteFiletoS3(url_imagen_actual, (err, data) => {
-        #     if err:
-        #         print('Error al eliminar la imagen:', err)
-        #         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al eliminar la imagen'}), 500
-        #     else:
-        # Subir la nueva imagen (Simulación, ya que en este ejemplo no se utiliza S3)
-        # uploadFiletoS3(req.files, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
-        #     if err:
-        #         print('Error al subir el archivo:', err)
-        #         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al subir la imagen'}), 500
-        #     else:
-        #         url_imagen = data
-
-        # Consulta para actualizar el álbum con la nueva imagen
         query = 'UPDATE ALBUM SET nombre = %s, descripcion = %s, id_artista = %s, imagen_portada = %s WHERE id = %s'
         values = (nombre, descripcion, id_artista, imagen_portada, id_album)
         cursor.execute(query, values)
@@ -406,7 +409,6 @@ def get_songs():
     except Exception as e:
         print("Error:", e)
         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al obtener las canciones'}), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True)
