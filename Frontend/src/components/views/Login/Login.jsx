@@ -61,8 +61,9 @@ const Login = () => {
             .then(({ data }) => {
                 if (data?.success) {
                     localStorage.setItem('auth', '"yes"')
-                    if (data?.extra?.es_administrador === 1) {
-                        push('/app/admin')
+                    const { es_administrador } = data?.extra
+                    if (es_administrador === 1) {
+                        push('/app_admin')
                     }
                     push('/app')
                 }

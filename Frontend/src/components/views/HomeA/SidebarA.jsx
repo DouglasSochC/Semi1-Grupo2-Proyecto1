@@ -1,33 +1,30 @@
 import React from "react";
 import styled from "styled-components";
-import { MdHomeFilled, MdSearch } from "react-icons/md";
-import { IoLibrary } from "react-icons/io5";
+import { MdHomeFilled, MdPeople, MdSearch, MdVerifiedUser } from "react-icons/md";
+import { IoDisc, IoLibrary } from "react-icons/io5";
 //import Playlists from "./Playlists";
 export default function Sidebar() {
   return (
     <Container>
-      <div>
-        <h1>Playlists</h1>
-      </div>
       <div className="top__links">
         <div className="logo">
-          <img
+          <img className="logo__img"
             src="./stream.png"
             alt="Sound Stream"
           />
         </div>
         <ul>
           <li>
-            <MdHomeFilled />
-            <span>Home</span>
-          </li>
-          <li>
-            <MdSearch />
-            <span>Search</span>
+            <MdPeople />
+            <span><a href="http://localhost:3001/artista">Artista</a> </span>
           </li>
           <li>
             <IoLibrary />
-            <span>Your Library</span>
+            <span> <a href="http://localhost:3001/album">Album</a></span>
+          </li>
+          <li>
+            <IoDisc />
+            <span><a href="http://localhost:3001/cancion">Cancion</a></span>
           </li>
         </ul>
       </div>
@@ -36,20 +33,21 @@ export default function Sidebar() {
 }
 
 const Container = styled.div`
-  text-align: center;
   background-color: black;
   color: #b3b3b3;
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
+  img {
+    width=300px; height=200px;
+  }
   .top__links {
     display: flex;
     flex-direction: column;
-    text-align: center;
     .logo {
       text-align: center;
-      
+     
     }
     ul {
       list-style-type: none;

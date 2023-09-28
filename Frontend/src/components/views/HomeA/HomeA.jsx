@@ -11,11 +11,19 @@ const HomeA = () => {
   console.log("HomeAdmin");
   return (
     <Container>
-      <div className="">
-        <Sidebar />
+    <div className="spotify__body">
+      <Sidebar />
+      <div className="body" >
+        <Navbar />
+        <div className="body__contents">
+          <Body headerBackground={headerBackground} />
+        </div>
       </div>
-
-    </Container>
+    </div>
+    <div className="spotify__footer">
+      <Footer />
+    </div>
+  </Container>
   );
 };
 
