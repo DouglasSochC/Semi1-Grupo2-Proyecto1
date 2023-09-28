@@ -123,7 +123,7 @@ app.post('/usuarios/login', (req, res) => {
     const contrasenia = req.body.contrasenia;
 
     // Se define el query que obtendra la contrasenia encriptada
-    const query = 'SELECT id, contrasenia FROM USUARIO WHERE correo = ?';
+    const query = 'SELECT id, contrasenia, es_administrador FROM USUARIO WHERE correo = ?';
 
     // Se ejecuta el query y se realiza la comparacion de contrasenia para verificar que el inicio de sesion sea correcto
     db.query(query, [correo], (err, result) => {
@@ -139,7 +139,7 @@ app.post('/usuarios/login', (req, res) => {
                 util.comparePassword(contrasenia, result[0].contrasenia)
                     .then(esCorrecta => {
                         if (esCorrecta) {
-                            res.json({ success: true, mensaje: "Bienvenido", extra: result[0].id });
+                            res.json({ success: true, mensaje: "Bienvenido", extra: { id_usuario: result[0].id, es_administrador: result[0].es_administrador } });
                         } else {
                             res.json({ success: false, mensaje: "Credenciales incorrectas" });
                         }
@@ -663,7 +663,7 @@ app.post('/favoritos', (req, res) => {
 /** Obtener todas las canciones favoritas de un usuario */
 app.get('/favoritos/:id_usuario', (req, res) => {
     const id_usuario = req.params.id_usuario;
-    const query = `SELECT f.id AS id_favorito, c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion, 
+    const query = `SELECT f.id AS id_favorito, c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
     c.duracion AS duracion_cancion, a.nombre AS nombre_artista
     FROM FAVORITO f
     INNER JOIN CANCION c ON c.id = f.id_cancion
