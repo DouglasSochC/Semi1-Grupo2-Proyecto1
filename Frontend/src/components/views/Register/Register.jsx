@@ -5,6 +5,7 @@ import fondo from './fondo.jpg';
 import { LockOutlined as LockOutlinedIcon } from '@material-ui/icons';
 import axios from 'axios';
 import { useHistory } from 'react-router';
+axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
 const useStyles = makeStyles(theme => ({
     root: {
@@ -83,7 +84,7 @@ const Register = () => {
         }
 
         axios
-            .post('http://localhost:3000/usuarios/register', formDataToSend)
+            .post('/usuarios/register', formDataToSend)
             .then(({ data }) => {
                 alert('Usuario registrado');
                 push('/login');
