@@ -238,7 +238,11 @@ app.post('/artistas', upload.single('archivo'), (req, res) => {
 
 /** Obtener todos los artistas */
 app.get('/artistas', (req, res) => {
-    const query = "SELECT a.id, a.nombre, CONCAT('https://" + process.env.AWS_BUCKET_NAME + ".s3.amazonaws.com/',fotografia) AS url_imagen, a.fecha_nacimiento FROM ARTISTA a";
+    const query = `SELECT a.id, a.nombre, 
+    CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/',fotografia) AS url_imagen, 
+    DATE_FORMAT(a.fecha_nacimiento, '%d/%m/%Y') AS fecha_nacimiento,
+    DATE_FORMAT(a.fecha_nacimiento, '%Y-%m-%d') AS fecha_formateada
+    FROM ARTISTA a`;
 
     db.query(query, (err, result) => {
         if (err) {

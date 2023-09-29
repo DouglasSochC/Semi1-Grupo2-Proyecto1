@@ -2,13 +2,13 @@ import axios from "axios";
 import React, { useEffect } from "react";
 import styled from "styled-components";
 import { AiFillClockCircle } from "react-icons/ai";
-
+axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
 export default function Body({ headerBackground }) {
   let selectedPlaylist = JSON.parse(localStorage.getItem("selectedPlaylist"));
   let playTrack = ( id, name, artists, image, context_uri, track_number ) => {
     axios
-      .put("http://localhost:3001/play", {
+      .put("/play", {
         id,
         name,
         artists,
