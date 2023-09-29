@@ -5,6 +5,7 @@ import fondo from './fondo.jpg'
 import { LockOutlined as LockOutlinedIcon } from '@material-ui/icons'
 import axios from 'axios'
 import { useHistory } from 'react-router'
+axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
 const useStyles = makeStyles(theme => ({
     root: {
@@ -56,8 +57,7 @@ const Login = () => {
     }
 
     const onSubmit = () => {
-        // http://localhost:3000/usuarios/login
-        axios.post('http://localhost:3000/usuarios/login', body)
+        axios.post('/usuarios/login', body)
             .then(({ data }) => {
                 if (data?.success) {
                     localStorage.setItem('auth', '"yes"')
