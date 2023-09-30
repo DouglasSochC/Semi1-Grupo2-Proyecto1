@@ -480,7 +480,7 @@ app.get('/canciones', (req, res) => {
 });
 
 /** Actualizar una cancion por su ID */
-app.put('/canciones/:id_cancion', upload.fields([{ name: 'fotografia', maxCount: 1 }, { name: 'archivo_mp3', maxCount: 1 }]), (req, res) => {
+app.put('/canciones/:id_cancion', upload.fields([{ name: 'imagen_portada', maxCount: 1 }, { name: 'archivo_mp3', maxCount: 1 }]), (req, res) => {
 
     const id_cancion = req.params.id_cancion;
     const { nombre, duracion, id_artista, id_album } = req.body;
@@ -503,7 +503,7 @@ app.put('/canciones/:id_cancion', upload.fields([{ name: 'fotografia', maxCount:
                             console.error('Error al eliminar el archivo MP3 anterior de S3:', err);
                             res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar el archivo MP3 anterior" });
                         } else {
-                            uploadFiletoS3(req.files.fotografia[0], process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
+                            uploadFiletoS3(req.files.imagen_portada[0], process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
                                 if (err) {
                                     console.error('Error al subir el nuevo archivo de imagen a S3:', err);
                                     res.json({ success: false, mensaje: "Ha ocurrido un error al subir el nuevo archivo de imagen" });
@@ -515,8 +515,8 @@ app.put('/canciones/:id_cancion', upload.fields([{ name: 'fotografia', maxCount:
                                             res.json({ success: false, mensaje: "Ha ocurrido un error al subir el nuevo archivo de imagen" });
                                         } else {
                                             const url_archivo_mp3 = data;
-                                            const query = 'UPDATE CANCION SET nombre = ?, fotografia = ?, duracion = ?, archivo_mp3 = ?, id_artista = ?, id_album = ? WHERE id = ?';
-                                            db.query(query, [nombre, url_fotografia, duracion, url_archivo_mp3, id_artista, id_album, id_cancion], (err, result) => {
+                                            const query = 'UPDATE CANCION SET nombre = ?, fotografia = ?, duracion = ?, archivo_mp3 = ?, id_artista = ?, id_album = ' + id_album + ' WHERE id = ?';
+                                            db.query(query, [nombre, url_fotografia, duracion, url_archivo_mp3, id_artista, id_cancion], (err, result) => {
                                                 if (err) {
                                                     console.error('Error al actualizar la canción:', err);
                                                     res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar la canción" });
