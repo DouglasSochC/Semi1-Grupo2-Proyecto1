@@ -297,118 +297,611 @@ def create_album():
         print("Error:", e)
         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al insertar el álbum'}), 500
 
-#AQUI HACIA ABAJO FALTA S3
-
+#AQUI HACIA ABAJO FALTA S3 DESDE ACA FALTA HACER TESTS
 @app.route('/albumes/<int:id_album>', methods=['PUT'])
-def update_album(id_album):
+def actualizar_album(id_album):
     try:
-        # Obtén los datos del cuerpo de la solicitud
-        data = request.json
-        nombre = data.get('nombre')
-        descripcion = data.get('descripcion')
-        id_artista = data.get('id_artista')
-        imagen_portada = data.get('imagen_portada')
-        query = 'UPDATE ALBUM SET nombre = %s, descripcion = %s, id_artista = %s, imagen_portada = %s WHERE id = %s'
-        values = (nombre, descripcion, id_artista, imagen_portada, id_album)
-        cursor.execute(query, values)
-        db.commit()
-
-        return jsonify({'success': True, 'mensaje': 'Álbum actualizado correctamente'}), 200
-
-    except Exception as e:
-        print("Error:", e)
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al actualizar el álbum'}), 500
-
-@app.route('/albumes/<int:id_album>', methods=['DELETE'])
-def delete_album(id_album):
-    try:
-        # Consulta para obtener la URL de la imagen del álbum
+        nombre = request.form['nombre']
+        descripcion = request.form['descripcion']
+        id_artista = request.form['id_artista']
         query_select_imagen = 'SELECT imagen_portada FROM ALBUM WHERE id = %s'
+
+        cursor = db.cursor()
         cursor.execute(query_select_imagen, (id_album,))
         result = cursor.fetchone()
 
         if result is None:
-            return jsonify({'success': False, 'mensaje': 'Álbum no encontrado'}), 404
+            return jsonify({'success': False, 'mensaje': 'No se encontró el álbum'}), 404
+
+        imagen_portada = result[0]
+
+        # Elimina la imagen actual de S3
+        delete_file_from_s3(imagen_portada)
+
+        # Sube la nueva imagen a S3
+        imagen_subida = upload_file_to_s3(request.files['archivo'], os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
+
+        # Actualiza el álbum en la base de datos
+        query = 'UPDATE ALBUM SET nombre = %s, descripcion = %s, imagen_portada = %s, id_artista = %s WHERE id = %s'
+        cursor.execute(query, (nombre, descripcion, imagen_subida, id_artista, id_album))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Álbum actualizado correctamente'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Eliminar un album por su ID
+@app.route('/albumes/<int:id_album>', methods=['DELETE'])
+def eliminar_album(id_album):
+    try:
+        query_select_imagen = 'SELECT imagen_portada FROM ALBUM WHERE id = %s'
+
+        cursor = db.cursor()
+        cursor.execute(query_select_imagen, (id_album,))
+        result = cursor.fetchone()
+
+        if result is None:
+            cursor.close()
+            return jsonify({'success': False, 'mensaje': 'No se encontró el álbum'}), 404
 
         url_imagen = result[0]
 
-        # Eliminar la imagen (Simulación, ya que en este ejemplo no se utiliza S3)
-        # deleteFiletoS3(url_imagen, (err, data) => {
-        #     if err:
-        #         print('Error al eliminar la imagen:', err)
-        #         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al eliminar la imagen'}), 500
-        #     else:
-        # Consulta para eliminar el álbum
+        # Elimina la imagen de S3
+        delete_file_from_s3(url_imagen)
+
+        # Elimina el álbum de la base de datos
         query = 'DELETE FROM ALBUM WHERE id = %s'
         cursor.execute(query, (id_album,))
         db.commit()
+        cursor.close()
 
         return jsonify({'success': True, 'mensaje': 'Álbum eliminado correctamente'}), 200
 
     except Exception as e:
-        print("Error:", e)
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al eliminar el álbum'}), 500
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
 
+# Crear una nueva cancion
 @app.route('/canciones', methods=['POST'])
-def create_song():
+def crear_cancion():
     try:
-        # Obtén los datos del cuerpo de la solicitud
-        nombre = request.json['nombre']
-        duracion = request.json['duracion']
-        id_artista = request.json['id_artista']
-        id_album = request.json['id_album']
+        nombre = request.form['nombre']
+        duracion = request.form['duracion']
+        id_artista = request.form['id_artista']
+        id_album = request.form['id_album']
 
-        # Subir la imagen a S3 (Simulación, ya que en este ejemplo no se utiliza S3)
-        url_imagen = request.json['fotografia']  # Reemplazar por la URL real después de la subida
+        # Sube la imagen de portada a S3
+        imagen_portada = request.files['imagen_portada']
+        url_imagen = upload_file_to_s3(imagen_portada, os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
 
-        # Subir el audio a S3 (Simulación, ya que en este ejemplo no se utiliza S3)
-        url_audio = request.json['archivo_mp3']  # Reemplazar por la URL real después de la subida
+        # Sube el archivo de audio MP3 a S3
+        archivo_mp3 = request.files['archivo_mp3']
+        url_audio = upload_file_to_s3(archivo_mp3, os.environ.get('AWS_BUCKET_FOLDER_CANCIONES'))
 
-        # Consulta para insertar una nueva canción
+        # Inserta la canción en la base de datos
         query = 'INSERT INTO CANCION (nombre, fotografia, duracion, archivo_mp3, id_artista, id_album) VALUES (%s, %s, %s, %s, %s, %s)'
-        values = (nombre, url_imagen, duracion, url_audio, id_artista, id_album)
-        cursor.execute(query, values)
+        cursor = db.cursor()
+        cursor.execute(query, (nombre, url_imagen, duracion, url_audio, id_artista, id_album))
         db.commit()
+        cursor.close()
 
         return jsonify({'success': True, 'mensaje': 'Canción creada correctamente'}), 200
 
     except Exception as e:
-        print("Error:", e)
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al insertar la canción'}), 500
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
 
+# Obtener todas las canciones
 @app.route('/canciones', methods=['GET'])
-def get_songs():
+def obtener_canciones():
     try:
-        # Consulta para obtener todas las canciones con información del artista
-        
-        query = """SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, c.duracion, a.id AS id_artista, a.nombre AS nombre_artista,
-                    CONCAT('https://{}/', c.fotografia) AS url_imagen,
-                    CONCAT('https://{}/', c.archivo_mp3) AS url_audio
-                    FROM CANCION c
-                    INNER JOIN ARTISTA a ON a.id = c.id_artista""".format(app.config['AWS_BUCKET_NAME'])
+        query = """
+        SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, c.duracion, a.id AS id_artista, a.nombre AS nombre_artista,
+        CONCAT('https://{}s3.amazonaws.com/', c.fotografia) AS url_imagen,
+        CONCAT('https://{}s3.amazonaws.com/', c.archivo_mp3) AS url_audio
+        FROM CANCION c
+        INNER JOIN ARTISTA a ON a.id = c.id_artista
+        """.format(os.environ.get('AWS_BUCKET_NAME'), os.environ.get('AWS_BUCKET_NAME'))
 
+        cursor = db.cursor(dictionary=True)
         cursor.execute(query)
         result = cursor.fetchall()
+        cursor.close()
 
-        # Convertir el resultado a un formato JSON
-        songs = []
-        for song in result:
-            song_data = {
-                'id_cancion': song[0],
-                'nombre_cancion': song[1],
-                'duracion': song[2],
-                'id_artista': song[3],
-                'nombre_artista': song[4],
-                'url_imagen': song[5],
-                'url_audio': song[6]
-            }
-            songs.append(song_data)
-
-        return jsonify({'success': True, 'canciones': songs}), 200
+        return jsonify({'success': True, 'canciones': result}), 200
 
     except Exception as e:
-        print("Error:", e)
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al obtener las canciones'}), 500
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Actualizar una cancion por su ID
+@app.route('/canciones/<int:id_cancion>', methods=['PUT'])
+def actualizar_cancion(id_cancion):
+    try:
+        nombre = request.form['nombre']
+        duracion = request.form['duracion']
+        id_artista = request.form['id_artista']
+        id_album = request.form['id_album']
+
+        # Obtener las URL de los archivos a modificar
+        query_select = 'SELECT fotografia, archivo_mp3 FROM CANCION WHERE id = %s'
+        cursor = db.cursor()
+        cursor.execute(query_select, (id_cancion,))
+        result = cursor.fetchone()
+
+        if result is None:
+            cursor.close()
+            return jsonify({'success': False, 'mensaje': 'No se encontró la canción'}), 404
+
+        url_fotografia = result[0]
+        url_archivo_mp3 = result[1]
+
+        # Elimina la imagen anterior de S3
+        delete_file_from_s3(url_fotografia)
+
+        # Elimina el archivo MP3 anterior de S3
+        delete_file_from_s3(url_archivo_mp3)
+
+        # Sube la nueva imagen de portada a S3
+        imagen_portada = request.files['fotografia']
+        url_nueva_fotografia = upload_file_to_s3(imagen_portada, os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
+
+        # Sube el nuevo archivo MP3 a S3
+        archivo_mp3 = request.files['archivo_mp3']
+        url_nuevo_archivo_mp3 = upload_file_to_s3(archivo_mp3, os.environ.get('AWS_BUCKET_FOLDER_CANCIONES'))
+
+        # Actualiza la canción en la base de datos
+        query = 'UPDATE CANCION SET nombre = %s, fotografia = %s, duracion = %s, archivo_mp3 = %s, id_artista = %s, id_album = %s WHERE id = %s'
+        cursor.execute(query, (nombre, url_nueva_fotografia, duracion, url_nuevo_archivo_mp3, id_artista, id_album, id_cancion))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Canción actualizada correctamente'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Eliminar cancion pu su ID
+@app.route('/canciones/<int:id_cancion>', methods=['DELETE'])
+def eliminar_cancion(id_cancion):
+    try:
+        # Obtener las URL de los archivos a eliminar
+        query_select = 'SELECT fotografia, archivo_mp3 FROM CANCION WHERE id = %s'
+        cursor = db.cursor()
+        cursor.execute(query_select, (id_cancion,))
+        result = cursor.fetchone()
+
+        if result is None:
+            cursor.close()
+            return jsonify({'success': False, 'mensaje': 'No se encontró la canción'}), 404
+
+        url_archivo_mp3 = result[1]
+        url_fotografia = result[0]
+
+        # Elimina el archivo MP3 de S3
+        delete_file_from_s3(url_archivo_mp3)
+
+        # Elimina la imagen de S3
+        delete_file_from_s3(url_fotografia)
+
+        # Elimina la canción de la base de datos
+        query = 'DELETE FROM CANCION WHERE id = %s'
+        cursor.execute(query, (id_cancion,))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Canción eliminada correctamente'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Obtener todas las canciones que pertenezcan al artista y que no esten agregadas a otro album
+@app.route('/canciones-artista/<int:id_artista>', methods=['GET'])
+def obtener_canciones_artista(id_artista):
+    try:
+        query = """
+        SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://{}s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion, 
+        c.duracion AS duracion_cancion, a.nombre AS nombre_artista
+        FROM CANCION c
+        INNER JOIN ARTISTA a ON a.id = c.id_artista
+        WHERE c.id_artista = ? AND c.id_album IS NULL
+        """.format(os.environ.get('AWS_BUCKET_NAME'))
+
+        cursor = db.cursor(dictionary=True)
+        cursor.execute(query, (id_artista,))
+        result = cursor.fetchall()
+        cursor.close()
+
+        return jsonify({'success': True, 'canciones_artista': result}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Obtener todas las canciones que pertenezca a un album 
+@app.route('/canciones-album/<int:id_album>', methods=['GET'])
+def obtener_canciones_album(id_album):
+    try:
+        query = """
+        SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://{}s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion, 
+        c.duracion AS duracion_cancion, a.nombre AS nombre_artista
+        FROM CANCION c
+        INNER JOIN ARTISTA a ON a.id = c.id_artista
+        WHERE c.id_album = ?
+        """.format(os.environ.get('AWS_BUCKET_NAME'))
+
+        cursor = db.cursor(dictionary=True)
+        cursor.execute(query, (id_album,))
+        result = cursor.fetchall()
+        cursor.close()
+
+        return jsonify({'success': True, 'canciones_album': result}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Agregar una cacnion de un album
+@app.route('/canciones-album/<int:id_cancion>', methods=['PUT'])
+def agregar_cancion_a_album(id_cancion):
+    try:
+        id_album = request.json['id_album']
+        query = 'UPDATE CANCION SET id_album = ? WHERE id = ?'
+
+        cursor = db.cursor()
+        cursor.execute(query, (id_album, id_cancion))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Canción adjuntada correctamente'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Eliminar una cacnion de un album
+@app.route('/canciones-album/<int:id_cancion>', methods=['DELETE'])
+def eliminar_cancion_de_album(id_cancion):
+    try:
+        query = "UPDATE CANCION SET id_album = null WHERE id = ?"
+
+        cursor = db.cursor()
+        cursor.execute(query, (id_cancion,))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Canción eliminada del álbum correctamente'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Agregar una cancion a favoritos para un usuario
+@app.route('/favoritos', methods=['POST'])
+def agregar_cancion_a_favoritos():
+    try:
+        id_cancion = request.json['id_cancion']
+        id_usuario = request.json['id_usuario']
+        query = 'INSERT INTO FAVORITO (id_cancion, id_usuario) VALUES (?, ?)'
+
+        cursor = db.cursor()
+        cursor.execute(query, (id_cancion, id_usuario))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Canción agregada a favoritos correctamente'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Obtener todas la canciones favoritas de un usuario
+@app.route('/favoritos/<int:id_usuario>', methods=['GET'])
+def obtener_canciones_favoritas(id_usuario):
+    try:
+        query = """
+        SELECT f.id AS id_favorito, c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://{}s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
+        c.duracion AS duracion_cancion, a.nombre AS nombre_artista
+        FROM FAVORITO f
+        INNER JOIN CANCION c ON c.id = f.id_cancion
+        INNER JOIN ARTISTA a ON a.id = c.id_artista
+        WHERE f.id_usuario = ?
+        """.format(os.environ.get('AWS_BUCKET_NAME'))
+
+        cursor = db.cursor(dictionary=True)
+        cursor.execute(query, (id_usuario,))
+        result = cursor.fetchall()
+        cursor.close()
+
+        return jsonify({'success': True, 'canciones_favoritas': result}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Eliminar una cancion de un album
+@app.route('/favoritos/<int:id_favorito>', methods=['DELETE'])
+def eliminar_cancion_de_favoritos(id_favorito):
+    try:
+        query = "DELETE FROM FAVORITO WHERE id = ?"
+
+        cursor = db.cursor()
+        cursor.execute(query, (id_favorito,))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Canción eliminada de favoritos correctamente'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# El usuario puede realizar la busqueda de albumes, canciones o artistas por medio de la entrada de usuario
+@app.route('/buscar/<string:entrada>', methods=['GET'])
+def buscar_entrada(entrada):
+    try:
+        query_albumes = """
+        SELECT a.id AS id_album, a.nombre AS nombre_album, a.descripcion, a2.id AS id_artista, a2.nombre AS nombre_artista,
+        JSON_ARRAYAGG(JSON_OBJECT('id_cancion', c.id, 'nombre_cancion', c.nombre, 'duracion_cancion', c.duracion)) AS detalle_album
+        FROM ALBUM a
+        INNER JOIN ARTISTA a2 ON a2.id = a.id_artista
+        INNER JOIN CANCION c ON c.id_album = a.id
+        WHERE CONCAT(a.nombre, a.descripcion) LIKE %s
+        GROUP BY a.id
+        """
+
+        cursor = db.cursor(dictionary=True)
+        cursor.execute(query_albumes, (f'%{entrada}%',))
+        albumes = cursor.fetchall()
+
+        query_artistas = """
+        SELECT c.id AS id_cancion, c.nombre, c.fotografia, c.duracion, c.archivo_mp3, a.id AS id_artista, a.nombre AS nombre_artista
+        FROM CANCION c
+        INNER JOIN ARTISTA a ON a.id = c.id_artista
+        WHERE a.nombre LIKE %s
+        """
+        cursor.execute(query_artistas, (f'%{entrada}%',))
+        canciones_artista = cursor.fetchall()
+
+        query_canciones = """
+        SELECT c.id AS id_cancion, c.nombre, c.fotografia, c.duracion, c.archivo_mp3, a.id AS id_artista, a.nombre AS nombre_artista
+        FROM CANCION c
+        INNER JOIN ARTISTA a ON a.id = c.id_artista
+        WHERE c.nombre LIKE %s
+        """
+        cursor.execute(query_canciones, (f'%{entrada}%',))
+        canciones = cursor.fetchall()
+
+        cursor.close()
+
+        return jsonify({'success': True, 'albumes': albumes, 'canciones_artista': canciones_artista, 'canciones': canciones}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Crear una nueva playlist
+@app.route('/playlists', methods=['POST'])
+def crear_playlist():
+    try:
+        nombre = request.json['nombre']
+        fondo_portada = request.json['fondo_portada']
+        id_usuario = request.json['id_usuario']
+        query = 'INSERT INTO PLAYLIST (nombre, fondo_portada, id_usuario) VALUES (?, ?, ?)'
+
+        cursor = db.cursor()
+        cursor.execute(query, (nombre, fondo_portada, id_usuario))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Playlist creada correctamente'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Actualizar una playlist por su ID
+@app.route('/playlists/<int:id>', methods=['PUT'])
+def actualizar_playlist(id):
+    try:
+        nombre = request.json['nombre']
+        fondo_portada = request.json['fondo_portada']
+        query = 'UPDATE PLAYLIST SET nombre = ?, fondo_portada = ? WHERE id = ?'
+
+        cursor = db.cursor()
+        cursor.execute(query, (nombre, fondo_portada, id))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Playlist actualizada correctamente'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Eliminar una playlist por su ID
+@app.route('/playlists/<int:id>', methods=['DELETE'])
+def eliminar_playlist(id):
+    try:
+        query = 'DELETE FROM PLAYLIST WHERE id = ?'
+
+        cursor = db.cursor()
+        cursor.execute(query, (id,))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Playlist eliminada correctamente'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Agregar una cancion a una playlist
+@app.route('/playlist-canciones', methods=['POST'])
+def agregar_cancion_a_playlist():
+    try:
+        id_playlist = request.json['id_playlist']
+        id_cancion = request.json['id_cancion']
+        query = 'INSERT INTO DETALLE_PLAYLIST (id_playlist, id_cancion) VALUES (?, ?)'
+
+        cursor = db.cursor()
+        cursor.execute(query, (id_playlist, id_cancion))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Canción agregada correctamente a la playlist'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Obtener el detalle de una playlist por su ID
+@app.route('/playlist-canciones/<int:id>', methods=['GET'])
+def obtener_detalle_de_playlist(id):
+    try:
+        query = """
+        SELECT c.id, c.nombre, c.fotografia, c.archivo_mp3
+        FROM PLAYLIST p
+        INNER JOIN DETALLE_PLAYLIST dp ON dp.id_playlist = p.id
+        INNER JOIN CANCION c ON c.id = dp.id_cancion
+        WHERE p.id = ?
+        """
+
+        cursor = db.cursor(dictionary=True)
+        cursor.execute(query, (id,))
+        result = cursor.fetchall()
+        cursor.close()
+
+        if result:
+            return jsonify({'success': True, 'playlist': result}), 200
+        else:
+            return jsonify({'success': False, 'mensaje': 'Playlist no encontrada'}), 404
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Eliminar una cancion de una playlist por su ID
+@app.route('/playlist-canciones/<int:id_cancion>', methods=['DELETE'])
+def eliminar_cancion_de_playlist(id_cancion):
+    try:
+        query = 'DELETE FROM DETALLE_PLAYLIST WHERE id = ?'
+
+        cursor = db.cursor()
+        cursor.execute(query, (id_cancion,))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Canción eliminada de la playlist correctamente'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Agrega una cancion al historial del usuario
+@app.route('/historicos', methods=['POST'])
+def agregar_cancion_a_historial():
+    try:
+        id_usuario = request.json['id_usuario']
+        id_cancion = request.json['id_cancion']
+        query = 'INSERT INTO HISTORICO (id_usuario, id_cancion) VALUES (?, ?)'
+
+        cursor = db.cursor()
+        cursor.execute(query, (id_usuario, id_cancion))
+        db.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'mensaje': 'Historial agregado correctamente'}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Top 5 caciones mar reproducidas
+@app.route('/top5-canciones', methods=['GET'])
+def obtener_top5_canciones():
+    try:
+        query = """
+        SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, c.fotografia, c.duracion, a.id AS id_artista, a.nombre AS nombre_artista, COUNT(h.id) AS cantidad
+        FROM HISTORICO h
+        INNER JOIN CANCION c ON c.id = h.id_cancion
+        INNER JOIN ARTISTA a ON a.id = c.id_artista
+        GROUP BY c.id
+        ORDER BY cantidad DESC
+        LIMIT 5
+        """
+
+        cursor = db.cursor(dictionary=True)
+        cursor.execute(query)
+        result = cursor.fetchall()
+        cursor.close()
+
+        return jsonify({'success': True, 'data': result}), 200
+
+    except Exception as e:
+        print('Error:', str(e))
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+
+# Obtiene el top 3 de artistas más escuchados.
+@app.route('/top3-artistas', methods=['GET'])
+def top3_artistas():
+    cursor = db.cursor()
+    query = """
+        SELECT a.id AS id_artista, a.nombre AS nombre_artista, COUNT(h.id) AS cantidad
+        FROM HISTORICO h
+        INNER JOIN CANCION c ON c.id = h.id_cancion
+        INNER JOIN ARTISTA a ON a.id = c.id_artista
+        GROUP BY a.id
+        ORDER BY cantidad DESC
+        LIMIT 3
+    """
+    cursor.execute(query)
+    result = cursor.fetchall()
+    if result:
+        return jsonify({'success': True, 'data': result})
+    else:
+        return jsonify({'success': False, 'mensaje': "Ha ocurrido un error al obtener los datos"})
+
+# Obtiene el top 5 de álbumes más reproducidos.
+@app.route('/top5-albumes', methods=['GET'])
+def top5_albumes():
+    cursor = db.cursor()
+    query = """
+        SELECT a.id AS id_album, a.nombre AS nombre_album, a.imagen_portada, COUNT(h.id) AS cantidad
+        FROM HISTORICO h
+        INNER JOIN CANCION c ON c.id = h.id_cancion
+        INNER JOIN ALBUM a ON a.id = c.id_album
+        GROUP BY a.id
+        ORDER BY cantidad DESC
+        LIMIT 5
+    """
+    cursor.execute(query)
+    result = cursor.fetchall()
+    if result:
+        return jsonify({'success': True, 'data': result})
+    else:
+        return jsonify({'success': False, 'mensaje': "Ha ocurrido un error al obtener los datos"})
+
+# Obtiene el historial de canciones reproducidas.
+@app.route('/historial', methods=['GET'])
+def historial():
+    cursor = db.cursor()
+    query = """
+        SELECT c.id AS id_cancion, c.nombre, c.fotografia, c.duracion, h.fecha_registro
+        FROM HISTORICO h
+        INNER JOIN CANCION c ON c.id = h.id_cancion
+    """
+    cursor.execute(query)
+    result = cursor.fetchall()
+    if result:
+        return jsonify({'success': True, 'data': result})
+    else:
+        return jsonify({'success': False, 'mensaje': "Ha ocurrido un error al obtener los datos"})
 
 if __name__ == '__main__':
     app.run(debug=True)
