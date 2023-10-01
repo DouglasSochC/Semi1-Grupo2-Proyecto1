@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 //import { Typography } from '@material-ui/core'
 import Sidebar from "./Sidebar";
 import styled from "styled-components";
@@ -7,16 +7,18 @@ import Footer from "./Footer";
 import Body from "./Body";
 
 const Home = () => {
+  const [search, setSearch] = useState("");
   const headerBackground = "https://i.imgur.com/2nCt3Sbl.jpg";
+
   return (
     <div>
       <Container>
         <div className="spotify__body">
-          <Sidebar />
+           <Sidebar />
           <div className="body" >
-            <Navbar />
+            <Navbar search={search} setSearch={setSearch} />
             <div className="body__contents">
-              <Body headerBackground={headerBackground} />
+              <Body headerBackground={headerBackground} search={search}/>
             </div>
           </div>
         </div>
@@ -29,12 +31,35 @@ const Home = () => {
 };
 
 const Container = styled.div`
-  max-width: 100vw;
-  max-height: 100vh;
+  max-width: 100%;
+  max-height: 100%;
   overflow: hidden;
   display: grid;
-  grid-template-rows: 85vh 15vh;
+  grid-template-rows: 86vh 14vh;
   .spotify__body {
+    display: grid;
+    grid-template-columns: 15vw 85vw;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(
+      0deg,
+      rgba(34, 193, 195, 1) 0%,
+      rgba(45, 17, 112, 1) 100%
+    );
+    background-color: rgb(34, 193, 195);
+    .body {
+      height: 100%;
+      width: 100%;
+      overflow: auto;
+      &::-webkit-scrollbar {
+        width: 0.7rem;
+        max-height: 2rem;
+        &-thumb {
+          background-color: rgba(255, 255, 255, 0.6);
+        }
+      }
+    }
+    .spotify__body {
     display: grid;
     grid-template-columns: 15vw 85vw;
     height: 100%;

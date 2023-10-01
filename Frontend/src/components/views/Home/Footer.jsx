@@ -13,19 +13,19 @@ export default function Footer() {
   const [changeTime, setChangeTime] = useState(-1);
 
   const CambiarVolumen = (e) => {
-    if (song != null && song.src != "" && song) {
+    if (song != null && song.src !== "" && song) {
       song.volume = e / 100;
     }
   };
 
   const CambiarTiempo = (e) => {
-    if(song != null && song.src != ""){
+    if(song != null && song.src !== ""){
       setChangeTime(e);
     }
   };
 
   useEffect(() => {
-    if (song != null && song.src != "" && song) {
+    if (song != null && song.src !== "" && song) {
       if (playerState) {
         song.play();
       } else {
@@ -35,7 +35,7 @@ export default function Footer() {
   }, [playerState, song]);
 
   useEffect(() => {
-    if (song != null && song.src != "" && changeTime !== -1) {
+    if (song != null && song.src !== "" && changeTime !== -1) {
       if (song) {
         song.currentTime = changeTime;
         setTime(changeTime);
@@ -45,8 +45,8 @@ export default function Footer() {
   }, [changeTime, song]);
 
   useEffect(() => {
-    const AudioSrc = "https://docs.google.com/uc?export=open&id=1d7_dWVmAxkzLanRyCpYdtsrWfK0sZiPu";
-    if (AudioSrc != ""){
+    const AudioSrc = "Zelda BOTW - Hyrule Castle Interior.mp3";
+    if (AudioSrc !== ""){
       const audio = new Audio(AudioSrc);
       audio.addEventListener("ended", () => {
         console.log("Cancion terminada");
@@ -68,7 +68,7 @@ export default function Footer() {
   }, []);
 
   const changeState = () => {
-    if(song != null && song.src != ""){
+    if(song != null && song.src !== ""){
       setPlayerState(!playerState);
     }
   };
@@ -76,8 +76,7 @@ export default function Footer() {
   return (
     <div>
       <Container2>
-        <TimeController CambiarTiempo={CambiarTiempo} currentTime={time} duration={duration}
-        />
+        <TimeController CambiarTiempo={CambiarTiempo} currentTime={time} duration={duration}/>
       </Container2>
       <Container>
         <CurrentTrack />
@@ -94,7 +93,7 @@ const Container = styled.div`
   background-color: #181818;
   border-top: 1px solid #282828;
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: 2fr 2fr 2fr;
   align-items: center;
   justify-content: center;
   padding: 0 1rem;
@@ -106,7 +105,6 @@ const Container2 = styled.div`
   background-color: #181818;
   border-top: 1px solid #282828;
   display: flex;
-  grid-template-columns: 1fr 2fr 1fr;
   align-items: center;
   justify-content: center;
   padding: 0 1rem;

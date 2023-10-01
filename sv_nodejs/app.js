@@ -354,6 +354,25 @@ app.post('/albumes', upload.single('archivo'), (req, res) => {
     });
 });
 
+/** Optener todos los albumes */
+app.get('/albumes', (req, res) => {
+
+    const query = `SELECT c.id AS id_album, c.nombre AS nombre_album, c.descripcion, a.id AS id_artista, a.nombre AS nombre_artista,
+    CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.imagen_portada) AS url_imagen
+    FROM ALBUM c
+    INNER JOIN ARTISTA a ON a.id = c.id_artista`;
+
+    db.query(query, (err, result) => {
+        if (err) {
+            console.error('Error al obtener las canciones:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener las canciones" });
+        } else {
+            res.json({ success: true, albumes: result });
+        }
+    });
+
+});
+
 /** Actualizar un album por su ID */
 app.put('/albumes/:id_album', upload.single('archivo'), (req, res) => {
     const id_album = req.params.id_album;

@@ -4,15 +4,18 @@ import styled from "styled-components";
 import { FaSearch } from "react-icons/fa";
 import { CgProfile } from "react-icons/cg";
 
-export default function Navbar({ navBackground }) {
+export default function Navbar({ navBackground, setSearch }) {
+
+  const handleChange = (e) => {
+    setSearch(e)
+  };
+
   return (
     <Container navBackground={navBackground}>
-      {/*
       <div className="search__bar">
         <FaSearch />
-        <input type="text" placeholder="Artists, songs, or podcasts" />
-      </div>*/
-      }
+        <input type="text" placeholder="Artists, songs, or podcasts" onChange={(e) => handleChange(e.target.value)}/>
+      </div>
       <div className="avatar">
         <a href="petio.html" >
           <CgProfile />

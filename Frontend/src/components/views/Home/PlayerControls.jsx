@@ -1,4 +1,4 @@
-import React, {useState}  from "react";
+import React from "react";
 import styled from "styled-components";
 import {
   BsFillPlayCircleFill,
@@ -7,7 +7,6 @@ import {
 } from "react-icons/bs";
 import { CgPlayTrackNext, CgPlayTrackPrev } from "react-icons/cg";
 import { FiRepeat } from "react-icons/fi";
-import axios from "axios";
 
 export default function PlayerControls(promps) {
 
