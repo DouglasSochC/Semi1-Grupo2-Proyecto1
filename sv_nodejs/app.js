@@ -89,7 +89,7 @@ app.post('/usuarios/register', upload.single('archivo'), (req, res) => {
         .then(hashedPassword => {
 
             const hashed = hashedPassword;
-            
+
             uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
                 if (err) {
                     console.error('Error al subir el archivo de S3:', err);
@@ -238,8 +238,8 @@ app.post('/artistas', upload.single('archivo'), (req, res) => {
 
 /** Obtener todos los artistas */
 app.get('/artistas', (req, res) => {
-    const query = `SELECT a.id, a.nombre, 
-    CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/',fotografia) AS url_imagen, 
+    const query = `SELECT a.id, a.nombre,
+    CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/',fotografia) AS url_imagen,
     DATE_FORMAT(a.fecha_nacimiento, '%d/%m/%Y') AS fecha_nacimiento,
     DATE_FORMAT(a.fecha_nacimiento, '%Y-%m-%d') AS fecha_formateada
     FROM ARTISTA a`;
@@ -352,6 +352,25 @@ app.post('/albumes', upload.single('archivo'), (req, res) => {
             });
         }
     });
+});
+
+/** Optener todos los albumes */
+app.get('/albumes', (req, res) => {
+
+    const query = `SELECT c.id AS id_album, c.nombre AS nombre_album, c.descripcion, a.id AS id_artista, a.nombre AS nombre_artista,
+    CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.imagen_portada) AS url_imagen
+    FROM ALBUM c
+    INNER JOIN ARTISTA a ON a.id = c.id_artista`;
+
+    db.query(query, (err, result) => {
+        if (err) {
+            console.error('Error al obtener los albumes:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener los albumes" });
+        } else {
+            res.json({ success: true, albumes: result });
+        }
+    });
+
 });
 
 /** Actualizar un album por su ID */

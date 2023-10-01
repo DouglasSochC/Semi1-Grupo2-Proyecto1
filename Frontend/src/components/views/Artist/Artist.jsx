@@ -58,12 +58,11 @@ const Artist = () => {
 
     /* Para el modal que realiza un registro */
     const [open, setOpen] = React.useState(false);
-    const handleOpen = (titleModal, isEditMode, id = '', nombre = '', fecha_nacimiento = '', archivo = null) => {
+    const handleOpen = (titleModal, isEditMode, id = '', nombre = '', fecha_nacimiento = '') => {
         if (isEditMode) {
             setId(id);
             setName(nombre);
             setBirthdate(fecha_nacimiento);
-            setFile(archivo);
         }
         setTitleModal(titleModal);
         setIsEditMode(isEditMode);  // Actualiza el estado para indicar si estamos en modo de edición
@@ -110,18 +109,24 @@ const Artist = () => {
         formData.append('archivo', file);
         formData.append('fecha_nacimiento', birthdate);
 
-        axios.post('/artistas', formData)
-            .then(response => {
-                console.log('Respuesta del servidor:', response);
-                // Realiza cualquier acción adicional que necesites con la respuesta del servidor
-            })
-            .catch(error => {
-                console.error('Error al enviar los datos:', error);
-            });
-
-        // Cierra el modal
-        setOpen(false);
-        handleClear();
+        if (name === '') {
+            alert("El campo nombre es obligatorio");
+        } else if (birthdate === '') {
+            alert("El campo fecha de nacimiento es obligatorio");
+        } else if (file === null) {
+            alert("El campo fotografía es obligatorio");
+        } else {
+            axios.post('/artistas', formData)
+                .then(response => {
+                    alert(response.data.mensaje);
+                    // Cierra el modal
+                    setOpen(false);
+                    handleClear();
+                })
+                .catch(error => {
+                    console.error('Error al enviar los datos:', error);
+                });
+        }
     };
 
     /* FUNCIONALIDAD DEL BOTON DE ACTUALIZAR */
@@ -131,26 +136,32 @@ const Artist = () => {
         formData.append('archivo', file);
         formData.append('fecha_nacimiento', birthdate);
 
-        axios.put('/artistas/' + id, formData)
-            .then(response => {
-                console.log('Respuesta del servidor:', response);
-                // Realiza cualquier acción adicional que necesites con la respuesta del servidor
-            })
-            .catch(error => {
-                console.error('Error al enviar los datos:', error);
-            });
+        if (name === '') {
+            alert("El campo nombre es obligatorio");
+        } else if (birthdate === '') {
+            alert("El campo fecha de nacimiento es obligatorio");
+        } else if (file === null) {
+            alert("El campo fotografía es obligatorio");
+        } else {
+            axios.put('/artistas/' + id, formData)
+                .then(response => {
+                    alert(response.data.mensaje);
+                    // Cierra el modal
+                    setOpen(false);
+                    handleClear();
+                })
+                .catch(error => {
+                    console.error('Error al enviar los datos:', error);
+                });
+        }
 
-        // Cierra el modal
-        setOpen(false);
-        handleClear();
     };
 
     /* FUNCIONALIDAD DEL BOTON DE ELIMINAR */
     const handleDelete = (id) => {
         axios.delete('/artistas/' + id)
             .then(response => {
-                console.log('Respuesta del servidor:', response);
-                // Realiza cualquier acción adicional que necesites con la respuesta del servidor
+                alert(response.data.mensaje);
             })
             .catch(error => {
                 console.error('Error al enviar los datos:', error);
@@ -250,7 +261,7 @@ const Artist = () => {
                                 </TableCell>
                                 <TableCell align="right">{row.fecha_nacimiento}</TableCell>
                                 <TableCell align="right">
-                                    <IconButton color="primary" onClick={() => handleOpen("Actualizar", true, row.id, row.nombre, row.fecha_formateada, row.url_imagen)}>
+                                    <IconButton color="primary" onClick={() => handleOpen("Actualizar", true, row.id, row.nombre, row.fecha_formateada)}>
                                         <EditIcon />
                                     </IconButton>
                                     <IconButton color="secondary" onClick={() => handleDelete(row.id)}>

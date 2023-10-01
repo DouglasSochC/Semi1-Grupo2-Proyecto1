@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -41,9 +41,8 @@ const Song = () => {
     /* Variables a utilizar */
     const [id, setId] = useState('');
     const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
     const [filePhoto, setFilePhoto] = useState(null);
-    const [audioDuration, setAudioDuration] = useState('');
-    const [fileAudio, setFileAudio] = useState(null);
     const [titleModal, setTitleModal] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);  // Estado para controlar el modo de edicion
 
@@ -59,43 +58,19 @@ const Song = () => {
         setFilenamePhoto(name);
     };
 
-    /* Para setear el archivo y nombre del audio a subir */
-    const [filenameAudio, setFilenameAudio] = useState("");
-    const handleFileAudioUpload = (e) => {
-        if (!e.target.files) {
-            return;
-        }
-
-        const fileAudio = e.target.files[0];
-        setFileAudio(fileAudio);
-        const { name } = fileAudio;
-        setFilenameAudio(name);
-
-        const audio = new Audio();
-        audio.preload = 'metadata';
-        audio.src = URL.createObjectURL(fileAudio);
-
-        audio.onloadedmetadata = () => {
-            const durationInSeconds = Math.round(audio.duration);
-            setAudioDuration(durationInSeconds);
-        };
-    };
-
     /* Para setear el id del artista seleccionado */
     const [idArtist, setIdArtist] = useState('');
     const handleChange = (event) => {
         setIdArtist(event.target.value);
     };
 
-    /* Para setear el audio */
-    const audioRef = useRef(null);
-
     /* Para el funcionamiento del modal que realiza un registro/modificacion */
     const [open, setOpen] = React.useState(false);
-    const handleOpen = (titleModal, isEditMode, id_cancion = '', nombre_cancion = '', id_artista = '') => {
+    const handleOpen = (titleModal, isEditMode, id_album = '', nombre_album = '', descripcion = '', id_artista = '') => {
         if (isEditMode) {
-            setId(id_cancion);
-            setName(nombre_cancion);
+            setId(id_album);
+            setName(nombre_album);
+            setDescription(descripcion);
             setIdArtist(id_artista);
         }
         setTitleModal(titleModal);
@@ -128,8 +103,8 @@ const Song = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get('/canciones');
-                setTableData(response.data.canciones); // Actualizar el estado con los datos del endpoint
+                const response = await axios.get('/albumes');
+                setTableData(response.data.albumes); // Actualizar el estado con los datos del endpoint
             } catch (error) {
                 console.error('Error al obtener los datos:', error);
             }
@@ -140,11 +115,11 @@ const Song = () => {
 
     /** FUNCIONALIDAD DEL BOTON DE GUARDADO */
     const handleSave = () => {
+
         const formData = new FormData();
         formData.append('nombre', name);
-        formData.append('imagen_portada', filePhoto);
-        formData.append('duracion', audioDuration);
-        formData.append('archivo_mp3', fileAudio);
+        formData.append('descripcion', description);
+        formData.append('archivo', filePhoto);
         formData.append('id_artista', idArtist);
 
         if (name === '') {
@@ -153,10 +128,8 @@ const Song = () => {
             alert("El campo fotografía es obligatorio");
         } else if (idArtist === '') {
             alert("El campo artista es obligatorio");
-        } else if (fileAudio === null) {
-            alert("El campo audio es obligatorio");
         } else {
-            axios.post('/canciones', formData)
+            axios.post('/albumes', formData)
                 .then(response => {
                     alert(response.data.mensaje);
                     // Cierra el modal
@@ -168,18 +141,15 @@ const Song = () => {
                 });
         }
 
-
     };
 
     /* FUNCIONALIDAD DEL BOTON DE ACTUALIZAR */
     const handleEdit = () => {
         const formData = new FormData();
         formData.append('nombre', name);
-        formData.append('imagen_portada', filePhoto);
-        formData.append('duracion', audioDuration);
-        formData.append('archivo_mp3', fileAudio);
+        formData.append('descripcion', description);
+        formData.append('archivo', filePhoto);
         formData.append('id_artista', idArtist);
-        formData.append('id_album', null);
 
         if (name === '') {
             alert("El campo nombre es obligatorio");
@@ -187,10 +157,8 @@ const Song = () => {
             alert("El campo fotografía es obligatorio");
         } else if (idArtist === '') {
             alert("El campo artista es obligatorio");
-        } else if (fileAudio === null) {
-            alert("El campo audio es obligatorio");
         } else {
-            axios.put('/canciones/' + id, formData)
+            axios.put('/albumes/' + id, formData)
                 .then(response => {
                     alert(response.data.mensaje);
                     // Cierra el modal
@@ -205,7 +173,7 @@ const Song = () => {
 
     /* FUNCIONALIDAD DEL BOTON DE ELIMINAR */
     const handleDelete = (id) => {
-        axios.delete('/canciones/' + id)
+        axios.delete('/albumes/' + id)
             .then(response => {
                 alert(response.data.mensaje);
             })
@@ -220,8 +188,6 @@ const Song = () => {
         setName('');
         setFilePhoto(null);
         setFilenamePhoto('');
-        setFileAudio(null);
-        setFilenameAudio('');
         setIdArtist('');
     }
 
@@ -241,12 +207,22 @@ const Song = () => {
                     <br />
                     <Typography id="modal-modal-description" sx={{ mt: 2 }}>
                         <TextField
-                            label="Nombre de la canción"
+                            label="Nombre del album"
                             variant="outlined"
                             fullWidth
                             sx={{ my: 1 }}
                             value={name}
                             onChange={(e) => setName(e.target.value)}
+                        />
+                        <br />
+                        <br />
+                        <TextField
+                            label="Descripción"
+                            variant="outlined"
+                            fullWidth
+                            sx={{ my: 1 }}
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
                         />
                         <br />
                         <br />
@@ -277,18 +253,6 @@ const Song = () => {
                         </Select>
                         <br />
                         <br />
-                        <Button
-                            component="label"
-                            variant="outlined"
-                            startIcon={<CloudUploadIcon />}
-                            sx={{ marginRight: "1rem" }}
-                        >
-                            Audio MP3
-                            <input type="file" accept=".mp3" hidden onChange={handleFileAudioUpload} />
-                        </Button>
-                        <Box>{filenameAudio}</Box>
-                        <br />
-                        <br />
                         {isEditMode ? (
                             <Button variant="contained" color="secondary" onClick={handleEdit}><UpdateIcon />Actualizar</Button>
                         ) : (
@@ -304,39 +268,28 @@ const Song = () => {
                         <TableRow>
                             <TableCell>ID</TableCell>
                             <TableCell align="right">Nombre</TableCell>
-                            <TableCell align="right">Fotografía</TableCell>
-                            <TableCell align="right">Duración</TableCell>
+                            <TableCell align="right">Descripción</TableCell>
+                            <TableCell align="right">Portada</TableCell>
                             <TableCell align="right">Artista</TableCell>
-                            <TableCell align="right">Reproducir</TableCell>
                             <TableCell align="right">Acciones</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {tableData.map((row) => (
                             <TableRow
-                                key={row.id_cancion}
+                                key={row.id_album}
                                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                             >
-                                <TableCell component="th" scope="row">
-                                    {row.id_cancion}
-                                </TableCell>
-                                <TableCell align="right">{row.nombre_cancion}</TableCell>
-                                <TableCell align="right">
-                                    <img src={row.url_imagen} alt="Fotografía" style={{ width: '50px', height: '50px' }} />
-                                </TableCell>
-                                <TableCell align="right">{row.duracion}</TableCell>
+                                <TableCell component="th" scope="row">{row.id_album}</TableCell>
+                                <TableCell align="right">{row.nombre_album}</TableCell>
+                                <TableCell align="right">{row.descripcion}</TableCell>
+                                <TableCell align="right"><img src={row.url_imagen} alt="Fotografía" style={{ width: '50px', height: '50px' }} /></TableCell>
                                 <TableCell align="right">{row.nombre_artista}</TableCell>
                                 <TableCell align="right">
-                                    <audio ref={audioRef} controls>
-                                        <source src={row.url_audio} type="audio/mp3" />
-                                        Tu navegador no soporta el elemento de audio.
-                                    </audio>
-                                </TableCell>
-                                <TableCell align="right">
-                                    <IconButton color="primary" onClick={() => handleOpen("Actualizar", true, row.id_cancion, row.nombre_cancion, row.id_artista)}>
+                                    <IconButton color="primary" onClick={() => handleOpen("Actualizar", true, row.id_album, row.nombre_album, row.descripcion, row.id_artista)}>
                                         <EditIcon />
                                     </IconButton>
-                                    <IconButton color="secondary" onClick={() => handleDelete(row.id_cancion)}>
+                                    <IconButton color="secondary" onClick={() => handleDelete(row.id_album)}>
                                         <DeleteIcon />
                                     </IconButton>
                                 </TableCell>
