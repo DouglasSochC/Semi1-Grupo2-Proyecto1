@@ -13,17 +13,19 @@ export default function Footer() {
   const [changeTime, setChangeTime] = useState(-1);
 
   const CambiarVolumen = (e) => {
-    if (song) {
+    if (song != null && song.src != "" && song) {
       song.volume = e / 100;
     }
   };
 
   const CambiarTiempo = (e) => {
-    setChangeTime(e);
+    if(song != null && song.src != ""){
+      setChangeTime(e);
+    }
   };
 
   useEffect(() => {
-    if (song) {
+    if (song != null && song.src != "" && song) {
       if (playerState) {
         song.play();
       } else {
@@ -33,7 +35,7 @@ export default function Footer() {
   }, [playerState, song]);
 
   useEffect(() => {
-    if (changeTime !== -1) {
+    if (song != null && song.src != "" && changeTime !== -1) {
       if (song) {
         song.currentTime = changeTime;
         setTime(changeTime);
@@ -43,27 +45,32 @@ export default function Footer() {
   }, [changeTime, song]);
 
   useEffect(() => {
-    const audio = new Audio("Zelda BOTW - Hyrule Castle Interior.mp3");
-    audio.addEventListener("ended", () => {
-      console.log("Cancion terminada");
-      audio.currentTime = 0;
-    });
-    audio.addEventListener("timeupdate", () => {
-      setTime(audio.currentTime);
-      setDuration(audio.duration);
-    });
-    setSong(audio);
-
-    // Cleanup event listeners when component unmounts
-    return () => {
-      audio.removeEventListener("ended", () => {});
-      audio.removeEventListener("timeupdate", () => {});
-      audio.pause();
-    };
+    const AudioSrc = "https://docs.google.com/uc?export=open&id=1d7_dWVmAxkzLanRyCpYdtsrWfK0sZiPu";
+    if (AudioSrc != ""){
+      const audio = new Audio(AudioSrc);
+      audio.addEventListener("ended", () => {
+        console.log("Cancion terminada");
+        audio.currentTime = 0;
+      });
+      audio.addEventListener("timeupdate", () => {
+        setTime(audio.currentTime);
+        setDuration(audio.duration);
+      });
+      setSong(audio);
+  
+      // Cleanup event listeners when component unmounts
+      return () => {
+        audio.removeEventListener("ended", () => {});
+        audio.removeEventListener("timeupdate", () => {});
+        audio.pause();
+      };
+    }
   }, []);
 
   const changeState = () => {
-    setPlayerState(!playerState);
+    if(song != null && song.src != ""){
+      setPlayerState(!playerState);
+    }
   };
 
   return (
