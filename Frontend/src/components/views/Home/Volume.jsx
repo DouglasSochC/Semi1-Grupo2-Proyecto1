@@ -2,26 +2,11 @@ import axios from "axios";
 import React from "react";
 import styled from "styled-components";
 
-export default function Volume() {
-
-  const setVolume = async (e) => {
-    await axios.put(
-      "https://api.spotify.com/v1/me/player/volume",
-      {},
-      {
-        params: {
-          volume_percent: parseInt(e.target.value),
-        },
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " ,
-        },
-      }
-    );
-  };
+export default function Volume(promps) {
+  
   return (
     <Container>
-      <input type="range" onMouseUp={(e) => setVolume(e)} min={0} max={100} />
+      <input type="range" onMouseUp={(event) => promps.CambiarVolumen(event.target.value)} min={0} max={100} defaultValue={100}/>
     </Container>
   );
 }
@@ -31,8 +16,9 @@ const Container = styled.div`
   justify-content: flex-end;
   align-content: center;
   input {
-    width: 15rem;
+    width: 10rem;
     border-radius: 2rem;
     height: 0.5rem;
+    -webkit-appearance: none;
   }
 `;

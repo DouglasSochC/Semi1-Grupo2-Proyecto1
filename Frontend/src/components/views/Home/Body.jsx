@@ -20,6 +20,7 @@ export default function Body({ headerBackground }) {
         console.log(res);
       });
   }
+  let ActualSong;
 
   let msToMinutesAndSeconds = (ms) => {
     let minutes = Math.floor(ms / 60000);

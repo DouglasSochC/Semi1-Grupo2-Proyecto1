@@ -13,16 +13,19 @@ const useStyles = makeStyles(theme => ({
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+        overflow: 'scroll',
         height: '100vh'
     },
     container: {
-        height: '80%',
+        height: '800px',
         marginTop: theme.spacing(10),
         [theme.breakpoints.down(400 + theme.spacing(2) + 2)]: {
             marginTop: 0,
             width: '100%',
             height: '100%'
-        }
+        },
+        marginBottom: '20px'
     },
     div: {
         marginTop: theme.spacing(8),
@@ -129,6 +132,7 @@ const Register = () => {
                             onChange={handleInputChange}
                         />
                         <TextField
+                            InputLabelProps={{ shrink: true }}
                             fullWidth
                             type='date'
                             color='primary'

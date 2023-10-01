@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState}  from "react";
 import styled from "styled-components";
 import {
   BsFillPlayCircleFill,
@@ -9,15 +9,11 @@ import { CgPlayTrackNext, CgPlayTrackPrev } from "react-icons/cg";
 import { FiRepeat } from "react-icons/fi";
 import axios from "axios";
 
-export default function PlayerControls() {
-
-  const changeState = async () => {
-  };
+export default function PlayerControls(promps) {
 
   const changeTrack = async (direction) => {
   }
-;
-  let playerState = true;
+
   return (
     <Container>
       <div className="shuffle">
@@ -27,10 +23,10 @@ export default function PlayerControls() {
         <CgPlayTrackPrev onClick={() => changeTrack("previous")} />
       </div>
       <div className="state">
-        {playerState ? (
-          <BsFillPauseCircleFill onClick={changeState} />
+        {promps.playerState ? (
+          <BsFillPauseCircleFill onClick={promps.changeState} />
         ) : (
-          <BsFillPlayCircleFill onClick={changeState} />
+          <BsFillPlayCircleFill onClick={promps.changeState} />
         )}
       </div>
       <div className="next">

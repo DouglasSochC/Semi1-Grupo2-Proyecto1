@@ -9,20 +9,22 @@ import Body from "./Body";
 const Home = () => {
   const headerBackground = "https://i.imgur.com/2nCt3Sbl.jpg";
   return (
-    <Container>
-      <div className="spotify__body">
-        <Sidebar />
-        <div className="body" >
-          <Navbar />
-          <div className="body__contents">
-            <Body headerBackground={headerBackground} />
+    <div>
+      <Container>
+        <div className="spotify__body">
+          <Sidebar />
+          <div className="body" >
+            <Navbar />
+            <div className="body__contents">
+              <Body headerBackground={headerBackground} />
+            </div>
           </div>
         </div>
-      </div>
-      <div className="spotify__footer">
-        <Footer />
-      </div>
-    </Container>
+        <div className="spotify__footer">
+          <Footer />
+        </div>
+      </Container>
+    </div>
   );
 };
 

@@ -13,10 +13,12 @@ const useStyles = makeStyles(theme => ({
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+        overflow: 'scroll',
         height: '100vh'
     },
     container: {
-        height: '60%',
+        height: '490px',
         marginTop: theme.spacing(10),
         [theme.breakpoints.down(400 + theme.spacing(2) + 2)]: {
             marginTop: 0,
@@ -61,7 +63,8 @@ const Login = () => {
             .then(({ data }) => {
                 if (data?.success) {
                     localStorage.setItem('auth', '"yes"')
-                    const { es_administrador } = data?.extra
+                    const { id_usuario, es_administrador } = data?.extra
+                    localStorage.setItem('SoundStream_UserID', id_usuario)
                     if (es_administrador === 1) {
                         push('/app_admin')
                     }
