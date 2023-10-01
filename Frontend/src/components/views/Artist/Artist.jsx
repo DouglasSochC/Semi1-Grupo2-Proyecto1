@@ -111,8 +111,6 @@ const Artist = () => {
 
         if (name === '') {
             alert("El campo nombre es obligatorio");
-        } else if (birthdate === '') {
-            alert("El campo fecha de nacimiento es obligatorio");
         } else if (file === null) {
             alert("El campo fotografía es obligatorio");
         } else {
@@ -138,8 +136,6 @@ const Artist = () => {
 
         if (name === '') {
             alert("El campo nombre es obligatorio");
-        } else if (birthdate === '') {
-            alert("El campo fecha de nacimiento es obligatorio");
         } else if (file === null) {
             alert("El campo fotografía es obligatorio");
         } else {

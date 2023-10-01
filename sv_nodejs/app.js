@@ -215,13 +215,14 @@ app.put('/usuarios/:id_usuario/:contrasenia', upload.single('archivo'), (req, re
 /** Crear un nuevo artista */
 app.post('/artistas', upload.single('archivo'), (req, res) => {
 
-    const { nombre, fecha_nacimiento } = req.body;
+    let { nombre, fecha_nacimiento } = req.body;
     uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
         if (err) {
             console.error('Error al subir el archivo de S3:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
         } else {
             const url_archivo = data;
+            fecha_nacimiento = fecha_nacimiento == '' || fecha_nacimiento == 'null' ? null : fecha_nacimiento;
             const query_insert = 'INSERT INTO ARTISTA (nombre, fotografia, fecha_nacimiento) VALUES (?, ?, ?)';
             db.query(query_insert, [nombre, url_archivo, fecha_nacimiento], (err, result) => {
                 if (err) {
@@ -258,7 +259,7 @@ app.get('/artistas', (req, res) => {
 app.put('/artistas/:id_artista', upload.single('archivo'), (req, res) => {
 
     const id_artista = req.params.id_artista;
-    const { nombre, fecha_nacimiento } = req.body;
+    let { nombre, fecha_nacimiento } = req.body;
     const query_select_fotografia = 'SELECT fotografia FROM ARTISTA WHERE id = ?';
 
     db.query(query_select_fotografia, [id_artista], (err, result) => {
@@ -277,6 +278,7 @@ app.put('/artistas/:id_artista', upload.single('archivo'), (req, res) => {
                             res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
                         } else {
                             const url_imagen = data;
+                            fecha_nacimiento = fecha_nacimiento == '' || fecha_nacimiento == 'null' ? null : fecha_nacimiento;
                             const query = 'UPDATE ARTISTA SET nombre = ?, fotografia = ?, fecha_nacimiento = ? WHERE id = ?';
                             db.query(query, [nombre, url_imagen, fecha_nacimiento, id_artista], (err, result) => {
                                 if (err) {
