@@ -41,7 +41,7 @@ export default function Body({ headerBackground, search }) {
         const formattedCanciones = data.map(item => ({
           id: item.id_cancion,
           nombre: item.nombre_cancion,
-          fotografia: (item.url_imagen).substring(44)
+          fotografia: (item.url_imagen)
         }));
         setCanciones(shuffle(formattedCanciones));
       })
@@ -55,7 +55,7 @@ export default function Body({ headerBackground, search }) {
         const formattedArtistas = data.map(item => ({
           id: item.id,
           nombre: item.nombre,
-          fotografia: (item.url_imagen).substring(44)
+          fotografia: (item.url_imagen)
         }));
         setArtistas(shuffle(formattedArtistas));
       })
@@ -69,7 +69,7 @@ export default function Body({ headerBackground, search }) {
         const formattedAlbumes = data.map(item => ({
           id: item.id_album,
           nombre: item.nombre_album,
-          fotografia: (item.url_imagen).substring(44)
+          fotografia: (item.url_imagen)
         }));
         setAlbumes(shuffle(formattedAlbumes));
       })
@@ -87,7 +87,7 @@ export default function Body({ headerBackground, search }) {
             formattedCanciones.push({
               id: data[i].id_cancion,
               nombre: data[i].nombre_cancion,
-              fotografia: (data[i].url_imagen).substring(44),
+              fotografia: (data[i].url_imagen),
               duracion: msToMinutesAndSeconds(data[i].duracion),
               artista: data[i].nombre,
               album: data[i].nombre_album
@@ -109,7 +109,7 @@ export default function Body({ headerBackground, search }) {
             formattedArtistas.push({
               id: data[i].id,
               nombre: data[i].nombre,
-              fotografia: (data[i].url_imagen).substring(44)
+              fotografia: (data[i].url_imagen)
             })
           }
         }
@@ -128,7 +128,7 @@ export default function Body({ headerBackground, search }) {
             formattedAlbumes.push({
               id: data[i].id_album,
               nombre: data[i].nombre_album,
-              fotografia: (data[i].url_imagen).substring(44)
+              fotografia: (data[i].url_imagen)
             })
           }
         }
