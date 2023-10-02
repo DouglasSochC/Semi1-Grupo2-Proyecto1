@@ -154,7 +154,20 @@ app.post('/usuarios/login', (req, res) => {
         }
 
     });
+});
 
+/* Optiene usuario por su ID */
+app.get('/usuario/:id', (req, res) => {
+    const id = req.params.id;
+    const query = `SELECT nombres, apellidos, foto, correo FROM USUARIO WHERE id = ?`;
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Error al obtener el usuario:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener el usuario" });
+        } else {
+            res.json({ success: true, usuario: result[0] });
+        }
+    });
 });
 
 /** Actualizar un usuario por su ID */

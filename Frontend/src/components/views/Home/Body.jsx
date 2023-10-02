@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
-
 export default function Body({ headerBackground, search }) {
   const [canciones, setCanciones] = useState([]);
   const [artistas, setArtistas] = useState([]);
@@ -72,7 +71,6 @@ export default function Body({ headerBackground, search }) {
           nombre: item.nombre_album,
           fotografia: (item.url_imagen).substring(44)
         }));
-        console.log(formattedAlbumes)
         setAlbumes(shuffle(formattedAlbumes));
       })
       .catch(error => {
@@ -137,7 +135,7 @@ export default function Body({ headerBackground, search }) {
         setAlbumes(formattedAlbumes);
       })
     }
-  }, [search]); // El array vacío [] asegura que esta función se ejecute solo una vez al montar el componente
+  }, [search]); 
   
   return (
     <Container headerBackground={headerBackground}>
@@ -175,6 +173,8 @@ export default function Body({ headerBackground, search }) {
 const Container = styled.div`
   h1{
     margin: 0 1rem;
+    -webkit-text-stroke: 2px black;
+    color: white;
   }
   .menu {
     display: flex;
@@ -198,7 +198,6 @@ const Container = styled.div`
     max-width: 20vh; /* Tamaño máximo */
     flex: 1; /* Permite la expansión en altura */
   }
-  
   .menu-item img {
     margin: 5px;
     max-width: 90%;
@@ -210,72 +209,5 @@ const Container = styled.div`
     color: white;
     white-space: normal; /* Permite el salto de línea */
     max-lines: 2;
-  }
-  .playlist {
-    margin: 0 2rem;
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    .image {
-      img {
-        height: 15rem;
-        box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
-      }
-    }
-    .details {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      color: #e0dede;
-      .title {
-        color: white;
-        font-size: 4rem;
-      }
-    }
-  }
-  .list {
-    .header-row {
-      display: grid;
-      grid-template-columns: 0.3fr 3fr 2fr 0.1fr;
-      margin: 1rem 0 0 0;
-      color: #dddcdc;
-      position: sticky;
-      top: 15vh;
-      padding: 1rem 3rem;
-      transition: 0.3s ease-in-out;
-      background-color: ${({ headerBackground }) =>
-        headerBackground ? "#000000dc" : "none"};
-    }
-    .tracks {
-      margin: 0 2rem;
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 5rem;
-      .row {
-        padding: 0.5rem 1rem;
-        display: grid;
-        grid-template-columns: 0.3fr 3.1fr 2fr 0.1fr;
-        &:hover {
-          background-color: rgba(0, 0, 0, 0.7);
-        }
-        .col {
-          display: flex;
-          align-items: center;
-          color: #dddcdc;
-          img {
-            height: 40px;
-            width: 40px;
-          }
-        }
-        .detail {
-          display: flex;
-          gap: 1rem;
-          .info {
-            display: flex;
-            flex-direction: column;
-          }
-        }
-      }
-    }
   }
 `;

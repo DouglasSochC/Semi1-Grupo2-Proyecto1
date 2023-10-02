@@ -1,32 +1,62 @@
-import React, {useState} from "react";
+import axios from "axios";
+import React, {useState, useEffect} from "react";
 //import { Typography } from '@material-ui/core'
 import Sidebar from "./Sidebar";
 import styled from "styled-components";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import Body from "./Body";
+import User from "./User/User";
+import NavBarUsr from "./User/Navbar";
+import { BrowserRouter as Router, Route } from 'react-router-dom';
+import { useHistory } from 'react-router'
+
 
 const Home = () => {
   const [search, setSearch] = useState("");
   const headerBackground = "https://i.imgur.com/2nCt3Sbl.jpg";
+  const [usuario, setUsuario] = useState({nombres:'',apellidos:'',foto:'',correo:''})
+  const { push } = useHistory()
+
+  useEffect(() => {
+    axios.get('/usuario/' + localStorage.getItem('SoundStream_UserID'))
+    .then(({ data }) => {
+      setUsuario(data.usuario)
+    })
+  }, []); 
+
+  const Salir = () =>{
+    localStorage.setItem('SoundStream_UserID', -1);
+    push('/login')
+  }
 
   return (
-    <div>
+    <Router>
       <Container>
         <div className="spotify__body">
-           <Sidebar />
-          <div className="body" >
-            <Navbar search={search} setSearch={setSearch} />
-            <div className="body__contents">
-              <Body headerBackground={headerBackground} search={search}/>
+          <Sidebar />
+          <Route path="/app">
+            <div className="body" >
+              <Navbar search={search} setSearch={setSearch} Salir={Salir} />
+              <div className="body__contents">
+                <Body headerBackground={headerBackground} search={search}/>
+              </div>
             </div>
-          </div>
+          </Route>
+          <Route path="/user">
+            <div className="body" >
+              <NavBarUsr search={search} Salir={Salir} />
+              <div className="body__contents">
+                <User headerBackground={headerBackground}/>
+              </div>
+            </div>
+          </Route>
         </div>
         <div className="spotify__footer">
           <Footer />
         </div>
       </Container>
-    </div>
+    </Router>
   );
 };
 

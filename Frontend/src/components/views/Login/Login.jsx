@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Grid, Container, Paper, Avatar, Typography, TextField, Button, CssBaseline } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
 import fondo from './fondo.jpg'
@@ -56,6 +56,11 @@ const Login = () => {
             ...body,
             [name]: value
         })
+    }
+
+    if (localStorage.getItem('SoundStream_UserID') > -1){
+        push('/app')
+        console.log(localStorage.getItem('SoundStream_UserID'))
     }
 
     const onSubmit = () => {
