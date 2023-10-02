@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Grid, Container, Paper, Avatar, Typography, TextField, Button, CssBaseline } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
 import fondo from './fondo.jpg'
@@ -13,10 +13,12 @@ const useStyles = makeStyles(theme => ({
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
+        overflow: 'scroll',
         height: '100vh'
     },
     container: {
-        height: '60%',
+        height: '490px',
         marginTop: theme.spacing(10),
         [theme.breakpoints.down(400 + theme.spacing(2) + 2)]: {
             marginTop: 0,
@@ -56,12 +58,18 @@ const Login = () => {
         })
     }
 
+    if (localStorage.getItem('SoundStream_UserID') > -1){
+        push('/app')
+        console.log(localStorage.getItem('SoundStream_UserID'))
+    }
+
     const onSubmit = () => {
         axios.post('/usuarios/login', body)
             .then(({ data }) => {
                 if (data?.success) {
                     localStorage.setItem('auth', '"yes"')
-                    const { es_administrador } = data?.extra
+                    const { id_usuario, es_administrador } = data?.extra
+                    localStorage.setItem('SoundStream_UserID', id_usuario)
                     if (es_administrador === 1) {
                         push('/app_admin')
                     }

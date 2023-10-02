@@ -3,19 +3,39 @@ import styled from "styled-components";
 
 import { FaSearch } from "react-icons/fa";
 import { CgProfile } from "react-icons/cg";
+import { ImExit } from "react-icons/im";
+import { useHistory } from 'react-router-dom';
+import { Button} from '@material-ui/core'
 
-export default function Navbar({ navBackground }) {
+export default function Navbar({ navBackground, setSearch, Salir }) {
+
+  const history = useHistory();
+
+  const { push } = useHistory()
+
+  const handleChange = (e) => {
+    setSearch(e)
+  };
+
+  const IrAUsuario = () =>{
+    push('/user')
+  }
+
   return (
     <Container navBackground={navBackground}>
       <div className="search__bar">
         <FaSearch />
-        <input type="text" placeholder="Artists, songs, or podcasts" />
+        <input type="text" placeholder="Artists, songs, or podcasts" onChange={(e) => handleChange(e.target.value)}/>
       </div>
       <div className="avatar">
-        <a href="petio.html" >
+        <Button onClick={() => IrAUsuario()}>
           <CgProfile />
           <span>Nombre</span>
-        </a>
+        </Button>
+        <Button onClick={() => Salir()}>
+          <ImExit />
+          <span>Salir</span>
+        </Button>
       </div>
 
     </Container>
@@ -26,10 +46,12 @@ const Container = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem;
+  padding: 1rem 2rem;
   position: sticky;
   top: 0;
+  z-index: 10;
   transition: 0.3s ease-in-out;
+  background-color: rgba(0, 0, 0, 0.5);
   background-color: ${({ navBackground }) =>
     navBackground ? "rgba(0,0,0,0.7)" : "none"};
   .search__bar {
@@ -57,12 +79,11 @@ const Container = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    a {
+    Button {
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 0.5rem;
-      text-decoration: none;
       color: white;
       font-weight: bold;
       svg {

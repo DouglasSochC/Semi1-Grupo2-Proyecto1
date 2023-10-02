@@ -1,7 +1,9 @@
 import React from "react";
 import styled from "styled-components";
-import { MdHomeFilled, MdSearch } from "react-icons/md";
+import { MdHomeFilled} from "react-icons/md";
 import { IoLibrary } from "react-icons/io5";
+import { AiFillHeart } from "react-icons/ai";
+import { BiSolidBookBookmark, BiSolidRadio } from "react-icons/bi";
 //import Playlists from "./Playlists";
 export default function Sidebar() {
   return (
@@ -9,8 +11,9 @@ export default function Sidebar() {
       <div className="top__links">
         <div className="logo">
           <img
-            src="./stream.png"
+            src="./images/stream.png"
             alt="Sound Stream"
+            width="80%"
           />
         </div>
         <ul>
@@ -19,12 +22,20 @@ export default function Sidebar() {
             <span>Home</span>
           </li>
           <li>
-            <MdSearch />
-            <span>Search</span>
-          </li>
-          <li>
             <IoLibrary />
             <span>Your Library</span>
+          </li>
+          <li>
+            <AiFillHeart />
+            <span>Favorites</span>
+          </li>
+          <li>
+            <BiSolidBookBookmark />
+            <span>Historical</span>
+          </li>
+          <li>
+            <BiSolidRadio />
+            <span>Radio</span>
           </li>
         </ul>
       </div>
