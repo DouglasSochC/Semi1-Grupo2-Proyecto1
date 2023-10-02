@@ -36,7 +36,7 @@ resource "aws_security_group" "Semi1-instances-sg" {
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
       protocol         = "-1"
-      security_groups  = []
+      security_groups  = [aws_security_group.Semi1-sg.id]
       self             = false
       to_port          = 0
     }
@@ -49,7 +49,7 @@ resource "aws_security_group" "Semi1-instances-sg" {
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
       protocol         = "tcp"
-      security_groups  = []
+      security_groups  = [aws_security_group.Semi1-sg.id]
       self             = false
       to_port          = 22
     },
@@ -60,7 +60,7 @@ resource "aws_security_group" "Semi1-instances-sg" {
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
       protocol         = "tcp"
-      security_groups  = []
+      security_groups  = [aws_security_group.Semi1-sg.id]
       self             = false
       to_port          = 3306
     },
