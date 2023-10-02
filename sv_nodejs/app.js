@@ -611,15 +611,15 @@ app.delete('/canciones/:id_cancion', (req, res) => {
 });
 
 /** Obtener todas las canciones que pertenezcan al artista y que no estén agregadas a otro album */
-app.get('/canciones-artista/:id_artista', (req, res) => {
+app.get('/canciones-artista/:id_album', (req, res) => {
 
-    const id_artista = req.params.id_artista;
+    const id_album = req.params.id_album;
     const query = `SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion, c.duracion AS duracion_cancion, a.nombre AS nombre_artista
     FROM CANCION c
     INNER JOIN ARTISTA a ON a.id = c.id_artista
-    WHERE c.id_artista = ? AND c.id_album IS NULL`;
+    WHERE c.id_artista = (SELECT id_artista FROM ALBUM WHERE id = ?) AND c.id_album IS NULL`;
 
-    db.query(query, [id_artista], (err, result) => {
+    db.query(query, [id_album], (err, result) => {
         if (err) {
             console.error('Error al obtener las canciones:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener las canciones que contiene el artista" });
