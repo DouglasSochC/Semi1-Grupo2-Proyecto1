@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
+
 export default function Body({ headerBackground, search }) {
   const [canciones, setCanciones] = useState([]);
   const [artistas, setArtistas] = useState([]);
@@ -41,7 +42,7 @@ export default function Body({ headerBackground, search }) {
         const formattedCanciones = data.map(item => ({
           id: item.id_cancion,
           nombre: item.nombre_cancion,
-          fotografia: (item.url_imagen)
+          fotografia: (item.url_imagen).substring(44)
         }));
         setCanciones(shuffle(formattedCanciones));
       })
@@ -55,7 +56,7 @@ export default function Body({ headerBackground, search }) {
         const formattedArtistas = data.map(item => ({
           id: item.id,
           nombre: item.nombre,
-          fotografia: (item.url_imagen)
+          fotografia: (item.url_imagen).substring(44)
         }));
         setArtistas(shuffle(formattedArtistas));
       })
@@ -69,7 +70,7 @@ export default function Body({ headerBackground, search }) {
         const formattedAlbumes = data.map(item => ({
           id: item.id_album,
           nombre: item.nombre_album,
-          fotografia: (item.url_imagen)
+          fotografia: (item.url_imagen).substring(44)
         }));
         setAlbumes(shuffle(formattedAlbumes));
       })
@@ -87,7 +88,7 @@ export default function Body({ headerBackground, search }) {
             formattedCanciones.push({
               id: data[i].id_cancion,
               nombre: data[i].nombre_cancion,
-              fotografia: (data[i].url_imagen),
+              fotografia: (data[i].url_imagen).substring(44),
               duracion: msToMinutesAndSeconds(data[i].duracion),
               artista: data[i].nombre,
               album: data[i].nombre_album
@@ -109,7 +110,7 @@ export default function Body({ headerBackground, search }) {
             formattedArtistas.push({
               id: data[i].id,
               nombre: data[i].nombre,
-              fotografia: (data[i].url_imagen)
+              fotografia: (data[i].url_imagen).substring(44)
             })
           }
         }
@@ -128,7 +129,7 @@ export default function Body({ headerBackground, search }) {
             formattedAlbumes.push({
               id: data[i].id_album,
               nombre: data[i].nombre_album,
-              fotografia: (data[i].url_imagen)
+              fotografia: (data[i].url_imagen).substring(44)
             })
           }
         }
@@ -210,4 +211,5 @@ const Container = styled.div`
     white-space: normal; /* Permite el salto de línea */
     max-lines: 2;
   }
+
 `;

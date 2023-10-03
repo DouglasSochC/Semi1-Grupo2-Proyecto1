@@ -5,7 +5,7 @@ import PlayerControls from "./PlayerControls";
 import Volume from "./Volume";
 import TimeController from "./TimeController";
 
-export default function Footer() {
+export default function Footer({ LCanciones }) {
   const [song, setSong] = useState(null);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);

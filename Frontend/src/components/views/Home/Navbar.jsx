@@ -7,7 +7,7 @@ import { ImExit } from "react-icons/im";
 import { useHistory } from 'react-router-dom';
 import { Button} from '@material-ui/core'
 
-export default function Navbar({ navBackground, setSearch, Salir }) {
+export default function Navbar({ navBackground, setSearch, Salir, Name }) {
 
   const history = useHistory();
 
@@ -21,6 +21,11 @@ export default function Navbar({ navBackground, setSearch, Salir }) {
     push('/user')
   }
 
+  const getFisrtName = (nombre) => {
+    let nombreArr = nombre.split(" ");
+    return nombreArr[0];
+  }
+
   return (
     <Container navBackground={navBackground}>
       <div className="search__bar">
@@ -30,7 +35,7 @@ export default function Navbar({ navBackground, setSearch, Salir }) {
       <div className="avatar">
         <Button onClick={() => IrAUsuario()}>
           <CgProfile />
-          <span>Nombre</span>
+          <span>{getFisrtName(Name)}</span>
         </Button>
         <Button onClick={() => Salir()}>
           <ImExit />

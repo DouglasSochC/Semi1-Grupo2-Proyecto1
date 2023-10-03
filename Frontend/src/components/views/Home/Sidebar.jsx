@@ -1,9 +1,9 @@
 import React from "react";
 import styled from "styled-components";
 import { MdHomeFilled} from "react-icons/md";
-import { IoLibrary } from "react-icons/io5";
 import { AiFillHeart } from "react-icons/ai";
-import { BiSolidBookBookmark, BiSolidRadio } from "react-icons/bi";
+import { BiSolidBookBookmark, BiSolidRadio, BiSolidPlaylist } from "react-icons/bi";
+import {BsCollectionPlayFill} from "react-icons/bs";
 //import Playlists from "./Playlists";
 export default function Sidebar() {
   return (
@@ -22,8 +22,12 @@ export default function Sidebar() {
             <span>Home</span>
           </li>
           <li>
-            <IoLibrary />
-            <span>Your Library</span>
+            <BsCollectionPlayFill />
+            <span>Reproduciendo</span>
+          </li>
+          <li>
+            <BiSolidPlaylist />
+            <span>Playlist</span>
           </li>
           <li>
             <AiFillHeart />

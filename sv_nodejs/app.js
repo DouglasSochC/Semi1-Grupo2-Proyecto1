@@ -159,7 +159,7 @@ app.post('/usuarios/login', (req, res) => {
 /* Optiene usuario por su ID */
 app.get('/usuario/:id', (req, res) => {
     const id = req.params.id;
-    const query = `SELECT nombres, apellidos, foto, correo FROM USUARIO WHERE id = ?`;
+    const query = `SELECT nombres, apellidos, foto, correo, fecha_nacimiento FROM USUARIO WHERE id = ?`;
     db.query(query, [id], (err, result) => {
         if (err) {
             console.error('Error al obtener el usuario:', err);
@@ -177,52 +177,73 @@ app.put('/usuarios/:id_usuario/:contrasenia', upload.single('archivo'), (req, re
     const id_usuario = req.params.id_usuario;
     const contrasenia = req.params.contrasenia;
     const { nombres, apellidos, correo } = req.body;
-
-    const query_select = 'SELECT foto, contrasenia FROM USUARIO WHERE id = ?';
-    db.query(query_select, [id_usuario], (err, result) => {
-        if (err) {
-            console.error('Error al obtener al usuario:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener al usuario" });
-        } else {
-            util.comparePassword(contrasenia, result[0].contrasenia)
-                .then(esCorrecta => {
-                    if (esCorrecta) {
-
-                        deleteFiletoS3(result[0].foto, (err, data) => {
-                            if (err) {
-                                console.error('Error al eliminar la imagen de S3:', err);
-                                res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
+    var nueva_contrasenia = req.body.nueva_contrasenia;
+    if (nueva_contrasenia == '') {
+        nueva_contrasenia = contrasenia;
+    }
+    util.hashPassword(nueva_contrasenia)
+        .then(hashedPassword => {
+            nueva_contrasenia = hashedPassword
+            const query_select = 'SELECT foto, contrasenia FROM USUARIO WHERE id = ?';
+            db.query(query_select, [id_usuario], (err, result) => {
+                if (err) {
+                    console.error('Error al obtener al usuario:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al obtener al usuario" });
+                } else {
+                    util.comparePassword(contrasenia, result[0].contrasenia)
+                        .then(esCorrecta => {
+                            if (esCorrecta) {
+                                if (req.file == undefined || req.file == null) {
+                                    const query = 'UPDATE USUARIO SET nombres = ?, apellidos = ?, correo = ?, contrasenia = ? WHERE id = ?;';
+                                    db.query(query, [nombres, apellidos, correo, nueva_contrasenia, id_usuario], (err, result) => {
+                                        if (err) {
+                                            console.error('Error al actualizar el usuario:', err);
+                                            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el usuario" });
+                                        } else {
+                                            res.json({ success: true, mensaje: "Usuario actualizado correctamente" });
+                                        }
+                                    });
+                                } else {
+                                    deleteFiletoS3(`https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/` + result[0].foto, (err, data) => {
+                                        if (err) {
+                                            console.error('Error al eliminar la imagen de S3:', err);
+                                            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
+                                        } else {
+                                            uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
+                                                if (err) {
+                                                    console.error('Error al subir el archivo de S3:', err);
+                                                    res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
+                                                } else {
+                                                    const url_imagen = data;
+                                                    const query = 'UPDATE USUARIO SET nombres = ?, apellidos = ?, foto = ?, correo = ?, contrasenia = ? WHERE id = ?;';
+                                                    db.query(query, [nombres, apellidos, url_imagen, correo, nueva_contrasenia, id_usuario], (err, result) => {
+                                                        if (err) {
+                                                            console.error('Error al actualizar el usuario:', err);
+                                                            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el usuario" });
+                                                        } else {
+                                                            res.json({ success: true, mensaje: "Usuario actualizado correctamente" });
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
                             } else {
-                                uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
-                                    if (err) {
-                                        console.error('Error al subir el archivo de S3:', err);
-                                        res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
-                                    } else {
-                                        const url_imagen = data;
-                                        const query = 'UPDATE USUARIO SET nombres = ?, apellidos = ?, foto = ?, correo = ? WHERE id = ?;';
-                                        db.query(query, [nombres, apellidos, url_imagen, correo, id_usuario], (err, result) => {
-                                            if (err) {
-                                                console.error('Error al actualizar el usuario:', err);
-                                                res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar el usuario" });
-                                            } else {
-                                                res.json({ success: true, mensaje: "Usuario actualizado correctamente" });
-                                            }
-                                        });
-                                    }
-                                });
+                                res.json({ success: false, mensaje: "Contraseña incorrecta" });
                             }
+                        })
+                        .catch(error => {
+                            console.error('Error al comparar contraseñas:', error);
+                            res.json({ success: false, mensaje: "Ha ocurrido un error al desencriptar la contraseña" });
                         });
-                    } else {
-                        res.json({ success: false, mensaje: "Contraseña incorrecta" });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al comparar contraseñas:', error);
-                    res.json({ success: false, mensaje: "Ha ocurrido un error al desencriptar la contraseña" });
-                });
-        }
-
-    });
+                }
+            });
+        })
+        .catch(error => {
+            console.error("Error al encriptar contraseña:", error);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al encriptar la contraseña" });
+        });
 });
 
 /** Verificacion de un usuario administrador por medio de su contrasenia para que asi se pueda realizar alguna transaccion segun sea el caso */
