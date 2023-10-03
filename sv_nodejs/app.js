@@ -225,6 +225,43 @@ app.put('/usuarios/:id_usuario/:contrasenia', upload.single('archivo'), (req, re
     });
 });
 
+/** Verificacion de un usuario administrador por medio de su contrasenia para que asi se pueda realizar alguna transaccion segun sea el caso */
+app.post('/usuarios/password', (req, res) => {
+
+    // Se recibe el parametro contrasenia
+    const contrasenia = req.body.contrasenia;
+    const query = `SELECT id, contrasenia FROM USUARIO WHERE es_administrador = TRUE`;
+    db.query(query, async (err, result) => {
+        if (err) {
+            console.error('Error al validar la contraseña:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al validar la contraseña" });
+        } else {
+
+            const comparacionesPromises = result.map(element => {
+                return util.comparePassword(contrasenia, element.contrasenia)
+                    .catch(error => {
+                        console.error('Error al comparar contraseñas:', error);
+                        throw new Error('Ha ocurrido un error al desencriptar la contraseña');
+                    });
+            });
+
+            try {
+                const comparaciones = await Promise.all(comparacionesPromises);
+                const es_valido = comparaciones.some(esCorrecta => esCorrecta);
+
+                if (es_valido) {
+                    res.json({ success: true, mensaje: "La contraseña es valida para realizar la transacción" });
+                } else {
+                    res.json({ success: false, mensaje: "La contraseña no es valida para realizar la transacción" });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                res.json({ success: false, mensaje: "Ha ocurrido un error: " + error.message });
+            }
+        }
+    });
+});
+
 /** Crear un nuevo artista */
 app.post('/artistas', upload.single('archivo'), (req, res) => {
 

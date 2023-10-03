@@ -224,13 +224,29 @@ const Album = () => {
 
     /* FUNCIONALIDAD DEL BOTON DE ELIMINAR */
     const handleDelete = (id) => {
-        axios.delete('/albumes/' + id)
-            .then(response => {
-                alert(response.data.mensaje);
-            })
-            .catch(error => {
-                console.error('Error al enviar los datos:', error);
-            });
+
+        let password = prompt("Ingrese una contraseña de administrador para ejecutar la acción");
+        if (password === '') {
+            alert("La contraseña es obligatoria")
+        } else {
+            axios.post('/usuarios/password', { contrasenia: password })
+                .then(response => {
+                    if (response.data.success) {
+                        axios.delete('/albumes/' + id)
+                            .then(response => {
+                                alert(response.data.mensaje);
+                            })
+                            .catch(error => {
+                                console.error('Error al enviar los datos:', error);
+                            });
+                    } else {
+                        alert(response.data.mensaje)
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al enviar los datos:', error);
+                });
+        }
     };
 
     /* FUNCIONALIDAD PARA LIMPIAR LAS VARIABLES */
