@@ -6,6 +6,7 @@ import os
 import mimetypes
 import time
 from util import check_password, hash_password, compare_password
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -121,7 +122,7 @@ def login_user():
         contrasenia = request.json.get('contrasenia')
 
         # Se define el query que obtendra la contrasenia encriptada
-        query = 'SELECT id, contrasenia FROM USUARIO WHERE correo = %s'
+        query = 'SELECT id, contrasenia, es_administrador FROM USUARIO WHERE correo = %s'
         cursor.execute(query, (correo,))
         result = cursor.fetchone()
 
@@ -130,10 +131,25 @@ def login_user():
 
         # Obtén la contraseña almacenada en la base de datos
         contrasenia_bd = result[1]
-        contrasenia = hash_password(contrasenia)
+        #contrasenia = hash_password(contrasenia)
+        print(contrasenia)
+        print(contrasenia_bd)
+        print(result)
         # Comparar contraseñas
-        if contrasenia == contrasenia_bd:
-            return jsonify({'success': True, 'mensaje': 'Bienvenido', 'extra': result[0]}), 200
+
+        # Result format
+        """         {
+            "success": true,
+            "mensaje": "Bienvenido",
+            "extra": {
+                "id_usuario": 5,
+                "es_administrador": 0
+            }
+        } """
+
+        extra = { 'id_usuario': result[0], 'es_administrador': result[2] }
+        if compare_password(contrasenia, contrasenia_bd):
+            return jsonify({'success': True, 'mensaje': 'Bienvenido', 'extra': extra}), 200
         else:
             return jsonify({'success': False, 'mensaje': 'Credenciales incorrectas'}), 401
 
@@ -141,6 +157,35 @@ def login_user():
         print("Error:", e)
         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al procesar la solicitud'}), 500
 
+# Ruta para obtener un usuario por su ID
+@app.route('/usuario/<int:id>', methods=['GET'])
+def obtener_usuario(id):
+    try:
+        query = "SELECT nombres, apellidos, foto, correo, fecha_nacimiento FROM USUARIO WHERE id = %s"
+        cursor.execute(query, (id,))
+        result = cursor.fetchone()
+
+        """
+        fecha_nacimiento en formato de base de datos: "2023-01-01T06:00:00.000Z"
+        """
+        fecha = result[4].strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+ 
+        if result:
+            usuario = {
+                'nombres': result[0],
+                'apellidos': result[1],
+                'foto': result[2],
+                'correo': result[3],
+                'fecha_nacimiento': fecha
+            }
+            return jsonify({'success': True, 'usuario': usuario})
+        else:
+            return jsonify({'success': False, 'mensaje': 'Usuario no encontrado'})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al obtener el usuario', 'error': str(e)})
+
+# Actualizar un usuario por su ID 
 @app.route('/usuarios/<int:id_usuario>/<contrasenia>', methods=['PUT'])
 def update_user(id_usuario, contrasenia):
     try:
@@ -204,7 +249,39 @@ def create_artist():
     except Exception as e:
         print("Error:", e)
         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al insertar el artista'}), 500
-    
+
+"""
+Verificacion de un usuario administrador por medio de su contrasenia para que asi se pueda realizar alguna transaccion segun sea el caso
+"""
+@app.route('/usuarios/password', methods=['POST'])
+def verificar_contrasenia():
+    # Se recibe el parámetro contrasenia
+    contrasenia = request.json.get('contrasenia')
+
+    # Consulta SQL para obtener las contraseñas de los usuarios administradores
+    query = "SELECT id, contrasenia FROM USUARIO WHERE es_administrador = TRUE"
+
+    try:
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        comparaciones = []
+        for row in result:
+            user_id, hashed_password = row
+            comparaciones.append(compare_password(contrasenia, hashed_password))
+
+        es_valido = any(comparaciones)
+
+        if es_valido:
+            return jsonify({"success": True, "mensaje": "La contraseña es válida para realizar la transacción"})
+        else:
+            return jsonify({"success": False, "mensaje": "La contraseña no es válida para realizar la transacción"})
+
+    except Exception as e:
+        print('Error al validar la contraseña:', str(e))
+        return jsonify({"success": False, "mensaje": "Ha ocurrido un error al validar la contraseña"})
+
+# Crear un nuevo artista
 @app.route('/artistas', methods=['GET'])
 def get_artists():
     try:
