@@ -5,7 +5,7 @@ import { TextField, Button } from '@material-ui/core'
 import { useHistory } from 'react-router'
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
-export default function Artist({ headerBackground }) {
+export default function Artist({ headerBackground, setSearch }) {
 
     const { push } = useHistory()
 
@@ -44,6 +44,7 @@ export default function Artist({ headerBackground }) {
 
     const IrAUsuario = () => {
         push('/app')
+        setSearch('')
     }
 
     const VerAlbum = (id_cancion) => {

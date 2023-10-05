@@ -12,74 +12,14 @@ import Song from "./Song/Song";
 import NavBarGen from "./Song/Navbar";
 import Album from "./Album/Album";
 import Artist from "./Artist/Artist";
+import Playing from "./Playing/Playing"
+import CRUDSong from "../Song/Song"
+import CRUDAlbum from "../Album/Album"
+import CRUDArtist from "../Artist/Artist"
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 import { useHistory } from 'react-router'
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
-/*
-class Cancion{
-  constructor(id, nombre, artista, album, duracion, imagen, audio){
-    this.id = id;
-    this.nombre = nombre;
-    this.artista = artista;
-    this.album = album;
-    this.duracion = duracion;
-    this.imagen = imagen;
-    this.audio = audio;
-    this.next = null;
-    this.prev = null;
-  }
-}
 
-class ListaCanciones{
-  constructor(){
-    this.Cabeza = null;
-  }
-
-  AgregarCancion(id, nombre, artista, album, duracion, imagen, audio){
-    const NuevaCancion = new Cancion(id, nombre, artista, album, duracion, imagen, audio);
-    if(this.Cabeza === null){
-      this.Cabeza = NuevaCancion;
-    }else{
-      let aux = this.Cabeza;
-      while(aux.next !== null){
-        aux = aux.next;
-      }
-      aux.next = NuevaCancion;
-      NuevaCancion.prev = aux;
-    }
-  }
-
-  EliminarCancion(id){
-    let aux = this.Cabeza;
-    while(aux !== null){
-      if(aux.id === id){
-        if(aux.prev === null){
-          this.Cabeza = aux.next;
-          aux.next.prev = null;
-        }else if(aux.next === null){
-          aux.prev.next = null;
-        }else{
-          aux.prev.next = aux.next;
-          aux.next.prev = aux.prev;
-        }
-        break;
-      }
-      aux = aux.next;
-    }
-  }
-
-  BuscarCancion(id){
-    let aux = this.Cabeza;
-    while(aux !== null){
-      if(aux.id === id){
-        return aux;
-      }
-      aux = aux.next;
-    }
-    return null;
-  }
-}
-*/
 const Home = () => {
   const [search, setSearch] = useState("");
   const headerBackground = "https://i.imgur.com/2nCt3Sbl.jpg";
@@ -125,7 +65,7 @@ const Home = () => {
 
   const addToPlayback = (id_cancion) => {
     if (listaCanciones.includes(id_cancion)) {
-      console.log("sin agregar")
+      alert("Esta cancion ya esta en la lista de reproduccion")
       return;
     }
     setListaCanciones([...listaCanciones, id_cancion]);
@@ -145,6 +85,22 @@ const Home = () => {
     if (reproduccion === -1) {
       setReproduccion(id_cancion);
     }
+    alert("Cancion agregada con exito")
+  }
+
+  const addListToPlayback = (ids) => {
+    setListaCanciones([...listaCanciones, ...(eliminarElementosRepetidos(listaCanciones, ids))]);
+    setListaReproduccion([...listaCanciones, ...shuffle(eliminarElementosRepetidos(listaCanciones, ids))]);
+    if (reproduccion === -1) {
+      setReproduccion(ids[0]);
+    }
+    alert("Cancion agregada con exito")
+  }
+
+  function eliminarElementosRepetidos(array1, array2) {
+    // Filtra los elementos del segundo array que no están en el primero
+    const arrayFiltrado = array2.filter(elemento => !array1.includes(elemento));
+    return arrayFiltrado;
   }
 
   const Next = () => {
@@ -160,6 +116,25 @@ const Home = () => {
       setReproduccion(listaReproduccion[index + 1]);
       setPlayerState(true)
     }
+  }
+
+  const play = (id_cancion) => {
+    setPlayerState(true);
+    setListaCanciones([id_cancion]);
+    setListaReproduccion([id_cancion]);
+    setReproduccion(id_cancion);
+  }
+
+  const playAList = (ids) => {
+    setListaCanciones(ids);
+    if(random){
+      console.log(random);
+      setListaReproduccion(shuffle([].concat(ids)));
+    }else{
+      setListaReproduccion(ids);
+    }
+    setPlayerState(true);
+    setReproduccion(ids[0]);
   }
 
   const Prev = () => {
@@ -195,7 +170,7 @@ const Home = () => {
     <Router>
       <Container>
         <div className="spotify__body">
-          <Sidebar isAdmin={usuario.es_administrador} />
+          <Sidebar isAdmin={usuario.es_administrador} setSearch={setSearch} />
           <Route path="/app">
             <div className="body" >
               <Navbar search={search} setSearch={setSearch} Salir={Salir} Name={usuario.nombres} />
@@ -206,7 +181,7 @@ const Home = () => {
           </Route>
           <Route path="/user">
             <div className="body" >
-              <NavBarUsr search={search} Salir={Salir} />
+              <NavBarUsr search={search} Salir={Salir} setSearch={setSearch} />
               <div className="body__contents">
                 <User headerBackground={headerBackground} User={usuario} />
               </div>
@@ -216,7 +191,7 @@ const Home = () => {
             <div className="body" >
               <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Cancion:"}/>
               <div className="body__contents">
-                <Song headerBackground={headerBackground} addToPlayback={addToPlayback}/>
+                <Song headerBackground={headerBackground} addToPlayback={addToPlayback} play={play} setSearch={setSearch}/>
               </div>
             </div>
           </Route>
@@ -224,7 +199,7 @@ const Home = () => {
             <div className="body" >
               <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Album:"}/>
               <div className="body__contents">
-                <Album headerBackground={headerBackground} addToPlayback={addToPlayback}/>
+                <Album headerBackground={headerBackground} setSearch={setSearch} playAList={playAList} addListToPlayback={addListToPlayback}/>
               </div>
             </div>
           </Route>
@@ -232,7 +207,36 @@ const Home = () => {
             <div className="body">
               <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Artista:"} />
               <div className="body__contents">
-                <Artist headerBackground={headerBackground} />
+                <Artist headerBackground={headerBackground} setSearch={setSearch} />
+              </div>
+            </div>
+          </Route>
+          <Route path="/playing">
+            <div className="body">
+              <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Reproduciendo:"} />
+              <div className="body__contents">
+                <Playing headerBackground={headerBackground} reproduccion={reproduccion} listaCanciones={listaCanciones} />
+              </div>
+            </div>
+          </Route>
+          <Route path="/CRUDCanciones">
+            <div className="body">
+              <div className="body__contents">
+                <CRUDSong/>
+              </div>
+            </div>
+          </Route>
+          <Route path="/CRUDAlbums">
+            <div className="body">
+              <div className="body__contents">
+                <CRUDAlbum/>
+              </div>
+            </div>
+          </Route>
+          <Route path="/CRUDArtistas">
+            <div className="body">
+              <div className="body__contents">
+                <CRUDArtist/>
               </div>
             </div>
           </Route>

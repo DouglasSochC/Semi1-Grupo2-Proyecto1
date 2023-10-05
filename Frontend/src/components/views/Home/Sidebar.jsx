@@ -6,12 +6,29 @@ import { BiSolidBookBookmark, BiSolidRadio, BiSolidPlaylist } from "react-icons/
 import { BsCollectionPlayFill, BsFillDiscFill } from "react-icons/bs";
 import { FiUsers } from "react-icons/fi";
 import { useHistory } from 'react-router'
-export default function Sidebar({ isAdmin }) {
+export default function Sidebar({ isAdmin, setSearch }) {
 
   const { push } = useHistory()
 
-  const Regresar = () =>{
+  const Inicio = () =>{
     push('/app')
+    setSearch("")
+  }
+
+  const irReproduccion = () =>{
+    push('/playing')
+  }
+
+  const irCRUDCanciones = () =>{
+    push('/CRUDCanciones')
+  }
+
+  const irCRUDAlbums = () =>{
+    push('/CRUDAlbums')
+  }
+
+  const irCRUDArtistas = () =>{
+    push('/CRUDArtistas')
   }
 
   return (
@@ -25,11 +42,11 @@ export default function Sidebar({ isAdmin }) {
           />
         </div>
         <ul>
-          <li onClick={() => Regresar()}>
+          <li onClick={Inicio}>
             <MdHomeFilled />
             <span>Home</span>
           </li>
-          <li>
+          <li onClick={irReproduccion}>
             <BsCollectionPlayFill />
             <span>Reproduciendo</span>
           </li>
@@ -43,7 +60,7 @@ export default function Sidebar({ isAdmin }) {
           </li>
           <li>
             <BiSolidBookBookmark />
-            <span>Historical</span>
+            <span>Historico</span>
           </li>
           <li>
             <BiSolidRadio />
@@ -51,17 +68,17 @@ export default function Sidebar({ isAdmin }) {
           </li>
           {isAdmin ? (
             <>
-              <li>
-                <FiUsers />
-                <span>CRUD Artistas</span>
+              <li onClick={irCRUDCanciones}>
+                <BsFillDiscFill />
+                <span>CRUD Canciones</span>
               </li>
-              <li>
+              <li onClick={irCRUDAlbums}>
                 <MdOutlineLibraryMusic />
                 <span>CRUD Album</span>
               </li>
-              <li>
-                <BsFillDiscFill />
-                <span>CRUD Canciones</span>
+              <li onClick={irCRUDArtistas}>
+                <FiUsers />
+                <span>CRUD Artistas</span>
               </li>
             </>
           ) : (

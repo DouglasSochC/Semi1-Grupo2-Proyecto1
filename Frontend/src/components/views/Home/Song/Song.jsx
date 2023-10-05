@@ -1,11 +1,14 @@
 import axios from "axios";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { TextField, Button } from '@material-ui/core'
 import { useHistory } from 'react-router'
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
-export default function Song({ headerBackground, addToPlayback }) {
+export default function Song({ headerBackground, addToPlayback, play, setSearch }) {
+
+  const playRef = useRef();
+  playRef.current = play;
 
   const { push } = useHistory()
 
@@ -36,6 +39,7 @@ export default function Song({ headerBackground, addToPlayback }) {
 
   const IrAUsuario = () => {
     push('/app')
+    setSearch('')
   }
 
   const VerArtista = () => {
@@ -48,7 +52,7 @@ export default function Song({ headerBackground, addToPlayback }) {
     push('/album')
   }
 
-  const add = (Cancion_ID) =>{
+  const add = () =>{
     addToPlayback(cancion.Cancion_ID)
   }
 
@@ -67,10 +71,10 @@ export default function Song({ headerBackground, addToPlayback }) {
           </div>
         </div>
         <div className="sides">
-          <div className="buttons">
+          <div className="buttons" onClick={() => {playRef.current(cancion.Cancion_ID)}}>
             Reproducir
           </div>
-          <div className="buttons" onClick={() => add(cancion.Cancion_ID)}>
+          <div className="buttons" onClick={add}>
             Agregar a reproduccion actual
           </div>
           <div className="buttons">

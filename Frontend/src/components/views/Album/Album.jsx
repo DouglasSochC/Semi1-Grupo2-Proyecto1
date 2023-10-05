@@ -135,7 +135,7 @@ const Album = () => {
         };
 
         fetchData();
-    }, []);
+    }, [tableData]);
 
     /** FUNCIONALIDAD DEL BOTON DEL DETALLE DE UN ALBUM */
     const [tableSongAdded, setTableSongAdded] = useState([]);

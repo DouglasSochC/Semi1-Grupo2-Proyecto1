@@ -6,12 +6,13 @@ import { ImExit } from "react-icons/im";
 import { useHistory } from 'react-router'
 import { Button } from '@material-ui/core'
 
-export default function NavbarUsr({ navBackground, Salir }) {
+export default function NavbarUsr({ navBackground, Salir, setSearch }) {
 
   const { push } = useHistory()
 
   const Regresar = () => {
     push('/app')
+    setSearch('')
   }
 
   return (

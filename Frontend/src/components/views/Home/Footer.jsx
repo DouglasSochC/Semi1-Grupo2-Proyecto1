@@ -109,6 +109,11 @@ export default function Footer({ playerState, setPlayerState, changeCiclico, cha
               song.addEventListener('canplaythrough', handleCanPlayThrough);
               song.addEventListener("ended", handleAudioEnded);
               song.addEventListener("timeupdate", handleTimeUpdate);
+              axios
+                .post('/historicos', {
+                  id_usuario: localStorage.getItem('SoundStream_UserID'),
+                  id_cancion: data.cancion.Cancion_ID,
+                });
             }
             setReproduccionLocal(reproduccion);
           }
@@ -146,7 +151,7 @@ export default function Footer({ playerState, setPlayerState, changeCiclico, cha
         <TimeController CambiarTiempo={CambiarTiempo} currentTime={time} duration={duration} />
       </Container2>
       <Container>
-        <CurrentTrack Cancion_Nombre={cancion.Cancion_Nombre} Cancion_Fotografia={cancion.Cancion_Fotografia} Artista_Nombre={cancion.Artista_Nombre} />
+        <CurrentTrack Cancion_Nombre={cancion.Cancion_Nombre} Cancion_Fotografia={cancion.Cancion_Fotografia.substring(44)} Artista_Nombre={cancion.Artista_Nombre} />
         <PlayerControls playerState={playerState} changeState={changeState} changeCiclico={changeCiclico} changeRandom={changeRandom} ciclico={ciclico} random={random} Next={Next} Prev={Prev} />
         <Volume CambiarVolumen={CambiarVolumen} />
       </Container>

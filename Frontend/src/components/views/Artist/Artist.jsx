@@ -100,7 +100,7 @@ const Artist = () => {
         };
 
         fetchData();
-    }, []);
+    }, [artistData]);
 
     /** FUNCIONALIDAD DEL BOTON DE GUARDADO */
     const handleSave = () => {

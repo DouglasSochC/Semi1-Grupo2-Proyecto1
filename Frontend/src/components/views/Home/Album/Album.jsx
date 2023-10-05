@@ -1,11 +1,16 @@
 import axios from "axios";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { TextField, Button } from '@material-ui/core'
-import { useHistory } from 'react-router'
+import { useHistory} from 'react-router'
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
-export default function Album({ headerBackground }) {
+export default function Album({ headerBackground, setSearch, playAList, addListToPlayback }) {
+
+  const playAListRef = useRef();
+  playAListRef.current = playAList;
+  const addListToPlaybackRef = useRef();
+  addListToPlaybackRef.current = addListToPlayback;
 
     const { push } = useHistory()
 
@@ -46,6 +51,7 @@ export default function Album({ headerBackground }) {
 
     const IrAUsuario = () => {
         push('/app')
+        setSearch("")
     }
 
     const VerArtista = () => {
@@ -56,6 +62,22 @@ export default function Album({ headerBackground }) {
     const VerCancion = (id_cancion) => {
         localStorage.setItem('SoundStream_SongID', id_cancion)
         push('/song')
+    }
+
+    const ReproducirAlbum = () =>{
+      const ListCanciones = [];
+      for (let i = 0; i < canciones.length; i++) {
+        ListCanciones.push(canciones[i].id_cancion)
+      }
+      playAListRef.current(ListCanciones);
+    }
+
+    const AgregarAlbum = () => {
+      const ListCanciones = [];
+      for (let i = 0; i < canciones.length; i++) {
+        ListCanciones.push(canciones[i].id_cancion)
+      }
+      addListToPlaybackRef.current(ListCanciones)
     }
 
     return (
@@ -72,10 +94,10 @@ export default function Album({ headerBackground }) {
                     </div>
                 </div>
                 <div className="sides">
-                    <div className="buttons">
+                    <div className="buttons" onClick={ReproducirAlbum}>
                         Reproducir
                     </div>
-                    <div className="buttons">
+                    <div className="buttons" onClick={AgregarAlbum}>
                         Agregar a reproduccion actual
                     </div>
                 </div>
