@@ -10,16 +10,13 @@ import { FiRepeat } from "react-icons/fi";
 
 export default function PlayerControls(promps) {
 
-  const changeTrack = async (direction) => {
-  }
-
   return (
     <Container>
       <div className="shuffle">
         <BsShuffle />
       </div>
       <div className="previous">
-        <CgPlayTrackPrev onClick={() => changeTrack("previous")} />
+        <CgPlayTrackPrev />
       </div>
       <div className="state">
         {promps.playerState ? (
@@ -29,7 +26,7 @@ export default function PlayerControls(promps) {
         )}
       </div>
       <div className="next">
-        <CgPlayTrackNext onClick={() => changeTrack("next")} />
+        <CgPlayTrackNext />
       </div>
       <div className="repeat">
         <FiRepeat />

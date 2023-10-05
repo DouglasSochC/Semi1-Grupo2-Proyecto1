@@ -8,10 +8,14 @@ import Footer from "./Footer";
 import Body from "./Body";
 import User from "./User/User";
 import NavBarUsr from "./User/Navbar";
+import Song from "./Song/Song";
+import NavBarGen from "./Song/Navbar";
+import Album from "./Album/Album";
+import Artist from "./Artist/Artist";
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 import { useHistory } from 'react-router'
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
-
+/*
 class Cancion{
   constructor(id, nombre, artista, album, duracion, imagen, audio){
     this.id = id;
@@ -75,18 +79,26 @@ class ListaCanciones{
     return null;
   }
 }
-
+*/
 const Home = () => {
   const [search, setSearch] = useState("");
   const headerBackground = "https://i.imgur.com/2nCt3Sbl.jpg";
-  const [usuario, setUsuario] = useState({nombres:'',apellidos:'',foto:'',correo:'', fecha_nacimiento:''})
+  const [usuario, setUsuario] = useState({nombres:'',apellidos:'',foto:'',correo:'', fecha_nacimiento:'', es_administrador:0})
   const { push } = useHistory()
-  const [LCanciones, setLCanciones] = useState(new ListaCanciones())
+  const [ reproduccion, setReproduccion ] = useState(-1);
+  const [ listaCanciones, setListaCanciones ] = useState([]);
+  const [ ciclico, setCiclico ] = useState(false);
+  const [ random, setRandom ] = useState(false);
+  //const [LCanciones, setLCanciones] = useState(new ListaCanciones())
 
   useEffect(() => {
     axios.get('/usuario/' + localStorage.getItem('SoundStream_UserID'))
     .then(({ data }) => {
-      setUsuario(data.usuario)
+      if (data !== undefined && data !== null){
+        setUsuario(data.usuario)
+      }else{
+        Salir()
+      }
     })
   }, [usuario]); 
 
@@ -99,7 +111,7 @@ const Home = () => {
     <Router>
       <Container>
         <div className="spotify__body">
-          <Sidebar />
+          <Sidebar isAdmin={usuario.es_administrador} />
           <Route path="/app">
             <div className="body" >
               <Navbar search={search} setSearch={setSearch} Salir={Salir} Name={usuario.nombres} />
@@ -113,6 +125,30 @@ const Home = () => {
               <NavBarUsr search={search} Salir={Salir} />
               <div className="body__contents">
                 <User headerBackground={headerBackground} User={usuario}/>
+              </div>
+            </div>
+          </Route>
+          <Route path="/song">
+            <div className="body" >
+              <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Cancion:"}/>
+              <div className="body__contents">
+                <Song headerBackground={headerBackground}/>
+              </div>
+            </div>
+          </Route>
+          <Route path="/album">
+            <div className="body" >
+              <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Album:"}/>
+              <div className="body__contents">
+                <Album headerBackground={headerBackground}/>
+              </div>
+            </div>
+          </Route>
+          <Route path="/artist">
+            <div className="body">
+              <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Artista:"}/>
+              <div className="body__contents">
+                <Artist headerBackground={headerBackground}/>
               </div>
             </div>
           </Route>

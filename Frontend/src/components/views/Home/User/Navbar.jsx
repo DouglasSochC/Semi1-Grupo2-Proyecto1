@@ -4,13 +4,13 @@ import styled from "styled-components";
 import { MdKeyboardReturn } from "react-icons/md";
 import { ImExit } from "react-icons/im";
 import { useHistory } from 'react-router'
-import { Button} from '@material-ui/core'
+import { Button } from '@material-ui/core'
 
 export default function NavbarUsr({ navBackground, Salir }) {
 
   const { push } = useHistory()
 
-  const IrAUsuario = () =>{
+  const Regresar = () => {
     push('/app')
   }
 
@@ -19,7 +19,7 @@ export default function NavbarUsr({ navBackground, Salir }) {
       <h1>Perfil</h1>
 
       <div className="avatar">
-        <Button onClick={() => IrAUsuario()}>
+        <Button onClick={() => Regresar()}>
           <MdKeyboardReturn />
           <span>Regresar</span>
         </Button>

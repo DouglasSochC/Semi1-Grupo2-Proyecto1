@@ -1,10 +1,14 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import { useHistory } from 'react-router'
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
 
 export default function Body({ headerBackground, search }) {
+
+  const { push } = useHistory()
+
   const [canciones, setCanciones] = useState([]);
   const [artistas, setArtistas] = useState([]);
   const [albumes, setAlbumes] = useState([]);
@@ -137,33 +141,48 @@ export default function Body({ headerBackground, search }) {
       })
     }
   }, [search]); 
-  
+
+  const VerCancion = (id_cancion) => {
+    localStorage.setItem('SoundStream_SongID', id_cancion)
+    push('/song')
+  }
+
+  const VerAlbum = (id_album) => {
+    localStorage.setItem('SoundStream_AlbumID', id_album)
+    push('/album')
+  }
+
+  const VerArtista = (id_artista) => {
+    localStorage.setItem('SoundStream_ArtistID', id_artista)
+    push('/artist')
+  }
+
   return (
     <Container headerBackground={headerBackground}>
       <h1>Canciones</h1>
       <div class="menu">
         {canciones.map(cancion => (
-          <div className="menu-item" key={cancion.id}>
-            <img src={cancion.fotografia} alt="Imagen 1" />
+          <div className="menu-item" key={cancion.id} onClick={() => VerCancion(cancion.id)}>
+            <img src={cancion.fotografia} alt={"Imagen " + cancion.id} />
             <p>{cancion.nombre}</p>
-          </div>
-        ))}
-      </div>
-      <h1>Artistas</h1>
-      <div class="menu">
-        {artistas.map(artista => (
-          <div className="menu-item" key={artista.id}>
-            <img src={artista.fotografia} alt="Imagen 1" />
-            <p>{artista.nombre}</p>
           </div>
         ))}
       </div>
       <h1>Albums</h1>
       <div class="menu">
         {albumes.map(album => (
-          <div className="menu-item" key={album.id}>
-            <img src={album.fotografia} alt="Imagen 1" />
+          <div className="menu-item" key={album.id} onClick={() => VerAlbum(album.id)}>
+            <img src={album.fotografia} alt={"Imagen " + album.id} />
             <p>{album.nombre}</p>
+          </div>
+        ))}
+      </div>
+      <h1>Artistas</h1>
+      <div class="menu">
+        {artistas.map(artista => (
+          <div className="menu-item" key={artista.id} onClick={() => VerArtista(artista.id)}>
+            <img src={artista.fotografia} alt={"Imagen " + artista.id} />
+            <p>{artista.nombre}</p>
           </div>
         ))}
       </div>
@@ -179,14 +198,15 @@ const Container = styled.div`
   }
   .menu {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     border-radius: 5px;
     padding: 8px;
     width: 98%;
     margin: 0 auto;
     background-color: rgba(0, 0, 0, 0.2);
-    overflow-x: auto; /* Agrega un scroll horizontal si es necesario */
-    white-space: nowrap; /* Evita que los elementos se dividan en múltiples líneas */
+    overflow-x: auto;
+    white-space: nowrap;
+    overflow-y: hidden;
   }
   .menu-item {
     display: flex;
@@ -198,6 +218,11 @@ const Container = styled.div`
     min-width: 20vh; /* Tamaño mínimo */
     max-width: 20vh; /* Tamaño máximo */
     flex: 1; /* Permite la expansión en altura */
+    transition: transform 0.2s, filter 0.2s;
+  }
+  .menu-item:hover {
+    transform: scale(1.05); /* Aumenta el tamaño al pasar el mouse */
+    border: 3px solid white;
   }
   .menu-item img {
     margin: 5px;

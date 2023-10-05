@@ -1,11 +1,19 @@
 import React from "react";
 import styled from "styled-components";
-import { MdHomeFilled} from "react-icons/md";
+import { MdHomeFilled, MdOutlineLibraryMusic } from "react-icons/md";
 import { AiFillHeart } from "react-icons/ai";
 import { BiSolidBookBookmark, BiSolidRadio, BiSolidPlaylist } from "react-icons/bi";
-import {BsCollectionPlayFill} from "react-icons/bs";
-//import Playlists from "./Playlists";
-export default function Sidebar() {
+import { BsCollectionPlayFill, BsFillDiscFill } from "react-icons/bs";
+import { FiUsers } from "react-icons/fi";
+import { useHistory } from 'react-router'
+export default function Sidebar({ isAdmin }) {
+
+  const { push } = useHistory()
+
+  const Regresar = () =>{
+    push('/app')
+  }
+
   return (
     <Container>
       <div className="top__links">
@@ -17,7 +25,7 @@ export default function Sidebar() {
           />
         </div>
         <ul>
-          <li>
+          <li onClick={() => Regresar()}>
             <MdHomeFilled />
             <span>Home</span>
           </li>
@@ -41,6 +49,25 @@ export default function Sidebar() {
             <BiSolidRadio />
             <span>Radio</span>
           </li>
+          {isAdmin ? (
+            <>
+              <li>
+                <FiUsers />
+                <span>CRUD Artistas</span>
+              </li>
+              <li>
+                <MdOutlineLibraryMusic />
+                <span>CRUD Album</span>
+              </li>
+              <li>
+                <BsFillDiscFill />
+                <span>CRUD Canciones</span>
+              </li>
+            </>
+          ) : (
+            <></>
+          )
+          }
         </ul>
       </div>
     </Container>

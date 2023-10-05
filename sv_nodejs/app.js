@@ -159,7 +159,7 @@ app.post('/usuarios/login', (req, res) => {
 /* Optiene usuario por su ID */
 app.get('/usuario/:id', (req, res) => {
     const id = req.params.id;
-    const query = `SELECT nombres, apellidos, foto, correo, fecha_nacimiento FROM USUARIO WHERE id = ?`;
+    const query = `SELECT nombres, apellidos, foto, correo, fecha_nacimiento, es_administrador FROM USUARIO WHERE id = ?`;
     db.query(query, [id], (err, result) => {
         if (err) {
             console.error('Error al obtener el usuario:', err);
@@ -204,7 +204,7 @@ app.put('/usuarios/:id_usuario/:contrasenia', upload.single('archivo'), (req, re
                                         }
                                     });
                                 } else {
-                                    deleteFiletoS3(`https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/` + result[0].foto, (err, data) => {
+                                    deleteFiletoS3(result[0].foto , (err, data) => {
                                         if (err) {
                                             console.error('Error al eliminar la imagen de S3:', err);
                                             res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
@@ -326,6 +326,25 @@ app.get('/artistas', (req, res) => {
     });
 });
 
+/* Obtener Artista por su ID */
+app.get('/artista/:id', (req, res) => {
+    const id = req.params.id;
+    const query = `SELECT a.id AS Artista_ID, a.nombre AS Artista_Nombre,
+    CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/',fotografia) AS url_imagen,
+    DATE_FORMAT(a.fecha_nacimiento, '%d/%m/%Y') AS fecha_nacimiento
+    FROM ARTISTA a
+    WHERE a.id = ?;`;
+
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Error al obtener al artista:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener al artista" });
+        } else {
+            res.json({ success: true, artista: result[0] });
+        }
+    });
+});
+
 /** Actualizar un artista por su ID */
 app.put('/artistas/:id_artista', upload.single('archivo'), (req, res) => {
 
@@ -422,6 +441,54 @@ app.get('/albumes', (req, res) => {
     });
 
 });
+
+/* Obtener Album por su ID */
+app.get('/album/:id', (req, res) => {
+    const id = req.params.id;
+    const query = `SELECT 
+        ALB.id AS 'Album_ID',
+        ALB.nombre AS 'Album_Nombre',
+        ALB.descripcion AS 'Album_Descripcion',
+        CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', ALB.imagen_portada) AS 'Album_ImagenPortada',
+        ALB.id_artista AS 'Artista_ID',
+        ART.nombre AS 'Artista_Nombre'
+    FROM ALBUM ALB
+    JOIN ARTISTA ART ON ALB.id_artista = ART.id
+    WHERE ALB.id = ?;`;
+
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Error al obtener el album:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener el album" });
+        } else {
+            res.json({ success: true, album: result[0] });
+        }
+    });
+});
+
+/* Obtener Albumes de un artista */
+app.get('/albumes-artista/:id', (req, res) => {
+    const id = req.params.id;
+    const query = `SELECT 
+        ALB.id AS 'Album_ID',
+        ALB.nombre AS 'Album_Nombre',
+        ALB.descripcion AS 'Album_Descripcion',
+        ALB.imagen_portada AS 'Album_ImagenPortada',
+        ALB.id_artista AS 'Artista_ID'
+    FROM ALBUM ALB
+    WHERE ALB.id_artista = ?`;
+
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Error al obtener llos albumes:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener los albumes" });
+        } else {
+            res.json({ success: true, albumes_artista: result });
+        }
+    });
+
+});
+
 
 /** Crear un nuevo album */
 app.post('/albumes', upload.single('archivo'), (req, res) => {
@@ -566,6 +633,35 @@ app.get('/canciones', (req, res) => {
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener las canciones" });
         } else {
             res.json({ success: true, canciones: result });
+        }
+    });
+
+});
+
+/* Obtener cancion por su ID */
+app.get('/cancion/:id', (req, res) => {
+    const id = req.params.id;
+    const query = `SELECT 
+        CAN.id AS 'Cancion_ID',
+        CAN.nombre AS 'Cancion_Nombre',
+        CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', CAN.fotografia) AS 'Cancion_Fotografia',
+        CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', CAN.archivo_mp3) AS 'Cancion_Archivo_MP3',
+        CAN.duracion AS 'Cancion_Duracion',
+        ART.id AS 'Artista_ID',
+        ART.nombre AS 'Artista_Nombre',
+        ALB.id AS 'Album_ID',
+        ALB.nombre AS 'Album_Nombre'
+    FROM CANCION CAN
+    JOIN ARTISTA ART ON CAN.id_artista = ART.id
+    LEFT JOIN ALBUM ALB ON CAN.id_album = ALB.id
+    WHERE CAN.id = ?;`;
+
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Error al obtener la cancion:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la cancion" });
+        } else {
+            res.json({ success: true, cancion: result[0] });
         }
     });
 

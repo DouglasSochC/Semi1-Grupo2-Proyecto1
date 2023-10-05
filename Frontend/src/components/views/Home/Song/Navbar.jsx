@@ -1,19 +1,15 @@
 import React from "react";
 import styled from "styled-components";
 
-import { FaSearch } from "react-icons/fa";
-import { CgProfile } from "react-icons/cg";
+import { MdKeyboardReturn } from "react-icons/md";
 import { ImExit } from "react-icons/im";
-import { useHistory } from 'react-router-dom';
+import { useHistory } from 'react-router'
 import { Button} from '@material-ui/core'
+import { CgProfile } from "react-icons/cg";
 
-export default function Navbar({ navBackground, setSearch, Salir, Name }) {
+export default function NavbarGen({ navBackground, Salir, Name, Type }) {
 
   const { push } = useHistory()
-
-  const handleChange = (e) => {
-    setSearch(e)
-  };
 
   const IrAUsuario = () =>{
     push('/user')
@@ -26,10 +22,7 @@ export default function Navbar({ navBackground, setSearch, Salir, Name }) {
 
   return (
     <Container navBackground={navBackground}>
-      <div className="search__bar">
-        <FaSearch />
-        <input type="text" placeholder="Artists, songs, or podcasts" onChange={(e) => handleChange(e.target.value)}/>
-      </div>
+      <h1>{Type}</h1>
       <div className="avatar">
         <Button onClick={() => IrAUsuario()}>
           <CgProfile />
@@ -49,7 +42,8 @@ const Container = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  color: white;
+  padding: 0rem 2rem;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -57,22 +51,8 @@ const Container = styled.div`
   background-color: rgba(0, 0, 0, 0.5);
   background-color: ${({ navBackground }) =>
     navBackground ? "rgba(0,0,0,0.7)" : "none"};
-  .search__bar {
-    background-color: white;
-    width: 30%;
-    padding: 0.4rem 1rem;
-    border-radius: 2rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    input {
-      border: none;
-      height: 2rem;
-      width: 100%;
-      &:focus {
-        outline: none;
-      }
-    }
+  .info {
+    font-color: white;
   }
   .avatar {
     background-color: black;
