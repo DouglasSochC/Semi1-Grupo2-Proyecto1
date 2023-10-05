@@ -85,7 +85,7 @@ export default function Album({ headerBackground, setSearch, playAList, addListT
             <div className="form">
                 <div className="sides">
                     <div className="sides1">
-                        <img src={album.Album_ImagenPortada.substring(44)} alt={"imagen de: " + album.Album_Nombre}></img>
+                        <img src={album.Album_ImagenPortada} alt={"imagen de: " + album.Album_Nombre}></img>
                     </div>
                     <div className="sides2">
                         <h1><u>Titulo: {album.Album_Nombre}</u></h1>

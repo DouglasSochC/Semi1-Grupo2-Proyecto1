@@ -61,7 +61,7 @@ export default function Song({ headerBackground, addToPlayback, play, setSearch 
       <div className="form">
         <div className="sides">
           <div className="sides1">
-            <img src={cancion.Cancion_Fotografia.substring(44)} alt={"imagen de: " + cancion.Cancion_Nombre}></img>
+            <img src={cancion.Cancion_Fotografia} alt={"imagen de: " + cancion.Cancion_Nombre}></img>
           </div>
           <div className="sides2">
             <h1><u>Titulo: {cancion.Cancion_Nombre}</u></h1>

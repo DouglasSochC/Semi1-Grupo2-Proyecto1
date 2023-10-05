@@ -98,7 +98,7 @@ export default function Footer({ playerState, setPlayerState, changeCiclico, cha
         .then(({ data }) => {
           if (data !== undefined && data !== null) {
             setCancion(data.cancion);
-            const AudioSrc = data.cancion.Cancion_Archivo_MP3.substring(44);
+            const AudioSrc = data.cancion.Cancion_Archivo_MP3;
             if (AudioSrc !== "") {
               if (song.readyState >= 2) {
                 song.pause();
@@ -151,7 +151,7 @@ export default function Footer({ playerState, setPlayerState, changeCiclico, cha
         <TimeController CambiarTiempo={CambiarTiempo} currentTime={time} duration={duration} />
       </Container2>
       <Container>
-        <CurrentTrack Cancion_Nombre={cancion.Cancion_Nombre} Cancion_Fotografia={cancion.Cancion_Fotografia.substring(44)} Artista_Nombre={cancion.Artista_Nombre} />
+        <CurrentTrack Cancion_Nombre={cancion.Cancion_Nombre} Cancion_Fotografia={cancion.Cancion_Fotografia} Artista_Nombre={cancion.Artista_Nombre} />
         <PlayerControls playerState={playerState} changeState={changeState} changeCiclico={changeCiclico} changeRandom={changeRandom} ciclico={ciclico} random={random} Next={Next} Prev={Prev} />
         <Volume CambiarVolumen={CambiarVolumen} />
       </Container>

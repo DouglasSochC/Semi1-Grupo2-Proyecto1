@@ -57,7 +57,7 @@ export default function Artist({ headerBackground, setSearch }) {
             <div className="form">
                 <div className="sides">
                     <div className="sides1">
-                        <img src={artista.url_imagen.substring(44)} alt={"imagen de: " + artista.Artista_Nombre}></img>
+                        <img src={artista.url_imagen} alt={"imagen de: " + artista.Artista_Nombre}></img>
                     </div>
                     <div className="sides2">
                         <h1><u>Nombre: {artista.Artista_Nombre}</u></h1>
