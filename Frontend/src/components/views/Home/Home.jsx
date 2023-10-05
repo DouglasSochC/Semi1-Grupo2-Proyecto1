@@ -91,7 +91,6 @@ const Home = () => {
   const [ciclico, setCiclico] = useState(false);
   const [random, setRandom] = useState(false);
   const [playerState, setPlayerState] = useState(false);
-  const [radio, setradio] = useState(false)
   //const [LCanciones, setLCanciones] = useState(new ListaCanciones())
 
   const changeCiclico = () => {
@@ -177,6 +176,11 @@ const Home = () => {
     }
   }
 
+  const Salir = () => {
+    localStorage.setItem('SoundStream_UserID', -1);
+    push('/login')
+  }
+
   useEffect(() => {
     axios.get('/usuario/' + localStorage.getItem('SoundStream_UserID'))
       .then(({ data }) => {
@@ -187,12 +191,6 @@ const Home = () => {
         }
       })
   }, [usuario]);
-
-  const Salir = () => {
-    localStorage.setItem('SoundStream_UserID', -1);
-    push('/login')
-  }
-
   return (
     <Router>
       <Container>
@@ -248,11 +246,11 @@ const Home = () => {
 };
 
 const Container = styled.div`
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   display: grid;
-  grid-template-rows: 85vh 15vh;
+  grid-template-rows: 87vh 13vh;
   .spotify__body {
     display: grid;
     grid-template-columns: 15vw 85vw;
@@ -276,31 +274,9 @@ const Container = styled.div`
         }
       }
     }
-    .spotify__body {
-    display: grid;
-    grid-template-columns: 15vw 85vw;
+  .spotify__footer{
     height: 100%;
     width: 100%;
-    background: linear-gradient(
-      0deg,
-      rgba(34, 193, 195, 1) 0%,
-      rgba(45, 17, 112, 1) 100%
-    );
-    background-color: rgb(34, 193, 195);
-    .body {
-      height: 100%;
-      width: 100%;
-      overflow: auto;
-      &::-webkit-scrollbar {
-        width: 0.7rem;
-        max-height: 2rem;
-        &-thumb {
-          background-color: rgba(255, 255, 255, 0.6);
-        }
-      }
-    }
-  }
-  .spotify__footer{
     display: grid;
   }
   /* ===== Scrollbar CSS ===== */

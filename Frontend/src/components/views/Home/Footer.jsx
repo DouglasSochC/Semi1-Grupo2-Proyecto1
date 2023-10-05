@@ -13,14 +13,14 @@ export default function Footer({ playerState, setPlayerState, changeCiclico, cha
   const [changeTime, setChangeTime] = useState(-1);
   const [reproduccionLocal, setReproduccionLocal] = useState(-1);
   const [cancion, setCancion] = useState({
-    Cancion_Nombre: '',
+    Cancion_Nombre: 'Cancion',
     Cancion_Archivo_MP3: '',
     Cancion_Duracion: 0,
-    Cancion_Fotografia: '',
+    Cancion_Fotografia: '/images/music.jpg',
     Cancion_ID: -1,
     id_album: -1,
     Artista_ID: -1,
-    Artista_Nombre: '',
+    Artista_Nombre: 'Artista',
     Album_ID: -1,
     Album_Nombre: ''
   });
@@ -79,13 +79,13 @@ export default function Footer({ playerState, setPlayerState, changeCiclico, cha
       }
     }
   };
-  
+
   const handleAudioEnded = () => {
     song.currentTime = 0;
     song.pause();
     nextRef.current();
   };
-  
+
   const handleTimeUpdate = () => {
     setTime(song.currentTime);
     setDuration(song.duration);
@@ -116,14 +116,23 @@ export default function Footer({ playerState, setPlayerState, changeCiclico, cha
     } else if (reproduccion === -1) {
       song.pause();
       setReproduccionLocal(reproduccion);
+      setCancion({
+        Cancion_Nombre: 'Cancion',
+        Cancion_Archivo_MP3: '',
+        Cancion_Duracion: 0,
+        Cancion_Fotografia: '/images/music.jpg',
+        Cancion_ID: -1,
+        id_album: -1,
+        Artista_ID: -1,
+        Artista_Nombre: 'Artista',
+        Album_ID: -1,
+        Album_Nombre: ''
+      })
     }
     return () => {
       clearAudioEventListeners();
     };
   }, [reproduccion]);
-  
-  
-  
 
   const changeState = () => {
     if (reproduccionLocal !== -1 && song != null && song.src !== "") {
@@ -132,22 +141,25 @@ export default function Footer({ playerState, setPlayerState, changeCiclico, cha
   };
 
   return (
-    <div>
+    <MaxConteiner>
       <Container2>
         <TimeController CambiarTiempo={CambiarTiempo} currentTime={time} duration={duration} />
       </Container2>
       <Container>
-        <CurrentTrack />
+        <CurrentTrack Cancion_Nombre={cancion.Cancion_Nombre} Cancion_Fotografia={cancion.Cancion_Fotografia} Artista_Nombre={cancion.Artista_Nombre} />
         <PlayerControls playerState={playerState} changeState={changeState} changeCiclico={changeCiclico} changeRandom={changeRandom} ciclico={ciclico} random={random} Next={Next} Prev={Prev} />
         <Volume CambiarVolumen={CambiarVolumen} />
       </Container>
-    </div>
+    </MaxConteiner>
   );
 }
 
-const Container = styled.div`
+const MaxConteiner = styled.div`
+  background-color: #181818;
   height: 100%;
-  width: 100%;
+`;
+
+const Container = styled.div`
   background-color: #181818;
   border-top: 1px solid #282828;
   display: grid;
@@ -155,10 +167,10 @@ const Container = styled.div`
   align-items: center;
   justify-content: center;
   padding: 0 1rem;
+  height: 100%;
 `;
 
 const Container2 = styled.div`
-  height: 100%;
   width: 100%;
   background-color: #181818;
   border-top: 1px solid #282828;
