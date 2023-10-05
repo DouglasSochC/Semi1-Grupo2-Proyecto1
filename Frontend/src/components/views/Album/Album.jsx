@@ -140,29 +140,26 @@ const Album = () => {
     /** FUNCIONALIDAD DEL BOTON DEL DETALLE DE UN ALBUM */
     const [tableSongAdded, setTableSongAdded] = useState([]);
     const [tableSongToAdd, setTableSongToAdd] = useState([]);
-    const handleShowAlbum = () => {
+    useEffect(() => {
+            if (idAlbum !== '') {
+                axios.get('/canciones-album/' + idAlbum)
+                    .then(response => {
+                        setTableSongAdded(response.data.canciones_album);
+                    })
+                    .catch(error => {
+                        console.error('Error al obtener los datos:', error);
+                    });
 
-        if (idAlbum === '') {
-            alert("Debe de seleccionar un álbum");
-        } else {
-            axios.get('/canciones-album/' + idAlbum)
-                .then(response => {
-                    setTableSongAdded(response.data.canciones_album);
-                })
-                .catch(error => {
-                    console.error('Error al obtener los datos:', error);
-                });
-
-            axios.get('/canciones-artista/' + idAlbum)
-                .then(response => {
-                    setTableSongToAdd(response.data.canciones_artista);
-                })
-                .catch(error => {
-                    console.error('Error al obtener los datos:', error);
-                });
-        }
-
-    };
+                axios.get('/canciones-artista/' + idAlbum)
+                    .then(response => {
+                        setTableSongToAdd(response.data.canciones_artista);
+                    })
+                    .catch(error => {
+                        console.error('Error al obtener los datos:', error);
+                    });
+            }
+    }, [idAlbum, tableSongAdded, tableSongToAdd]);
+    ;
 
     /** FUNCIONALIDAD DEL BOTON DE GUARDADO */
     const handleSave = () => {
@@ -422,9 +419,6 @@ const Album = () => {
                     </MenuItem>
                 ))}
             </Select>
-            <br /><br />
-            <Button variant="contained" color="primary" onClick={() => handleShowAlbum()}><VisibilityIcon />Mostrar</Button>
-            <br />
             <br />
 
             <div style={{ display: 'flex' }}>

@@ -143,10 +143,9 @@ const Song = () => {
         const formData = new FormData();
         formData.append('nombre', name);
         formData.append('imagen_portada', filePhoto);
-        formData.append('duracion', audioDuration);
+        formData.append('duracion', segundosAFormatoTiempo(audioDuration));
         formData.append('archivo_mp3', fileAudio);
         formData.append('id_artista', idArtist);
-
         if (name === '') {
             alert("El campo nombre es obligatorio");
         } else if (filePhoto === null) {
@@ -171,12 +170,22 @@ const Song = () => {
 
     };
 
+    function segundosAFormatoTiempo(segundos) {
+        const horas = Math.floor(segundos / 3600);
+        const minutos = Math.floor((segundos % 3600) / 60);
+        const segundosRestantes = segundos % 60;
+      
+        const formatoHora = (valor) => (valor < 10 ? `0${valor}` : `${valor}`);
+        
+        return `${formatoHora(horas)}:${formatoHora(minutos)}:${formatoHora(segundosRestantes)}`;
+      }
+
     /* FUNCIONALIDAD DEL BOTON DE ACTUALIZAR */
     const handleEdit = () => {
         const formData = new FormData();
         formData.append('nombre', name);
         formData.append('imagen_portada', filePhoto);
-        formData.append('duracion', audioDuration);
+        formData.append('duracion', segundosAFormatoTiempo(audioDuration));
         formData.append('archivo_mp3', fileAudio);
         formData.append('id_artista', idArtist);
         formData.append('id_album', null);
