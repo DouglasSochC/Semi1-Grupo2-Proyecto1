@@ -5,7 +5,7 @@ import { TextField, Button } from '@material-ui/core'
 import { useHistory } from 'react-router'
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
-export default function Song({ headerBackground }) {
+export default function Song({ headerBackground, addToPlayback }) {
 
   const { push } = useHistory()
 
@@ -48,6 +48,10 @@ export default function Song({ headerBackground }) {
     push('/album')
   }
 
+  const add = (Cancion_ID) =>{
+    addToPlayback(cancion.Cancion_ID)
+  }
+
   return (
     <Container headerBackground={headerBackground}>
       <div className="form">
@@ -66,7 +70,7 @@ export default function Song({ headerBackground }) {
           <div className="buttons">
             Reproducir
           </div>
-          <div className="buttons">
+          <div className="buttons" onClick={() => add(cancion.Cancion_ID)}>
             Agregar a reproduccion actual
           </div>
           <div className="buttons">

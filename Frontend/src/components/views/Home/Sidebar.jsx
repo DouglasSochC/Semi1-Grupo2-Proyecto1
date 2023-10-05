@@ -35,7 +35,7 @@ export default function Sidebar({ isAdmin }) {
           </li>
           <li>
             <BiSolidPlaylist />
-            <span>Playlist</span>
+            <span>Playlists</span>
           </li>
           <li>
             <AiFillHeart />

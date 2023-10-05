@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 //import { Typography } from '@material-ui/core'
 import Sidebar from "./Sidebar";
 import styled from "styled-components";
@@ -83,26 +83,112 @@ class ListaCanciones{
 const Home = () => {
   const [search, setSearch] = useState("");
   const headerBackground = "https://i.imgur.com/2nCt3Sbl.jpg";
-  const [usuario, setUsuario] = useState({nombres:'',apellidos:'',foto:'',correo:'', fecha_nacimiento:'', es_administrador:0})
+  const [usuario, setUsuario] = useState({ nombres: '', apellidos: '', foto: '', correo: '', fecha_nacimiento: '', es_administrador: 0 })
   const { push } = useHistory()
-  const [ reproduccion, setReproduccion ] = useState(-1);
-  const [ listaCanciones, setListaCanciones ] = useState([]);
-  const [ ciclico, setCiclico ] = useState(false);
-  const [ random, setRandom ] = useState(false);
+  const [reproduccion, setReproduccion] = useState(-1);
+  const [listaCanciones, setListaCanciones] = useState([]);
+  const [listaReproduccion, setListaReproduccion] = useState([]);
+  const [ciclico, setCiclico] = useState(false);
+  const [random, setRandom] = useState(false);
+  const [playerState, setPlayerState] = useState(false);
+  const [radio, setradio] = useState(false)
   //const [LCanciones, setLCanciones] = useState(new ListaCanciones())
+
+  const changeCiclico = () => {
+    setCiclico(!ciclico);
+  };
+
+  const changeRandom = () => {
+    if(!random){
+      setListaReproduccion(shuffle(listaReproduccion));
+    }else{
+      setListaReproduccion(listaCanciones);
+    }
+    setRandom(!random);
+  }
+
+  const shuffle = (array) => {
+    let currentIndex = array.length,  randomIndex;
+  
+    // While there remain elements to shuffle.
+    while (currentIndex > 0) {
+  
+      // Pick a remaining element.
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+  
+      // And swap it with the current element.
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+    }
+    return array;
+  }
+
+  const addToPlayback = (id_cancion) => {
+    if (listaCanciones.includes(id_cancion)) {
+      console.log("sin agregar")
+      return;
+    }
+    setListaCanciones([...listaCanciones, id_cancion]);
+    const nuevaListaReproduccion = [...listaReproduccion];
+    if (random) {
+      // Genera un índice aleatorio dentro de la longitud de la lista
+      const randomIndex = Math.floor(Math.random() * (nuevaListaReproduccion.length + 1));
+      // Inserta la nueva ID en la posición aleatoria generada
+      nuevaListaReproduccion.splice(randomIndex, 0, id_cancion);
+    } else {
+      // Si no es reproducción aleatoria, simplemente agrega la ID al final
+      nuevaListaReproduccion.push(id_cancion);
+    }
+    // Actualiza el estado de listaReproduccion
+    console.log(nuevaListaReproduccion)
+    setListaReproduccion(nuevaListaReproduccion);
+    if (reproduccion === -1) {
+      setReproduccion(id_cancion);
+    }
+  }
+
+  const Next = () => {
+    if (reproduccion === -1) {
+      return;
+    }
+    console.log(listaReproduccion)
+    const index = listaReproduccion.indexOf(reproduccion);
+    if (index === listaReproduccion.length - 1) {
+      setReproduccion(listaReproduccion[0]);
+      setPlayerState(ciclico)
+    } else {
+      setReproduccion(listaReproduccion[index + 1]);
+      setPlayerState(true)
+    }
+  }
+
+  const Prev = () => {
+    if (reproduccion === -1) {
+      return;
+    }
+    const index = listaReproduccion.indexOf(reproduccion);
+    if (index === 0) {
+      setReproduccion(listaReproduccion[listaReproduccion.length - 1]);
+      setPlayerState(ciclico)
+    } else {
+      setReproduccion(listaReproduccion[index - 1]);
+      setPlayerState(true)
+    }
+  }
 
   useEffect(() => {
     axios.get('/usuario/' + localStorage.getItem('SoundStream_UserID'))
-    .then(({ data }) => {
-      if (data !== undefined && data !== null){
-        setUsuario(data.usuario)
-      }else{
-        Salir()
-      }
-    })
-  }, [usuario]); 
+      .then(({ data }) => {
+        if (data !== undefined && data !== null) {
+          setUsuario(data.usuario)
+        } else {
+          Salir()
+        }
+      })
+  }, [usuario]);
 
-  const Salir = () =>{
+  const Salir = () => {
     localStorage.setItem('SoundStream_UserID', -1);
     push('/login')
   }
@@ -116,7 +202,7 @@ const Home = () => {
             <div className="body" >
               <Navbar search={search} setSearch={setSearch} Salir={Salir} Name={usuario.nombres} />
               <div className="body__contents">
-                <Body headerBackground={headerBackground} search={search}/>
+                <Body headerBackground={headerBackground} search={search} />
               </div>
             </div>
           </Route>
@@ -124,7 +210,7 @@ const Home = () => {
             <div className="body" >
               <NavBarUsr search={search} Salir={Salir} />
               <div className="body__contents">
-                <User headerBackground={headerBackground} User={usuario}/>
+                <User headerBackground={headerBackground} User={usuario} />
               </div>
             </div>
           </Route>
@@ -132,7 +218,7 @@ const Home = () => {
             <div className="body" >
               <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Cancion:"}/>
               <div className="body__contents">
-                <Song headerBackground={headerBackground}/>
+                <Song headerBackground={headerBackground} addToPlayback={addToPlayback}/>
               </div>
             </div>
           </Route>
@@ -140,21 +226,21 @@ const Home = () => {
             <div className="body" >
               <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Album:"}/>
               <div className="body__contents">
-                <Album headerBackground={headerBackground}/>
+                <Album headerBackground={headerBackground} addToPlayback={addToPlayback}/>
               </div>
             </div>
           </Route>
           <Route path="/artist">
             <div className="body">
-              <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Artista:"}/>
+              <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Artista:"} />
               <div className="body__contents">
-                <Artist headerBackground={headerBackground}/>
+                <Artist headerBackground={headerBackground} />
               </div>
             </div>
           </Route>
         </div>
         <div className="spotify__footer">
-          <Footer/>
+          <Footer playerState={playerState} setPlayerState={setPlayerState} changeCiclico={changeCiclico} changeRandom={changeRandom} ciclico={ciclico} random={random} reproduccion={reproduccion} Next={Next} Prev={Prev} listaReproduccion={listaReproduccion}/>
         </div>
       </Container>
     </Router>
@@ -166,7 +252,7 @@ const Container = styled.div`
   max-height: 100%;
   overflow: hidden;
   display: grid;
-  grid-template-rows: 86vh 14vh;
+  grid-template-rows: 85vh 15vh;
   .spotify__body {
     display: grid;
     grid-template-columns: 15vw 85vw;
@@ -213,6 +299,9 @@ const Container = styled.div`
         }
       }
     }
+  }
+  .spotify__footer{
+    display: grid;
   }
   /* ===== Scrollbar CSS ===== */
   /* Firefox */

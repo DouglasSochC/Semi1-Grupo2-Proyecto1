@@ -3,33 +3,40 @@ import styled from "styled-components";
 import {
   BsFillPlayCircleFill,
   BsFillPauseCircleFill,
-  BsShuffle,
 } from "react-icons/bs";
 import { CgPlayTrackNext, CgPlayTrackPrev } from "react-icons/cg";
-import { FiRepeat } from "react-icons/fi";
+import { TbArrowsRight, TbRepeatOff, TbArrowsShuffle2, TbRepeat } from "react-icons/tb";
 
-export default function PlayerControls(promps) {
+export default function PlayerControls({playerState, changeState, changeCiclico, changeRandom, ciclico, random, Next, Prev}) {
 
   return (
     <Container>
       <div className="shuffle">
-        <BsShuffle />
+        {random ? (
+          <TbArrowsShuffle2 onClick={changeRandom} />
+        ) : (
+          <TbArrowsRight onClick={changeRandom} />
+        )}
       </div>
       <div className="previous">
-        <CgPlayTrackPrev />
+        <CgPlayTrackPrev onClick={Prev} />
       </div>
       <div className="state">
-        {promps.playerState ? (
-          <BsFillPauseCircleFill onClick={promps.changeState} />
+        {playerState ? (
+          <BsFillPauseCircleFill onClick={changeState} />
         ) : (
-          <BsFillPlayCircleFill onClick={promps.changeState} />
+          <BsFillPlayCircleFill onClick={changeState} />
         )}
       </div>
       <div className="next">
-        <CgPlayTrackNext />
+        <CgPlayTrackNext onClick={Next} />
       </div>
       <div className="repeat">
-        <FiRepeat />
+        {ciclico ? (
+          <TbRepeat onClick={changeCiclico} />
+        ) : (
+          <TbRepeatOff onClick={changeCiclico} />
+        )}
       </div>
     </Container>
   );
@@ -56,5 +63,11 @@ const Container = styled.div`
   .next,
   .state {
     font-size: 2rem;
+  }
+  .shuffle,
+  .repeat {
+    font-size: 1rem;
+  }
+
   }
 `;
