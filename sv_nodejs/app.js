@@ -838,6 +838,7 @@ app.delete('/canciones-album/:id_cancion', (req, res) => {
     });
 });
 
+// ACA INIAR A TESTESAR EN PYTHON
 /** Agregar una cancion a favoritos para un usuario */
 app.post('/favoritos', (req, res) => {
     const { id_cancion, id_usuario } = req.body;
