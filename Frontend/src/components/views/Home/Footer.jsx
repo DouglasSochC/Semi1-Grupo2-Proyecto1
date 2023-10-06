@@ -93,7 +93,6 @@ export default function Footer({ playerState, setPlayerState, changeCiclico, cha
 
   useEffect(() => {
     if (reproduccionLocal !== reproduccion && reproduccion !== -1) {
-      console.log('/cancion/' + reproduccion);
       axios.get('/cancion/' + reproduccion)
         .then(({ data }) => {
           if (data !== undefined && data !== null) {

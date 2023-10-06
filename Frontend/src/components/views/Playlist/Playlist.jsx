@@ -129,7 +129,6 @@ const Playlist = ({playAList}) => {
                 .catch(error => {
                     console.error('Error al obtener los datos:', error);
                 });
-
             axios.get('/canciones-no-playlist/' + idPlaylist)
                 .then(response => {
                     setTableSongToAdd(response.data.canciones_playlist);

@@ -42,7 +42,6 @@ export default function Song({ headerBackground, addToPlayback, play, setSearch 
     axios.get('/favorito-usuario/' + localStorage.getItem('SoundStream_UserID') + '/' + localStorage.getItem('SoundStream_SongID'))
       .then(({ data }) => {
         if (data !== undefined && data !== null) {
-          console.log(data.es_favorita)
           setFavorito(data.es_favorita)
         } else {
           localStorage.setItem('SoundStream_SongID', -1)

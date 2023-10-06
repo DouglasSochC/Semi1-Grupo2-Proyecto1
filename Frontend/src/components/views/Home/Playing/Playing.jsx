@@ -39,7 +39,6 @@ export default function Album({ headerBackground, reproduccion, listaCanciones, 
     }, [listaCanciones]);
 
     const EliminarCancion = (id_artista) => {
-      console.log(canciones)
       removeFromPlayback(id_artista)
   }
 

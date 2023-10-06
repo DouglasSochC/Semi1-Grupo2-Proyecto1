@@ -59,7 +59,6 @@ export default function Album({ headerBackground, reproduccion, changeSong }) {
   useEffect(() => {
     axios.get('/historial/' + localStorage.getItem('SoundStream_UserID'))
       .then(({ data }) => {
-        console.log(data)
         if (data !== undefined && data !== null) {
           setHistorial(data.data)
         }

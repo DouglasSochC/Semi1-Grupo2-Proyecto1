@@ -84,7 +84,6 @@ const Home = () => {
       nuevaListaReproduccion.push(id_cancion);
     }
     // Actualiza el estado de listaReproduccion
-    console.log(nuevaListaReproduccion)
     setListaReproduccion(nuevaListaReproduccion);
     if (reproduccion === -1) {
       setReproduccion(id_cancion);
@@ -149,7 +148,6 @@ const Home = () => {
   const playAList = (ids) => {
     setListaCanciones(ids);
     if (random) {
-      console.log(random);
       setListaReproduccion(shuffle([].concat(ids)));
     } else {
       setListaReproduccion(ids);

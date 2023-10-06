@@ -8,7 +8,6 @@ import Body from "./BodyA";
 
 const HomeA = () => {
   const headerBackground = "https://i.imgur.com/2nCt3Sbl.jpg";
-  console.log("HomeAdmin");
   return (
     <Container>
     <div className="spotify__body">

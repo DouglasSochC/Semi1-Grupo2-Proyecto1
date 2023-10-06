@@ -852,7 +852,7 @@ def canciones_playlist(id_playlist):
             INNER JOIN ARTISTA a ON a.id = c.id_artista
             WHERE p.id = %s
         """
-
+        cursor = g.cursor
         cursor.execute(query, (id_playlist,))
         result = cursor.fetchall()
 
@@ -883,7 +883,7 @@ def canciones_no_playlist(id_playlist):
             INNER JOIN ARTISTA a ON a.id = c.id_artista
             WHERE c.id NOT IN (SELECT id_cancion FROM DETALLE_PLAYLIST dp WHERE dp.id_playlist = %s)
         """
-
+        cursor = g.cursor
         cursor.execute(query, (id_playlist,))
         result = cursor.fetchall()
 
@@ -1204,25 +1204,6 @@ def eliminar_playlist(id):
         print('Error:', str(e))
         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
 
-# Agregar una cancion a una playlist
-@app.route('/playlist-canciones', methods=['POST'])
-def agregar_cancion_a_playlist():
-    try:
-        id_playlist = request.json['id_playlist']
-        id_cancion = request.json['id_cancion']
-        query = 'INSERT INTO DETALLE_PLAYLIST (id_playlist, id_cancion) VALUES (%s, %s)'
-
-        cursor = db.cursor()
-        cursor.execute(query, (id_playlist, id_cancion))
-        db.commit()
-        cursor.close()
-
-        return jsonify({'success': True, 'mensaje': 'Canción agregada correctamente a la playlist'}), 200
-
-    except Exception as e:
-        print('Error:', str(e))
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
-
 # Obtener el detalle de una playlist por su ID
 @app.route('/playlist-canciones/<int:id>', methods=['GET'])
 def obtener_detalle_de_playlist(id):
@@ -1244,23 +1225,6 @@ def obtener_detalle_de_playlist(id):
             return jsonify({'success': True, 'playlist': result}), 200
         else:
             return jsonify({'success': False, 'mensaje': 'Playlist no encontrada'}), 404
-
-    except Exception as e:
-        print('Error:', str(e))
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
-
-# Eliminar una cancion de una playlist por su ID
-@app.route('/playlist-canciones/<int:id_cancion>', methods=['DELETE'])
-def eliminar_cancion_de_playlist(id_cancion):
-    try:
-        query = 'DELETE FROM DETALLE_PLAYLIST WHERE id = %s'
-
-        cursor = db.cursor()
-        cursor.execute(query, (id_cancion,))
-        db.commit()
-        cursor.close()
-
-        return jsonify({'success': True, 'mensaje': 'Canción eliminada de la playlist correctamente'}), 200
 
     except Exception as e:
         print('Error:', str(e))
