@@ -168,7 +168,7 @@ def login_user():
     except Exception as e:
         print("Error:", e)
         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al procesar la solicitud'}), 500
-
+    
 # Ruta para obtener un usuario por su ID
 @app.route('/usuario/<int:id>', methods=['GET'])
 def obtener_usuario(id):

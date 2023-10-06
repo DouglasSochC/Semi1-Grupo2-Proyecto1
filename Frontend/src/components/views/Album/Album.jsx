@@ -104,7 +104,7 @@ const Album = () => {
         };
 
         fetchData();
-    }, []);
+    }, [albumes]);
 
     /* FUNCIONALIDAD PARA CARGAR LOS ARTISTAS */
     const [artists, setArtists] = useState([]);

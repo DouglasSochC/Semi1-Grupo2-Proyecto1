@@ -137,6 +137,16 @@ const Home = () => {
     setReproduccion(ids[0]);
   }
 
+  const playRadio= (ids) => {
+    setListaCanciones(ids);
+    setRandom(true);
+    setCiclico(true)
+    const listaRandom = shuffle([].concat(ids));
+    setListaReproduccion(listaRandom);
+    setPlayerState(true);
+    setReproduccion(listaRandom[0]);
+  }
+
   const Prev = () => {
     if (reproduccion === -1) {
       return;
@@ -170,7 +180,7 @@ const Home = () => {
     <Router>
       <Container>
         <div className="spotify__body">
-          <Sidebar isAdmin={usuario.es_administrador} setSearch={setSearch} />
+          <Sidebar isAdmin={usuario.es_administrador} setSearch={setSearch} playRadio={playRadio}/>
           <Route path="/app">
             <div className="body" >
               <Navbar search={search} setSearch={setSearch} Salir={Salir} Name={usuario.nombres} />
