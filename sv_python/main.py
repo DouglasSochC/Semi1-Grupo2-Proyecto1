@@ -1250,7 +1250,7 @@ def top3_artistas(id_usuario):
             WHERE h.id_usuario = %s
             GROUP BY a.id
             ORDER BY cantidad DESC
-            LIMIT 3
+            LIMIT 3;
         """
 
         cursor.execute(query, (id_usuario,))
