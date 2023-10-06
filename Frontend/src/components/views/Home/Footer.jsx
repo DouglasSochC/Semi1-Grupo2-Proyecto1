@@ -6,7 +6,7 @@ import PlayerControls from "./PlayerControls";
 import Volume from "./Volume";
 import TimeController from "./TimeController";
 
-export default function Footer({ playerState, setPlayerState, changeCiclico, changeRandom, ciclico, random, reproduccion, Next, Prev }) {
+export default function Footer({ playerState, setPlayerState, changeCiclico, changeRandom, ciclico, random, reproduccion, Next, Prev, changeSong, setChangeSong }) {
   const [song, setSong] = useState(new Audio());
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -113,6 +113,9 @@ export default function Footer({ playerState, setPlayerState, changeCiclico, cha
                 .post('/historicos', {
                   id_usuario: localStorage.getItem('SoundStream_UserID'),
                   id_cancion: data.cancion.Cancion_ID,
+                })
+                .then(() => {
+                  setChangeSong(!changeSong)
                 });
             }
             setReproduccionLocal(reproduccion);

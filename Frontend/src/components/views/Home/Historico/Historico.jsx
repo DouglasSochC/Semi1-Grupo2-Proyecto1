@@ -5,90 +5,219 @@ import { TextField, Button } from '@material-ui/core'
 import { useHistory } from 'react-router'
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
-export default function Album({ headerBackground, reproduccion, listaCanciones }) {
+export default function Album({ headerBackground, reproduccion, changeSong }) {
 
-    const { push } = useHistory()
+  const { push } = useHistory()
 
-    const [canciones, setCanciones] = useState([]);
-    const [artistas, setArtistas] = useState([]);
-    const [albumes, setAlbumes] = useState([]);
+  const [canciones, setCanciones] = useState([]);
+  const [artistas, setArtistas] = useState([]);
+  const [albumes, setAlbumes] = useState([]);
+  const [historial, setHistorial] = useState([]);
 
-    const VerCancion = (id_cancion) => {
-        localStorage.setItem('SoundStream_SongID', id_cancion)
-        push('/song')
-    }
+  const VerCancion = (id_cancion) => {
+    localStorage.setItem('SoundStream_SongID', id_cancion)
+    push('/song')
+  }
 
-    const VerAlbum = (id_album) => {
-        localStorage.setItem('SoundStream_AlbumID', id_album)
-        push('/album')
-    }
+  const VerAlbum = (id_album) => {
+    localStorage.setItem('SoundStream_AlbumID', id_album)
+    push('/album')
+  }
 
-    const VerArtista = (id_artista) => {
-        localStorage.setItem('SoundStream_ArtistID', id_artista)
-        push('/artist')
-    }
+  const VerArtista = (id_artista) => {
+    localStorage.setItem('SoundStream_ArtistID', id_artista)
+    push('/artist')
+  }
 
-    useEffect(() => {
-        const TempCanciones = []
-        for (let i = 0; i < listaCanciones.length; i++) {
-            axios.get('/cancion/' + listaCanciones[i])
-                .then(({ data }) => {
-                    if (data !== undefined && data !== null) {
-                        TempCanciones = [...TempCanciones, data.cancion]
-                    }
-                })
+  useEffect(() => {
+    axios.get('/top5-canciones/' + localStorage.getItem('SoundStream_UserID'))
+      .then(({ data }) => {
+        if (data !== undefined && data !== null) {
+          setCanciones(data.data)
         }
-        setCanciones(TempCanciones)
-    }, [listaCanciones]);
+      })
+  }, [changeSong]);
 
-    return (
-        <Container headerBackground={headerBackground}>
-            <div className="form">
-                <div className={`sides`}>
-                    <div className="Left">
-                        No.
-                    </div>
-                    <div className="Center">
-                        Nombre
-                    </div>
-                    <div className="Center">
-                        Album
-                    </div>
-                    <div className="Center">
-                        Artista
-                    </div>
-                    <div className="Center">
-                        Duracion
-                    </div>
-                    <div className="Rigth">
-                        Eliminar
-                    </div>
-                </div>
-                {canciones.map((cancion, index) => (
-                    <div className={`sides ${cancion.Cancion_ID === reproduccion ? 'now' : index % 2 === 0 ? 'even' : ''} ligth`}>
-                        <div className="Left">
-                            {index + 1}
-                        </div>
-                        <div className="Center" key={cancion.id_cancion} onClick={() => VerCancion(cancion.id_cancion)}>
-                            {cancion.Cancion_Nombre}
-                        </div>
-                        <div className="Center" key={cancion.Album_ID} onClick={() => VerAlbum(cancion.Album_ID)}>
-                            {cancion.Album_Nombre}
-                        </div>
-                        <div className="Center" key={cancion.Artista_ID} onClick={() => VerArtista(cancion.Artista_ID)}>
-                            {cancion.Artista_Nombre}
-                        </div>
-                        <div className="Center">
-                            {cancion.Cancion_Duracion}
-                        </div>
-                        <div className="Rigth">
-                            X
-                        </div>
-                    </div>
-                ))}
+  useEffect(() => {
+    axios.get('/top3-artistas/' + localStorage.getItem('SoundStream_UserID'))
+      .then(({ data }) => {
+        if (data !== undefined && data !== null) {
+          setArtistas(data.data)
+        }
+      })
+  }, [changeSong]);
+
+  useEffect(() => {
+    axios.get('/top5-albumes/' + localStorage.getItem('SoundStream_UserID'))
+      .then(({ data }) => {
+        if (data !== undefined && data !== null) {
+          setAlbumes(data.data)
+        }
+      })
+  }, [changeSong]);
+
+  useEffect(() => {
+    axios.get('/historial/' + localStorage.getItem('SoundStream_UserID'))
+      .then(({ data }) => {
+        if (data !== undefined && data !== null) {
+          setHistorial(data.data)
+        }
+      })
+  }, [changeSong]);
+
+  return (
+    <Container headerBackground={headerBackground}>
+      <div className="aux">
+        <h1>Tus 5 canciones mas reproducidos:</h1>
+      </div>
+      <div className="form">
+        <div className={`sides`}>
+          <div className="Left">
+            No.
+          </div>
+          <div className="Center">
+            Nombre
+          </div>
+          <div className="Center">
+            Artista
+          </div>
+          <div className="Center">
+            Album
+          </div>
+          <div className="Rigth">
+            Reproducciones
+          </div>
+        </div>
+        {canciones.map((cancion, index) => (
+          <div className={`sides ${index % 2 === 0 ? 'even' : ''} ligth`}>
+            <div className="Left">
+              {index + 1}
             </div>
-        </Container>
-    );
+            <div className="Center" key={cancion.id_cancion} onClick={() => VerCancion(cancion.id_cancion)}>
+              {cancion.nombre_cancion}
+            </div>
+            <div className="Center" key={cancion.id_artista} onClick={() => VerArtista(cancion.id_artista)}>
+              {cancion.nombre_artista}
+            </div>
+            <div className="Center" key={cancion.id_album} onClick={() => VerAlbum(cancion.id_album)}>
+              {cancion.nombre_album}
+            </div>
+            <div className="Rigth">
+              {cancion.cantidad}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="aux">
+        <h1>Tus 3 artistas mas reproducidos:</h1>
+      </div>
+      <div className="form">
+        <div className={`sides`}>
+          <div className="LeftArtist">
+            No.
+          </div>
+          <div className="CenterArtist">
+            Nombre
+          </div>
+          <div className="RigthArtist">
+            Reproducciones
+          </div>
+        </div>
+        {artistas.map((artista, index) => (
+          <div className={`sides ${index % 2 === 0 ? 'even' : ''} ligth`}>
+            <div className="LeftArtist">
+              {index + 1}
+            </div>
+            <div className="CenterArtist" key={artista.id_artista} onClick={() => VerArtista(artista.id_artista)}>
+              {artista.nombre_artista}
+            </div>
+            <div className="RigthArtist">
+              {artista.cantidad}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="aux">
+        <h1>Tus 5 albumes mas reproducidos:</h1>
+      </div>
+      <div className="form">
+        <div className={`sides`}>
+          <div className="LeftAlbum">
+            No.
+          </div>
+          <div className="CenterAlbum">
+            Nombre
+          </div>
+          <div className="CenterAlbum">
+            Artista
+          </div>
+          <div className="RigthAlbum">
+            Reproducciones
+          </div>
+        </div>
+        {albumes.map((album, index) => (
+          <div className={`sides ${index % 2 === 0 ? 'even' : ''} ligth`}>
+            <div className="LeftAlbum">
+              {index + 1}
+            </div>
+            <div className="CenterAlbum" key={album.id_album} onClick={() => VerAlbum(album.id_album)}>
+              {album.nombre_album}
+            </div>
+            <div className="CenterAlbum" key={album.id_artista} onClick={() => VerArtista(album.id_artista)}>
+              {album.nombre_artista}
+            </div>
+            <div className="RigthAlbum">
+              {album.cantidad}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="aux">
+        <h1>Historial de canciones:</h1>
+      </div>
+      <div className="form">
+        <div className={`sides`}>
+          <div className="LeftHistory">
+            No.
+          </div>
+          <div className="CenterHistory">
+            Nombre
+          </div>
+          <div className="CenterHistory">
+            Artista
+          </div>
+          <div className="CenterHistory">
+            Album
+          </div>
+          <div className="RigthHistory">
+            Fecha
+          </div>
+        </div>
+        {historial.map((registro, index) => (
+          <div className={`sides ${index % 2 === 0 ? 'even' : ''} ligth`}>
+            <div className="LeftHistory">
+              {index + 1}
+            </div>
+            <div className="CenterHistory" key={registro.id_cancion} onClick={() => VerCancion(registro.id_cancion)}>
+              {registro.nombre}
+            </div>
+            <div className="CenterHistory" key={registro.id_artista} onClick={() => VerArtista(registro.id_artista)}>
+              {registro.nombre_artista}
+            </div>
+            <div className="CenterHistory" key={registro.id_album} onClick={() => VerAlbum(registro.id_album)}>
+              {registro.nombre_album}
+            </div>
+            <div className="RigthHistory">
+              {registro.fecha_registro}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Container>
+  );
 }
 
 const Container = styled.div`
@@ -96,6 +225,10 @@ const Container = styled.div`
   height: 100%; /* Ocupa el 100% del alto disponible */
   margin-top:2.5%;
   color: white;
+  .aux{
+    width: 95%; /* Ocupa todo el ancho dentro de Container */
+    margin: auto; /* Centra horizontalmente */
+  }
   .form{
     width: 95%; /* Ocupa todo el ancho dentro de Container */
     margin: auto; /* Centra horizontalmente */
@@ -126,7 +259,7 @@ const Container = styled.div`
     padding: 10px;
   }
   .buttons{
-    flex: 50%; /* Ocupa el 33% del ancho */
+    flex: 50%; 
     background-color: black;
     padding: 10px;
     display: flex;
@@ -135,7 +268,7 @@ const Container = styled.div`
     border: 3px solid black;
   }
   .Left{
-    flex: 8%; /* Ocupa el 33% del ancho */
+    flex: 5%; 
     padding: 10px;
     display: flex;
     justify-content: center; /* Centra horizontalmente */
@@ -143,7 +276,7 @@ const Container = styled.div`
     border: 1px solid black;
   }
   .Center{
-    flex: 21%; /* Ocupa el 33% del ancho */
+    flex: 28%; 
     padding: 10px;
     display: flex;
     justify-content: center; /* Centra horizontalmente */
@@ -151,7 +284,82 @@ const Container = styled.div`
     border: 1px solid black;
   }
   .Rigth{
-    flex: 8%; /* Ocupa el 33% del ancho */
+    flex: 11%; 
+    padding: 10px;
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    border: 1px solid black;
+  }
+
+  .LeftArtist{
+    flex: 5%; 
+    padding: 10px;
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    border: 1px solid black;
+  }
+  .CenterArtist{
+    flex: 84%; 
+    padding: 10px;
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    border: 1px solid black;
+  }
+  .RigthArtist{
+    flex: 11%; 
+    padding: 10px;
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    border: 1px solid black;
+  }
+
+  .LeftAlbum{
+    flex: 5%; 
+    padding: 10px;
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    border: 1px solid black;
+  }
+  .CenterAlbum{
+    flex: 42%; 
+    padding: 10px;
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    border: 1px solid black;
+  }
+  .RigthAlbum{
+    flex: 11%; 
+    padding: 10px;
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    border: 1px solid black;
+  }
+
+  .LeftHistory{
+    flex: 5%; 
+    padding: 10px;
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    border: 1px solid black;
+  }
+  .CenterHistory{
+    flex: 20%; 
+    padding: 10px;
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    border: 1px solid black;
+  }
+  .RigthHistory{
+    flex: 15%; 
     padding: 10px;
     display: flex;
     justify-content: center; /* Centra horizontalmente */

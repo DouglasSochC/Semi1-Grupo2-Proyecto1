@@ -1111,17 +1111,19 @@ app.post('/historicos', (req, res) => {
 });
 
 /** Top 5 canciones mas reproducidas */
-app.get('/top5-canciones', (req, res) => {
-
-    const query = `SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, c.fotografia, c.duracion, a.id AS id_artista, a.nombre AS nombre_artista, COUNT(h.id) AS cantidad
+app.get('/top5-canciones/:id_usuario', (req, res) => {
+    const id_usuario = req.params.id_usuario;
+    const query = `SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, c.fotografia, c.duracion, a.id AS id_artista, a.nombre AS nombre_artista, al.id AS id_album, al.nombre AS nombre_album, COUNT(h.id) AS cantidad 
         FROM HISTORICO h
         INNER JOIN CANCION c ON c.id = h.id_cancion
         INNER JOIN ARTISTA a ON a.id = c.id_artista
+        LEFT JOIN ALBUM al ON al.id = c.id_album
+        WHERE h.id_usuario = ? 
         GROUP BY c.id
         ORDER BY cantidad DESC
-        LIMIT 5`;
+        LIMIT 5;`;
 
-    db.query(query, [], (err, result) => {
+    db.query(query, [id_usuario], (err, result) => {
         if (err) {
             console.error('Error al obtener los datos:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener los datos" });
@@ -1132,17 +1134,18 @@ app.get('/top5-canciones', (req, res) => {
 });
 
 /** Top 3 artistas mas escuchados */
-app.get('/top3-artistas', (req, res) => {
-
+app.get('/top3-artistas/:id_usuario', (req, res) => {
+    const id_usuario = req.params.id_usuario;
     const query = `SELECT a.id AS id_artista, a.nombre AS nombre_artista, COUNT(h.id) AS cantidad
         FROM HISTORICO h
         INNER JOIN CANCION c ON c.id = h.id_cancion
         INNER JOIN ARTISTA a ON a.id = c.id_artista
+        WHERE h.id_usuario = ? 
         GROUP BY a.id
         ORDER BY cantidad DESC
         LIMIT 3`;
 
-    db.query(query, [], (err, result) => {
+    db.query(query, [id_usuario], (err, result) => {
         if (err) {
             console.error('Error al obtener los datos:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener los datos" });
@@ -1153,17 +1156,19 @@ app.get('/top3-artistas', (req, res) => {
 });
 
 /** Top 5 albumes mas reproducidos */
-app.get('/top5-albumes', (req, res) => {
-
-    const query = `SELECT a.id AS id_album, a.nombre AS nombre_album, a.imagen_portada, COUNT(h.id) AS cantidad
+app.get('/top5-albumes/:id_usuario', (req, res) => {
+    const id_usuario = req.params.id_usuario;
+    const query = `SELECT a.id AS id_album, a.nombre AS nombre_album, a.imagen_portada, ar.id AS id_artista, ar.nombre AS nombre_artista, COUNT(h.id) AS cantidad
         FROM HISTORICO h
         INNER JOIN CANCION c ON c.id = h.id_cancion
         INNER JOIN ALBUM a ON a.id = c.id_album
+        INNER JOIN ARTISTA ar ON ar.id = a.id_artista
+        WHERE h.id_usuario = ?
         GROUP BY a.id
         ORDER BY cantidad DESC
-        LIMIT 5`;
+        LIMIT 5;`;
 
-    db.query(query, [], (err, result) => {
+    db.query(query, [id_usuario], (err, result) => {
         if (err) {
             console.error('Error al obtener los datos:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener los datos" });
@@ -1174,13 +1179,18 @@ app.get('/top5-albumes', (req, res) => {
 });
 
 /** Historial de canciones reproducidas */
-app.get('/historial', (req, res) => {
-
-    const query = `SELECT c.id AS id_cancion, c.nombre, c.fotografia, c.duracion, h.fecha_registro
+app.get('/historial/:id_usuario', (req, res) => {
+    const id_usuario = req.params.id_usuario;
+    const query = `SELECT c.id AS id_cancion,  c.nombre,  c.fotografia,  c.duracion,  DATE_FORMAT(h.fecha_registro, '%d/%m/%Y %H:%i:%s') AS fecha_registro, a.id AS id_album, a.nombre AS nombre_album, art.id AS id_artista, art.nombre AS nombre_artista
         FROM HISTORICO h
-        INNER JOIN CANCION c ON c.id = h.id_cancion`;
+        INNER JOIN CANCION c ON c.id = h.id_cancion
+        LEFT JOIN ALBUM a ON a.id = c.id_album
+        LEFT JOIN ARTISTA art ON art.id = c.id_artista
+        WHERE h.id_usuario = ?
+        ORDER BY h.fecha_registro DESC;
+`;
 
-    db.query(query, [], (err, result) => {
+    db.query(query, [id_usuario], (err, result) => {
         if (err) {
             console.error('Error al obtener los datos:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener los datos" });

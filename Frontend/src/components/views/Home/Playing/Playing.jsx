@@ -5,7 +5,7 @@ import { TextField, Button } from '@material-ui/core'
 import { useHistory } from 'react-router'
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
-export default function Album({ headerBackground, reproduccion, listaCanciones }) {
+export default function Album({ headerBackground, reproduccion, listaCanciones, removeFromPlayback }) {
 
     const { push } = useHistory()
 
@@ -37,6 +37,11 @@ export default function Album({ headerBackground, reproduccion, listaCanciones }
                 })
         }
     }, [listaCanciones]);
+
+    const EliminarCancion = (id_artista) => {
+      console.log(canciones)
+      removeFromPlayback(id_artista)
+  }
 
     return (
         <Container headerBackground={headerBackground}>
@@ -77,8 +82,8 @@ export default function Album({ headerBackground, reproduccion, listaCanciones }
                         </div>
                         <div className="Center">
                             {cancion.Cancion_Duracion}
-                        </div>
-                        <div className="Rigth">
+                        </div >
+                        <div className="Rigth" key={cancion.Artista_ID} onClick={() => EliminarCancion(cancion.Cancion_ID)}>
                             X
                         </div>
                     </div>

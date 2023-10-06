@@ -49,6 +49,10 @@ export default function Sidebar({ isAdmin, setSearch, playRadio }) {
     push('/CRUDArtistas')
   }
 
+  const irHistorico = () => {
+    push('/Historical')
+  }
+
   return (
     <Container>
       <div className="top__links">
@@ -76,7 +80,7 @@ export default function Sidebar({ isAdmin, setSearch, playRadio }) {
             <AiFillHeart />
             <span>Favorites</span>
           </li>
-          <li>
+          <li onClick={irHistorico}>
             <BiSolidBookBookmark />
             <span>Historico</span>
           </li>

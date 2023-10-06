@@ -13,6 +13,7 @@ import NavBarGen from "./Song/Navbar";
 import Album from "./Album/Album";
 import Artist from "./Artist/Artist";
 import Playing from "./Playing/Playing"
+import Historico from "./Historico/Historico"
 import CRUDSong from "../Song/Song"
 import CRUDAlbum from "../Album/Album"
 import CRUDArtist from "../Artist/Artist"
@@ -31,6 +32,7 @@ const Home = () => {
   const [ciclico, setCiclico] = useState(false);
   const [random, setRandom] = useState(false);
   const [playerState, setPlayerState] = useState(false);
+  const [changeSong, setChangeSong] = useState(false);
   //const [LCanciones, setLCanciones] = useState(new ListaCanciones())
 
   const changeCiclico = () => {
@@ -88,6 +90,24 @@ const Home = () => {
     alert("Cancion agregada con exito")
   }
 
+  const removeFromPlayback = (id_cancion) => {
+    if (listaCanciones.includes(id_cancion)) {
+      if (listaCanciones.length === 1) {
+        setPlayerState(false);
+        setReproduccion(-1);
+        setListaCanciones([]);
+        setListaReproduccion([]);
+        return;
+      }else{
+        if (reproduccion === id_cancion) {
+          Next()
+        }
+        setListaCanciones(listaCanciones.filter((cancion) => cancion !== id_cancion));
+        setListaReproduccion(listaReproduccion.filter((cancion) => cancion !== id_cancion));
+      }
+    }
+  }
+
   const addListToPlayback = (ids) => {
     setListaCanciones([...listaCanciones, ...(eliminarElementosRepetidos(listaCanciones, ids))]);
     setListaReproduccion([...listaCanciones, ...shuffle(eliminarElementosRepetidos(listaCanciones, ids))]);
@@ -107,7 +127,6 @@ const Home = () => {
     if (reproduccion === -1) {
       return;
     }
-    console.log(listaReproduccion)
     const index = listaReproduccion.indexOf(reproduccion);
     if (index === listaReproduccion.length - 1) {
       setReproduccion(listaReproduccion[0]);
@@ -226,7 +245,7 @@ const Home = () => {
             <div className="body">
               <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Reproduciendo:"} />
               <div className="body__contents">
-                <Playing headerBackground={headerBackground} reproduccion={reproduccion} listaCanciones={listaCanciones} />
+                <Playing headerBackground={headerBackground} reproduccion={reproduccion} listaCanciones={listaCanciones} removeFromPlayback={removeFromPlayback} />
               </div>
             </div>
           </Route>
@@ -251,9 +270,16 @@ const Home = () => {
               </div>
             </div>
           </Route>
+          <Route path="/Historical">
+            <div className="body">
+              <div className="body__contents">
+                <Historico headerBackground={headerBackground} reproduccion={reproduccion} changeSong={changeSong}/>
+              </div>
+            </div>
+          </Route>
         </div>
         <div className="spotify__footer">
-          <Footer playerState={playerState} setPlayerState={setPlayerState} changeCiclico={changeCiclico} changeRandom={changeRandom} ciclico={ciclico} random={random} reproduccion={reproduccion} Next={Next} Prev={Prev} listaReproduccion={listaReproduccion}/>
+          <Footer playerState={playerState} setPlayerState={setPlayerState} changeCiclico={changeCiclico} changeRandom={changeRandom} ciclico={ciclico} random={random} reproduccion={reproduccion} Next={Next} Prev={Prev} listaReproduccion={listaReproduccion} changeSong={changeSong} setChangeSong={setChangeSong}/>
         </div>
       </Container>
     </Router>
