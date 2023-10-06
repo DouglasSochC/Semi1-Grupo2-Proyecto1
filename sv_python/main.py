@@ -1211,7 +1211,7 @@ def top5_canciones(id_usuario):
             WHERE h.id_usuario = %s
             GROUP BY c.id
             ORDER BY cantidad DESC
-            LIMIT 5
+            LIMIT 5;
         """
 
         cursor.execute(query, (id_usuario,))
