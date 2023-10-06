@@ -1224,25 +1224,35 @@ def obtener_top5_canciones():
         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
 
 # Obtiene el top 3 de artistas más escuchados.
+# Endpoint para obtener el top 3 de artistas más escuchados
 @app.route('/top3-artistas', methods=['GET'])
 def top3_artistas():
-    cursor = db.cursor()
-    query = """
-        SELECT a.id AS id_artista, a.nombre AS nombre_artista, COUNT(h.id) AS cantidad
-        FROM HISTORICO h
-        INNER JOIN CANCION c ON c.id = h.id_cancion
-        INNER JOIN ARTISTA a ON a.id = c.id_artista
-        GROUP BY a.id
-        ORDER BY cantidad DESC
-        LIMIT 3
-    """
-    cursor = g.cursor
-    cursor.execute(query)
-    result = cursor.fetchall()
-    if result:
-        return jsonify({'success': True, 'data': result})
-    else:
-        return jsonify({'success': False, 'mensaje': "Ha ocurrido un error al obtener los datos"})
+    try:
+        query = """
+            SELECT a.id AS id_artista, a.nombre AS nombre_artista, COUNT(h.id) AS cantidad
+            FROM HISTORICO h
+            INNER JOIN CANCION c ON c.id = h.id_cancion
+            INNER JOIN ARTISTA a ON a.id = c.id_artista
+            GROUP BY a.id
+            ORDER BY cantidad DESC
+            LIMIT 3
+        """
+
+        cursor.execute(query)
+        result = cursor.fetchall()
+
+        data = []
+        for row in result:
+            artista = {
+                'id_artista': row[0],
+                'nombre_artista': row[1],
+                'cantidad': row[2]
+            }
+            data.append(artista)
+
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
 
 # Endpoint para obtener los 5 álbumes más reproducidos
 @app.route('/top5-albumes/<int:id_usuario>', methods=['GET'])
