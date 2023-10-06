@@ -8,6 +8,7 @@ import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import IconButton from '@material-ui/core/IconButton';
+import BookmarkIcon from '@material-ui/icons/Bookmark';
 import EditIcon from '@material-ui/icons/Edit';
 import AddIcon from '@material-ui/icons/Add';
 import SaveIcon from '@material-ui/icons/Save';
@@ -15,6 +16,9 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import UpdateIcon from '@material-ui/icons/Update';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import Box from '@material-ui/core/Box';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import Select from '@material-ui/core/Select';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import Modal from '@material-ui/core/Modal';
@@ -41,6 +45,7 @@ const Playlist = () => {
     const [file, setFile] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);  // Estado para controlar el modo de edicion
     const [titleModal, setTitleModal] = useState(false);
+    const [changes, setChanges] = useState(false)
 
     /* Para setear el nombre del archivo a subir */
     const [filename, setFilename] = useState("");
@@ -52,6 +57,13 @@ const Playlist = () => {
         setFile(file);
         const { name } = file;
         setFilename(name);
+    };
+
+    /* Para setear el id del playlist seleccionado */
+    const [idPlaylist, setIdPlaylist] = useState('');
+    const handleChangeAlbum = (event) => {
+        setIdPlaylist(event.target.value);
+        setChanges(!changes)
     };
 
     /* Para el modal que realiza un registro */
@@ -84,6 +96,45 @@ const Playlist = () => {
 
         fetchData();
     }, [artistData]);
+
+    /* FUNCIONALIDAD PARA CARGAR LAS PLAYLISTS */
+    const [playlists, setPlaylists] = useState([]);
+    useEffect(() => {
+
+        const fetchData = async () => {
+            try {
+                const response = await axios.get('/playlists');
+                setPlaylists(response.data.playlists);
+            } catch (error) {
+                console.error('Error al obtener los datos:', error);
+            }
+        };
+
+        fetchData();
+    }, [changes]);
+
+    /** FUNCIONALIDAD DEL BOTON DEL DETALLE DE UN ALBUM */
+    const [tableSongAdded, setTableSongAdded] = useState([]);
+    const [tableSongToAdd, setTableSongToAdd] = useState([]);
+    useEffect(() => {
+        if (idPlaylist !== '') {
+            axios.get('/canciones-playlist/' + idPlaylist)
+                .then(response => {
+                    setTableSongAdded(response.data.canciones_playlist);
+                })
+                .catch(error => {
+                    console.error('Error al obtener los datos:', error);
+                });
+
+            axios.get('/canciones-no-playlist/' + idPlaylist)
+                .then(response => {
+                    setTableSongToAdd(response.data.canciones_playlist);
+                })
+                .catch(error => {
+                    console.error('Error al obtener los datos:', error);
+                });
+        }
+    }, [changes]);
 
     /** FUNCIONALIDAD DEL BOTON DE GUARDADO */
     const handleSave = () => {
@@ -151,6 +202,39 @@ const Playlist = () => {
         setName('');
         setFile(null);
         setFilename('');
+    }
+
+    /* FUNCIONALIDAD PARA ELIMINAR UNA CANCION DE UN ALBUM */
+    const handleRemoveSongOfAlbum = (id_cancion) => {
+        axios.delete('/canciones-playlist/' + id_cancion)
+            .then(response => {
+                alert(response.data.mensaje);
+                setChanges(!changes)
+            })
+            .catch(error => {
+                console.error('Error al enviar los datos:', error);
+            });
+    }
+
+    /* FUNCIONALIDAD PARA AGREGAR UNA CANCION DE UN ALBUM */
+    const handleAddSongOfPlaylist = (id_cancion) => {
+
+        const data = {
+            id_playlist: idPlaylist
+        };
+
+        if (idPlaylist === '') {
+            alert("Debe de seleccionar una playlist");
+        } else {
+            axios.post('/canciones-playlist/' + id_cancion, data)
+                .then(response => {
+                    alert(response.data.mensaje);
+                    setChanges(!changes)
+                })
+                .catch(error => {
+                    console.error('Error al enviar los datos:', error);
+                });
+        }
     }
 
     return (
@@ -235,6 +319,116 @@ const Playlist = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <br /><br />
+            <InputLabel id="demo-simple-select-label">Playlists</InputLabel>
+            <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={idPlaylist}
+                label="Id"
+                onChange={handleChangeAlbum}
+            >
+                {playlists.map(playlists => (
+                    <MenuItem key={playlists.id} value={playlists.id}>
+                        {playlists.id} - {playlists.nombre}
+                    </MenuItem>
+                ))}
+            </Select>
+            <br />
+
+            <div style={{ display: 'flex' }}>
+                <div style={{ marginRight: '20px' }}>
+                    <TableContainer component={Paper}>
+                        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>ID</TableCell>
+                                    <TableCell align="right">Nombre</TableCell>
+                                    <TableCell align="right">Imagen</TableCell>
+                                    <TableCell align="right">Duración</TableCell>
+                                    <TableCell align="right">Artista</TableCell>
+                                    <TableCell align="right">Acciones</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {
+                                    tableSongAdded ? (
+                                        tableSongAdded.map((row) => (
+                                            <TableRow
+                                                key={row.id_cancion}
+                                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                            >
+                                                <TableCell component="th" scope="row">{row.id_cancion}</TableCell>
+                                                <TableCell align="right">{row.nombre_cancion}</TableCell>
+                                                <TableCell align="right"><img src={row.url_imagen_cancion} alt="Fotografía" style={{ width: '50px', height: '50px' }} /></TableCell>
+                                                <TableCell align="right">{row.duracion_cancion}</TableCell>
+                                                <TableCell align="right">{row.nombre_artista}</TableCell>
+                                                <TableCell align="right">
+                                                    <IconButton color="secondary" onClick={() => handleRemoveSongOfAlbum(row.id_cancion)}>
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={6} align="center">
+                                                No hay registros disponibles.
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                }
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </div>
+                <div>
+                    <TableContainer component={Paper}>
+                        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>ID</TableCell>
+                                    <TableCell align="right">Nombre</TableCell>
+                                    <TableCell align="right">Descripción</TableCell>
+                                    <TableCell align="right">Portada</TableCell>
+                                    <TableCell align="right">Artista</TableCell>
+                                    <TableCell align="right">Acciones</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {
+                                    tableSongToAdd ? (
+                                        tableSongToAdd.map((row) => (
+                                            <TableRow
+                                                key={row.id_cancion}
+                                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                            >
+                                                <TableCell component="th" scope="row">{row.id_cancion}</TableCell>
+                                                <TableCell align="right">{row.nombre_cancion}</TableCell>
+                                                <TableCell align="right"><img src={row.url_imagen_cancion} alt="Fotografía" style={{ width: '50px', height: '50px' }} /></TableCell>
+                                                <TableCell align="right">{row.duracion_cancion}</TableCell>
+                                                <TableCell align="right">{row.nombre_artista}</TableCell>
+                                                <TableCell align="right">
+                                                    <IconButton color="primary" onClick={() => handleAddSongOfPlaylist(row.id_cancion)}>
+                                                        <BookmarkIcon />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={6} align="center">
+                                                No hay registros disponibles.
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                }
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </div>
+            </div>
         </>
     );
 }

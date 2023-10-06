@@ -204,7 +204,7 @@ app.put('/usuarios/:id_usuario/:contrasenia', upload.single('archivo'), (req, re
                                         }
                                     });
                                 } else {
-                                    deleteFiletoS3(result[0].foto , (err, data) => {
+                                    deleteFiletoS3(result[0].foto, (err, data) => {
                                         if (err) {
                                             console.error('Error al eliminar la imagen de S3:', err);
                                             res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
@@ -488,7 +488,6 @@ app.get('/albumes-artista/:id', (req, res) => {
     });
 
 });
-
 
 /** Crear un nuevo album */
 app.post('/albumes', upload.single('archivo'), (req, res) => {
@@ -838,6 +837,82 @@ app.delete('/canciones-album/:id_cancion', (req, res) => {
     });
 });
 
+/** Obtener todas las canciones que pertenezcan a una playlist */
+app.get('/canciones-playlist/:id_playlist', (req, res) => {
+
+    const id_playlist = req.params.id_playlist;
+    const query = `SELECT p.id AS id_playlist, c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion, c.duracion AS duracion_cancion, a.nombre AS nombre_artista
+    FROM PLAYLIST p
+    INNER JOIN DETALLE_PLAYLIST dp ON dp.id_playlist = p.id
+    INNER JOIN CANCION c ON c.id = dp.id_cancion
+    INNER JOIN ARTISTA a ON a.id = c.id_artista
+    WHERE p.id = ?`;
+
+    db.query(query, [id_playlist], (err, result) => {
+        if (err) {
+            console.error('Error al obtener las canciones:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener las canciones que contiene la playlist" });
+        } else {
+            res.json({ success: true, canciones_playlist: result });
+        }
+    });
+
+});
+
+/** Obtener todas las canciones que NO pertenezcan a una playlist */
+app.get('/canciones-no-playlist/:id_playlist', (req, res) => {
+
+    const id_playlist = req.params.id_playlist;
+    const query = `SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion, c.duracion AS duracion_cancion, a.nombre AS nombre_artista
+    FROM CANCION c
+    INNER JOIN ARTISTA a ON a.id = c.id_artista
+    WHERE c.id NOT IN (SELECT id_cancion FROM DETALLE_PLAYLIST dp WHERE dp.id_playlist = ?)`;
+
+    db.query(query, [id_playlist], (err, result) => {
+        if (err) {
+            console.error('Error al obtener las canciones:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener las canciones que contiene la playlist" });
+        } else {
+            res.json({ success: true, canciones_playlist: result });
+        }
+    });
+
+});
+
+/** Agregar una cancion a un playlist */
+app.post('/canciones-playlist/:id_cancion', (req, res) => {
+
+    const id_cancion = req.params.id_cancion;
+    const { id_playlist } = req.body;
+    const query = 'INSERT INTO DETALLE_PLAYLIST (id_playlist, id_cancion) VALUES (?, ?)';
+
+    db.query(query, [id_playlist, id_cancion], (err, result) => {
+        if (err) {
+            console.error('Error al adjuntar la canción en el playlist:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al adjuntar la canción al playlist especificado" });
+        } else {
+            res.json({ success: true, mensaje: "Canción adjuntada correctamente" });
+        }
+    });
+
+});
+
+/** Eliminar una cancion de un playlist */
+app.delete('/canciones-playlist/:id_cancion', (req, res) => {
+
+    const id_cancion = req.params.id_cancion;
+    const query = "DELETE FROM DETALLE_PLAYLIST WHERE id_cancion = ?";
+
+    db.query(query, [id_cancion], (err, result) => {
+        if (err) {
+            console.error('Error al eliminar la canción del playlist:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la canción del playlist" });
+        } else {
+            res.json({ success: true, mensaje: "Canción eliminada del playlist correctamente" });
+        }
+    });
+});
+
 // ACA INIAR A TESTESAR EN PYTHON
 /** Agregar una cancion a favoritos para un usuario */
 app.post('/favoritos', (req, res) => {
@@ -857,25 +932,25 @@ app.post('/favoritos', (req, res) => {
 /** Obtener todas las canciones favoritas de un usuario */
 app.get('/favoritos/:id_usuario', (req, res) => {
     const id_usuario = req.params.id_usuario;
-    const query = `SELECT 
-            f.id AS id_favorito, 
-            c.id AS id_cancion, 
-            c.nombre AS nombre_cancion, 
+    const query = `SELECT
+            f.id AS id_favorito,
+            c.id AS id_cancion,
+            c.nombre AS nombre_cancion,
             CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
-            c.duracion AS duracion_cancion, 
+            c.duracion AS duracion_cancion,
             a.nombre AS nombre_artista,
             al.id AS id_album,
             al.nombre AS nombre_album,
             al.id_artista AS id_artista_album
-        FROM 
+        FROM
             FAVORITO f
-        INNER JOIN 
+        INNER JOIN
             CANCION c ON c.id = f.id_cancion
-        INNER JOIN 
+        INNER JOIN
             ARTISTA a ON a.id = c.id_artista
-        INNER JOIN 
+        INNER JOIN
             ALBUM al ON al.id = c.id_album
-        WHERE 
+        WHERE
             f.id_usuario = ?;
         `;
 
@@ -905,9 +980,9 @@ app.get('/favorito-usuario/:id_usuario/:id_cancion', (req, res) => {
             console.error('Error al obtener la cancion favorita:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la cancion favorita" });
         } else {
-            if (result.length <= 0){
+            if (result.length <= 0) {
                 res.json({ success: true, es_favorita: false });
-            }else{
+            } else {
                 res.json({ success: true, es_favorita: true });
             }
         }
@@ -1153,12 +1228,12 @@ app.post('/historicos', (req, res) => {
 /** Top 5 canciones mas reproducidas */
 app.get('/top5-canciones/:id_usuario', (req, res) => {
     const id_usuario = req.params.id_usuario;
-    const query = `SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, c.fotografia, c.duracion, a.id AS id_artista, a.nombre AS nombre_artista, al.id AS id_album, al.nombre AS nombre_album, COUNT(h.id) AS cantidad 
+    const query = `SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, c.fotografia, c.duracion, a.id AS id_artista, a.nombre AS nombre_artista, al.id AS id_album, al.nombre AS nombre_album, COUNT(h.id) AS cantidad
         FROM HISTORICO h
         INNER JOIN CANCION c ON c.id = h.id_cancion
         INNER JOIN ARTISTA a ON a.id = c.id_artista
         LEFT JOIN ALBUM al ON al.id = c.id_album
-        WHERE h.id_usuario = ? 
+        WHERE h.id_usuario = ?
         GROUP BY c.id
         ORDER BY cantidad DESC
         LIMIT 5;`;
@@ -1180,7 +1255,7 @@ app.get('/top3-artistas/:id_usuario', (req, res) => {
         FROM HISTORICO h
         INNER JOIN CANCION c ON c.id = h.id_cancion
         INNER JOIN ARTISTA a ON a.id = c.id_artista
-        WHERE h.id_usuario = ? 
+        WHERE h.id_usuario = ?
         GROUP BY a.id
         ORDER BY cantidad DESC
         LIMIT 3`;
@@ -1243,30 +1318,30 @@ app.get('/historial/:id_usuario', (req, res) => {
 /**
  *
 {
-	"success": true,
-	"artistas": [
-		{
-			"id": 3,
-			"nombre": "Artista 1",
-			"url_imagen": "https://multimediasemi1-g2.s3.amazonaws.com/Fotos/1696479587839.jpg",
-			"fecha_nacimiento": "01/01/2023",
-			"fecha_formateada": "2023-01-01"
-		}
-	]
+    "success": true,
+    "artistas": [
+        {
+            "id": 3,
+            "nombre": "Artista 1",
+            "url_imagen": "https://multimediasemi1-g2.s3.amazonaws.com/Fotos/1696479587839.jpg",
+            "fecha_nacimiento": "01/01/2023",
+            "fecha_formateada": "2023-01-01"
+        }
+    ]
 }
 
 
 {
-	"artistas": [
-		{
-			"fecha_formateada": "2023-01-01",
-			"fecha_nacimiento": "01/01/2023",
-			"id": 3,
-			"nombre": "Artista 1",
-			"url_imagen": "https://multimediasemi1-g2.s3.amazonaws.com/Fotos/1696479587839.jpg"
-		}
-	],
-	"success": true
+    "artistas": [
+        {
+            "fecha_formateada": "2023-01-01",
+            "fecha_nacimiento": "01/01/2023",
+            "id": 3,
+            "nombre": "Artista 1",
+            "url_imagen": "https://multimediasemi1-g2.s3.amazonaws.com/Fotos/1696479587839.jpg"
+        }
+    ],
+    "success": true
 }
  */
 
