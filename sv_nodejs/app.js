@@ -445,7 +445,7 @@ app.get('/albumes', (req, res) => {
 /* Obtener Album por su ID */
 app.get('/album/:id', (req, res) => {
     const id = req.params.id;
-    const query = `SELECT 
+    const query = `SELECT
         ALB.id AS 'Album_ID',
         ALB.nombre AS 'Album_Nombre',
         ALB.descripcion AS 'Album_Descripcion',
@@ -469,7 +469,7 @@ app.get('/album/:id', (req, res) => {
 /* Obtener Albumes de un artista */
 app.get('/albumes-artista/:id', (req, res) => {
     const id = req.params.id;
-    const query = `SELECT 
+    const query = `SELECT
         ALB.id AS 'Album_ID',
         ALB.nombre AS 'Album_Nombre',
         ALB.descripcion AS 'Album_Descripcion',
@@ -641,7 +641,7 @@ app.get('/canciones', (req, res) => {
 /* Obtener cancion por su ID */
 app.get('/cancion/:id', (req, res) => {
     const id = req.params.id;
-    const query = `SELECT 
+    const query = `SELECT
         CAN.id AS 'Cancion_ID',
         CAN.nombre AS 'Cancion_Nombre',
         CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', CAN.fotografia) AS 'Cancion_Fotografia',
@@ -945,32 +945,82 @@ app.get('/buscar/:entrada', (req, res) => {
 });
 
 /** Crear una nueva playlist */
-app.post('/playlists', (req, res) => {
-    const { nombre, fondo_portada, id_usuario } = req.body;
-    const query = 'INSERT INTO PLAYLIST (nombre, fondo_portada, id_usuario) VALUES (?, ?, ?)';
+app.post('/playlists', upload.single('archivo'), (req, res) => {
 
-    db.query(query, [nombre, fondo_portada, id_usuario], (err, result) => {
+    const { nombre, id_usuario } = req.body;
+    uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
         if (err) {
-            console.error('Error al insertar la playlist:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al insertar la playlist" });
+            console.error('Error al subir el archivo de S3:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
         } else {
-            res.json({ success: true, mensaje: "Playlist creada correctamente" });
+            const url_archivo = data;
+            const query_insert = 'INSERT INTO PLAYLIST (nombre, fondo_portada, id_usuario) VALUES (?, ?, ?)';
+            db.query(query_insert, [nombre, url_archivo, id_usuario], (err, result) => {
+                if (err) {
+                    console.error('Error al insertar la playlist:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al insertar la playlist" });
+                } else {
+                    res.json({ success: true, mensaje: "Playlist creada correctamente" });
+                }
+            });
         }
     });
+
+});
+
+/** Obtener todas las playlists */
+app.get('/playlists', (req, res) => {
+
+    const query = `SELECT p.id, p.nombre,
+    CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', p.fondo_portada) AS url_imagen
+    FROM PLAYLIST p`;
+
+    db.query(query, (err, result) => {
+        if (err) {
+            console.error('Error al obtener las playlists:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener las playlists" });
+        } else {
+            res.json({ success: true, playlists: result });
+        }
+    });
+
 });
 
 /** Actualizar una playlist por su ID */
-app.put('/playlists/:id', (req, res) => {
-    const id_playlist = req.params.id;
-    const { nombre, fondo_portada } = req.body;
-    const query = 'UPDATE PLAYLIST SET nombre = ?, fondo_portada = ? WHERE id = ?';
+app.put('/playlists/:id_playlist', upload.single('archivo'), (req, res) => {
+    const id_playlist = req.params.id_playlist;
+    const { nombre } = req.body;
+    const query_select_fotografia = 'SELECT fondo_portada FROM PLAYLIST WHERE id = ?';
 
-    db.query(query, [nombre, fondo_portada, id_playlist], (err, result) => {
+    db.query(query_select_fotografia, [id_playlist], (err, result) => {
         if (err) {
-            console.error('Error al actualizar la playlist:', err);
-            res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar la playlist" });
+            console.error('Error al obtener la URL del archivo a modificar:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la URL del archivo a modificar" });
         } else {
-            res.json({ success: true, mensaje: "Playlist actualizada correctamente" });
+            deleteFiletoS3(result[0].fondo_portada, (err, data) => {
+                if (err) {
+                    console.error('Error al eliminar la imagen de S3:', err);
+                    res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la imagen" });
+                } else {
+                    uploadFiletoS3(req.file, process.env.AWS_BUCKET_FOLDER_FOTOS, (err, data) => {
+                        if (err) {
+                            console.error('Error al subir el archivo de S3:', err);
+                            res.json({ success: false, mensaje: "Ha ocurrido un error al subir el archivo" });
+                        } else {
+                            const url_imagen = data;
+                            const query = 'UPDATE PLAYLIST SET nombre = ?, fondo_portada = ? WHERE id = ?';
+                            db.query(query, [nombre, url_imagen, id_playlist], (err, result) => {
+                                if (err) {
+                                    console.error('Error al actualizar la playlist:', err);
+                                    res.json({ success: false, mensaje: "Ha ocurrido un error al actualizar la playlist" });
+                                } else {
+                                    res.json({ success: true, mensaje: "Playlist actualizada correctamente" });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
         }
     });
 });
@@ -1141,7 +1191,7 @@ app.get('/historial', (req, res) => {
 });
 
 /**
- * 
+ *
 {
 	"success": true,
 	"artistas": [
