@@ -1200,5 +1200,5 @@ def historial():
 
 if __name__ == '__main__':
     print('Iniciando servidor...')
-    print('Host:', settings['PY_HOST'])
-    app.run(port=settings['PY_PORT'], debug=True)
+    print('Host:', settings['PY_HOST'], 'Port:', settings['PY_PORT'])
+    app.run(host=settings['PY_HOST'], port=settings['PY_PORT'], debug=True)
