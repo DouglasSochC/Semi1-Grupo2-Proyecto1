@@ -996,6 +996,28 @@ def crear_playlist():
             return jsonify({'success': False, 'mensaje': 'Archivo no encontrado'})
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+    
+# Obtener todas las playlist de un usuario
+@app.route('/playlists', methods=['GET'])
+def obtener_playlists():
+    try:
+        query = "SELECT p.id, p.nombre, CONCAT('https://{}.s3.amazonaws.com/', p.fondo_portada) AS url_imagen FROM PLAYLIST p".format(os.environ.get('AWS_BUCKET_NAME'))
+        cursor.execute(query)
+        result = cursor.fetchall()
+        playlists = []
+
+        for row in result:
+            playlist = {
+                'id': row[0],
+                'nombre': row[1],
+                'url_imagen': row[2]
+            }
+            playlists.append(playlist)
+
+        return jsonify({'success': True, 'playlists': playlists})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
 
 # Actualizar una playlist por su ID
 @app.route('/playlists/<int:id>', methods=['PUT'])
