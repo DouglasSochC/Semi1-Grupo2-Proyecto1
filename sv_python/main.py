@@ -877,7 +877,7 @@ def agregar_cancion_a_favoritos():
     try:
         id_cancion = request.json['id_cancion']
         id_usuario = request.json['id_usuario']
-        query = 'INSERT INTO FAVORITO (id_cancion, id_usuario) VALUES (?, ?)'
+        query = 'INSERT INTO FAVORITO (id_cancion, id_usuario) VALUES (%s, %s)'
 
         cursor = db.cursor()
         cursor.execute(query, (id_cancion, id_usuario))
@@ -952,7 +952,7 @@ def verificar_favorito_usuario(id_usuario, id_cancion):
 @app.route('/favoritos/<int:id_favorito>', methods=['DELETE'])
 def eliminar_cancion_de_favoritos(id_favorito):
     try:
-        query = "DELETE FROM FAVORITO WHERE id = ?"
+        query = "DELETE FROM FAVORITO WHERE id = %s"
 
         cursor = db.cursor()
         cursor.execute(query, (id_favorito,))
@@ -1111,7 +1111,7 @@ def agregar_cancion_a_playlist():
     try:
         id_playlist = request.json['id_playlist']
         id_cancion = request.json['id_cancion']
-        query = 'INSERT INTO DETALLE_PLAYLIST (id_playlist, id_cancion) VALUES (?, ?)'
+        query = 'INSERT INTO DETALLE_PLAYLIST (id_playlist, id_cancion) VALUES (%s, %s)'
 
         cursor = db.cursor()
         cursor.execute(query, (id_playlist, id_cancion))
@@ -1133,7 +1133,7 @@ def obtener_detalle_de_playlist(id):
         FROM PLAYLIST p
         INNER JOIN DETALLE_PLAYLIST dp ON dp.id_playlist = p.id
         INNER JOIN CANCION c ON c.id = dp.id_cancion
-        WHERE p.id = ?
+        WHERE p.id = %s
         """
 
         cursor = g.cursor
@@ -1154,7 +1154,7 @@ def obtener_detalle_de_playlist(id):
 @app.route('/playlist-canciones/<int:id_cancion>', methods=['DELETE'])
 def eliminar_cancion_de_playlist(id_cancion):
     try:
-        query = 'DELETE FROM DETALLE_PLAYLIST WHERE id = ?'
+        query = 'DELETE FROM DETALLE_PLAYLIST WHERE id = %s'
 
         cursor = db.cursor()
         cursor.execute(query, (id_cancion,))
