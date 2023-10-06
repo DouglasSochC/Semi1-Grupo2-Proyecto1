@@ -840,6 +840,93 @@ def obtener_canciones_por_album(id_album):
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
 
+# 1 Obtener todas las canciones que pertenecen a una playlist
+@app.route('/canciones-playlist/<int:id_playlist>', methods=['GET'])
+def canciones_playlist(id_playlist):
+    try:
+        query = """
+            SELECT p.id AS id_playlist, c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://""" + os.environ.get('AWS_BUCKET_NAME') + """.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion, c.duracion AS duracion_cancion, a.nombre AS nombre_artista
+            FROM PLAYLIST p
+            INNER JOIN DETALLE_PLAYLIST dp ON dp.id_playlist = p.id
+            INNER JOIN CANCION c ON c.id = dp.id_cancion
+            INNER JOIN ARTISTA a ON a.id = c.id_artista
+            WHERE p.id = %s
+        """
+
+        cursor.execute(query, (id_playlist,))
+        result = cursor.fetchall()
+
+        data = []
+        for row in result:
+            cancion = {
+                'id_playlist': row[0],
+                'id_cancion': row[1],
+                'nombre_cancion': row[2],
+                'url_imagen_cancion': row[3],
+                'duracion_cancion': str(row[4]),
+                'nombre_artista': row[5]
+            }
+            data.append(cancion)
+
+        return jsonify({'success': True, 'canciones_playlist': data})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
+
+# 2 Obtener todas las canciones que NO pertenezcan a una playlist
+@app.route('/canciones-no-playlist/<int:id_playlist>', methods=['GET'])
+def canciones_no_playlist(id_playlist):
+    try:
+        query = """
+            SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://""" + os.environ.get('AWS_BUCKET_NAME') + """.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion, c.duracion AS duracion_cancion, a.nombre AS nombre_artista
+            FROM CANCION c
+            INNER JOIN ARTISTA a ON a.id = c.id_artista
+            WHERE c.id NOT IN (SELECT id_cancion FROM DETALLE_PLAYLIST dp WHERE dp.id_playlist = %s)
+        """
+
+        cursor.execute(query, (id_playlist,))
+        result = cursor.fetchall()
+
+        data = []
+        for row in result:
+            cancion = {
+                'id_cancion': row[0],
+                'nombre_cancion': row[1],
+                'url_imagen_cancion': row[2],
+                'duracion_cancion': str(row[3]),
+                'nombre_artista': row[4]
+            }
+            data.append(cancion)
+
+        return jsonify({'success': True, 'canciones_no_playlist': data})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
+# Agregar una canción a un playlist
+@app.route('/canciones-playlist/<int:id_cancion>', methods=['POST'])
+def agregar_cancion_a_playlist(id_cancion):
+    try:
+        id_playlist = request.json['id_playlist']
+        query = 'INSERT INTO DETALLE_PLAYLIST (id_playlist, id_cancion) VALUES (%s, %s)'
+        cursor.execute(query, (id_playlist, id_cancion))
+        db.commit()
+
+        return jsonify({'success': True, 'mensaje': "Canción adjuntada correctamente"})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
+# Eliminar una canción de un playlist
+@app.route('/canciones-playlist/<int:id_cancion>', methods=['DELETE'])
+def eliminar_cancion_de_playlist(id_cancion):
+    try:
+        query = "DELETE FROM DETALLE_PLAYLIST WHERE id_cancion = %s"
+        cursor.execute(query, (id_cancion,))
+        db.commit()
+
+        return jsonify({'success': True, 'mensaje': "Canción eliminada del playlist correctamente"})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
 
 # Agregar una cacnion de un album testeo falta de datos
 @app.route('/canciones-album/<int:id_cancion>', methods=['PUT'])
@@ -858,7 +945,7 @@ def agregar_cancion_a_album(id_cancion):
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
 
-# Eliminar una cacnion de un album
+# 3 Eliminar una cacnion de un album
 @app.route('/canciones-album/<int:id_cancion>', methods=['DELETE'])
 def eliminar_cancion_de_album(id_cancion):
     try:
