@@ -1213,7 +1213,7 @@ def top5_canciones(id_usuario):
             ORDER BY cantidad DESC
             LIMIT 5;
         """
-
+        cursor = g.cursor
         cursor.execute(query, (id_usuario,))
         result = cursor.fetchall()
 
@@ -1252,7 +1252,7 @@ def top3_artistas(id_usuario):
             ORDER BY cantidad DESC
             LIMIT 3;
         """
-
+        cursor = g.cursor
         cursor.execute(query, (id_usuario,))
         result = cursor.fetchall()
 
@@ -1286,10 +1286,9 @@ def obtener_top5_albumes(id_usuario):
             ORDER BY cantidad DESC
             LIMIT 5;
         """
-
+        cursor = g.cursor
         cursor.execute(query, (id_usuario,))
         result = cursor.fetchall()
-
         data = []
         for row in result:
             album = {
@@ -1301,7 +1300,6 @@ def obtener_top5_albumes(id_usuario):
                 'cantidad': row[5]
             }
             data.append(album)
-
         return jsonify({'success': True, 'data': data})
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
@@ -1335,10 +1333,9 @@ def obtener_historial(id_usuario):
             ORDER BY 
                 h.fecha_registro DESC;
         """
-
+        cursor = g.cursor
         cursor.execute(query, (id_usuario,))
         result = cursor.fetchall()
-
         data = []
         for row in result:
             cancion = {
@@ -1353,7 +1350,6 @@ def obtener_historial(id_usuario):
                 'nombre_artista': row[8]
             }
             data.append(cancion)
-
         return jsonify({'success': True, 'data': data})
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
