@@ -874,6 +874,27 @@ app.get('/favoritos/:id_usuario', (req, res) => {
     });
 });
 
+/** Obtener una cancion si es favorita de un usuario */
+app.get('/favorito-usuario/:id_usuario/:id_cancion', (req, res) => {
+    const id_usuario = req.params.id_usuario;
+    const id_cancion = req.params.id_cancion;
+    const query = `SELECT f.id AS id_favorito, c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
+    c.duracion AS duracion_cancion, a.nombre AS nombre_artista
+    FROM FAVORITO f
+    INNER JOIN CANCION c ON c.id = f.id_cancion
+    INNER JOIN ARTISTA a ON a.id = c.id_artista
+    WHERE f.id_usuario = ? AND f.id_cancion = ?`;
+
+    db.query(query, [id_usuario, id_cancion], (err, result) => {
+        if (err) {
+            console.error('Error al obtener la cancion favorita:', err);
+            res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la cancion favorita" });
+        } else {
+            res.json({ success: true, cancion_favorita: result });
+        }
+    });
+});
+
 /** Eliminar una cancion de favoritos */
 app.delete('/favoritos/:id_cancion/:id_usuario', (req, res) => {
 
