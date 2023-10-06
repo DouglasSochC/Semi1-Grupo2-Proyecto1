@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -15,6 +15,7 @@ import SaveIcon from '@material-ui/icons/Save';
 import DeleteIcon from '@material-ui/icons/Delete';
 import UpdateIcon from '@material-ui/icons/Update';
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
+import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import Box from '@material-ui/core/Box';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -35,9 +36,10 @@ const style = {
     border: '2px solid #000',
     boxShadow: 24,
     p: 4,
+
 };
 
-const Playlist = () => {
+const Playlist = ({playAList}) => {
 
     /* Variables a utilizar */
     const [id, setId] = useState('');
@@ -46,6 +48,8 @@ const Playlist = () => {
     const [isEditMode, setIsEditMode] = useState(false);  // Estado para controlar el modo de edicion
     const [titleModal, setTitleModal] = useState(false);
     const [changes, setChanges] = useState(false)
+    const playAListRef = useRef();
+    playAListRef.current = playAList;
 
     /* Para setear el nombre del archivo a subir */
     const [filename, setFilename] = useState("");
@@ -237,6 +241,21 @@ const Playlist = () => {
         }
     }
 
+    const handlePlay = (id_playlist) => {
+        axios.get('/canciones-playlist/' + id_playlist)
+            .then(response => {
+                const data = response.data.canciones_playlist
+                const ListCanciones = [];
+                for (let i = 0; i < data.length; i++) {
+                    ListCanciones.push(data[i].id_cancion)
+                }
+                playAListRef.current(ListCanciones);
+            })
+            .catch(error => {
+                console.error('Error al obtener los datos:', error);
+            });
+    }
+
     return (
 
         <>
@@ -307,6 +326,9 @@ const Playlist = () => {
                                     <img src={row.url_imagen} alt="Fotografía" style={{ width: '50px', height: '50px' }} />
                                 </TableCell>
                                 <TableCell align="right">
+                                    <IconButton onClick={() => handlePlay(row.id)}>
+                                        <PlayArrowIcon />
+                                    </IconButton>
                                     <IconButton color="primary" onClick={() => handleOpen("Actualizar", true, row.id, row.nombre)}>
                                         <EditIcon />
                                     </IconButton>

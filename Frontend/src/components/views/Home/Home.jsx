@@ -289,7 +289,7 @@ const Home = () => {
           <Route path="/Playlist">
             <div className="body">
               <div className="body__contents">
-                <CRUDPlayList />
+                <CRUDPlayList playAList={playAList}/>
               </div>
             </div>
           </Route>
