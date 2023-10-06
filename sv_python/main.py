@@ -1244,26 +1244,41 @@ def top3_artistas():
     else:
         return jsonify({'success': False, 'mensaje': "Ha ocurrido un error al obtener los datos"})
 
-# Obtiene el top 5 de álbumes más reproducidos.
-@app.route('/top5-albumes', methods=['GET'])
-def top5_albumes():
-    cursor = db.cursor()
-    query = """
-        SELECT a.id AS id_album, a.nombre AS nombre_album, a.imagen_portada, COUNT(h.id) AS cantidad
-        FROM HISTORICO h
-        INNER JOIN CANCION c ON c.id = h.id_cancion
-        INNER JOIN ALBUM a ON a.id = c.id_album
-        GROUP BY a.id
-        ORDER BY cantidad DESC
-        LIMIT 5
-    """
-    cursor = g.cursor
-    cursor.execute(query)
-    result = cursor.fetchall()
-    if result:
-        return jsonify({'success': True, 'data': result})
-    else:
-        return jsonify({'success': False, 'mensaje': "Ha ocurrido un error al obtener los datos"})
+# Endpoint para obtener los 5 álbumes más reproducidos
+@app.route('/top5-albumes/<int:id_usuario>', methods=['GET'])
+def obtener_top5_albumes(id_usuario):
+    try:
+        query = """
+            SELECT a.id AS id_album, a.nombre AS nombre_album, a.imagen_portada, ar.id AS id_artista, ar.nombre AS nombre_artista, COUNT(h.id) AS cantidad
+            FROM HISTORICO h
+            INNER JOIN CANCION c ON c.id = h.id_cancion
+            INNER JOIN ALBUM a ON a.id = c.id_album
+            INNER JOIN ARTISTA ar ON ar.id = a.id_artista
+            WHERE h.id_usuario = %s
+            GROUP BY a.id
+            ORDER BY cantidad DESC
+            LIMIT 5;
+        """
+
+        cursor.execute(query, (id_usuario,))
+        result = cursor.fetchall()
+
+        data = []
+        for row in result:
+            album = {
+                'id_album': row[0],
+                'nombre_album': row[1],
+                'imagen_portada': row[2],
+                'id_artista': row[3],
+                'nombre_artista': row[4],
+                'cantidad': row[5]
+            }
+            data.append(album)
+
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
 
 # Obtiene el historial de canciones reproducidas.
 @app.route('/historial/<int:id_usuario>', methods=['GET'])
