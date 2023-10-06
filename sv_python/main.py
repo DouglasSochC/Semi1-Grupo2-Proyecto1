@@ -1266,21 +1266,41 @@ def top5_albumes():
         return jsonify({'success': False, 'mensaje': "Ha ocurrido un error al obtener los datos"})
 
 # Obtiene el historial de canciones reproducidas.
-@app.route('/historial', methods=['GET'])
-def historial():
-    cursor = db.cursor()
-    query = """
-        SELECT c.id AS id_cancion, c.nombre, c.fotografia, c.duracion, h.fecha_registro
-        FROM HISTORICO h
-        INNER JOIN CANCION c ON c.id = h.id_cancion
-    """
-    cursor = g.cursor
-    cursor.execute(query)
-    result = cursor.fetchall()
-    if result:
+@app.route('/historial/<int:id_usuario>', methods=['GET'])
+def obtener_historial(id_usuario):
+    try:
+        query = """
+            SELECT 
+                c.id AS id_cancion, 
+                c.nombre, 
+                c.fotografia, 
+                c.duracion, 
+                DATE_FORMAT(h.fecha_registro, '%d/%m/%Y %H:%i:%s') AS fecha_registro, 
+                a.id AS id_album, 
+                a.nombre AS nombre_album, 
+                art.id AS id_artista, 
+                art.nombre AS nombre_artista
+            FROM 
+                HISTORICO h
+            INNER JOIN 
+                CANCION c ON c.id = h.id_cancion
+            LEFT JOIN 
+                ALBUM a ON a.id = c.id_album
+            LEFT JOIN 
+                ARTISTA art ON art.id = c.id_artista
+            WHERE 
+                h.id_usuario = %s
+            ORDER BY 
+                h.fecha_registro DESC;
+        """
+
+        cursor.execute(query, (id_usuario,))
+        result = cursor.fetchall()
+
         return jsonify({'success': True, 'data': result})
-    else:
-        return jsonify({'success': False, 'mensaje': "Ha ocurrido un error al obtener los datos"})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
 
 if __name__ == '__main__':
     print('Iniciando servidor...')
