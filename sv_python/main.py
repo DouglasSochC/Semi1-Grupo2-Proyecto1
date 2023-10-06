@@ -1018,7 +1018,7 @@ def obtener_playlists():
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
 
-# Actualizar una playlist por su ID
+# Actualizar una playlist por su ID mio
 @app.route('/playlists/<int:id_playlist>', methods=['PUT'])
 def actualizar_playlist(id_playlist):
     try:
@@ -1053,25 +1053,6 @@ def actualizar_playlist(id_playlist):
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
 
-
-# Actualizar una playlist por su ID
-@app.route('/playlists/<int:id>', methods=['PUT'])
-def actualizar_playlist(id):
-    try:
-        nombre = request.json['nombre']
-        fondo_portada = request.json['fondo_portada']
-        query = 'UPDATE PLAYLIST SET nombre = ?, fondo_portada = ? WHERE id = ?'
-
-        cursor = db.cursor()
-        cursor.execute(query, (nombre, fondo_portada, id))
-        db.commit()
-        cursor.close()
-
-        return jsonify({'success': True, 'mensaje': 'Playlist actualizada correctamente'}), 200
-
-    except Exception as e:
-        print('Error:', str(e))
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
 
 # Eliminar una playlist por su ID
 @app.route('/playlists/<int:id>', methods=['DELETE'])
