@@ -918,7 +918,7 @@ def obtener_canciones_favoritas(id_usuario):
         """.format(os.environ.get('AWS_BUCKET_NAME'))
         cursor.execute(query, (id_usuario,))
         result = cursor.fetchall()
-        
+
         canciones_favoritas = []
         for row in result:
             cancion_favorita = {
@@ -965,21 +965,17 @@ def verificar_favorito_usuario(id_usuario, id_cancion):
 
 
 # Eliminar una cancion de un album
-@app.route('/favoritos/<int:id_favorito>', methods=['DELETE'])
-def eliminar_cancion_de_favoritos(id_favorito):
+@app.route('/favoritos/<int:id_cancion>/<int:id_usuario>', methods=['DELETE'])
+def eliminar_cancion_de_favoritos(id_cancion, id_usuario):
     try:
-        query = "DELETE FROM FAVORITO WHERE id = %s"
+        query = "DELETE FROM FAVORITO WHERE id_cancion = %s AND id_usuario = %s"
 
-        cursor = db.cursor()
-        cursor.execute(query, (id_favorito,))
+        cursor.execute(query, (id_cancion, id_usuario))
         db.commit()
-        cursor.close()
 
-        return jsonify({'success': True, 'mensaje': 'Canción eliminada de favoritos correctamente'}), 200
-
+        return jsonify({'success': True, 'mensaje': 'Canción eliminada de favoritos correctamente'})
     except Exception as e:
-        print('Error:', str(e))
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
 
 # El usuario puede realizar la busqueda de albumes, canciones o artistas por medio de la entrada de usuario
 @app.route('/buscar/<string:entrada>', methods=['GET'])
