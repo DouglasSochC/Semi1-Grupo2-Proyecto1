@@ -1,5 +1,6 @@
 import mysql.connector
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from dotenv import dotenv_values
 import boto3
 import os
@@ -8,7 +9,9 @@ import time
 from util import check_password, hash_password, compare_password
 from datetime import datetime
 
+
 app = Flask(__name__)
+CORS(app)
 
 settings = dotenv_values()
 
@@ -80,23 +83,26 @@ def register_user():
     
         if hashed_password:
             parametro['contrasenia'] = hashed_password
-
+            print(request.files)
             file = request.files['archivo']
 
             if file and allowed_file(file.filename):
                 folder_name = os.environ.get('AWS_BUCKET_FOLDER_FOTOS')
                 foto_key = upload_file_to_s3(file, folder_name)
-
+                print("A")
                 if foto_key:
+                    print("Ba")
                     parametro['foto'] = foto_key
-                    parametro['es_administrador'] = parametro['es_administrador'].lower() == 'true'
-                    
+                    print("B")
+                    parametro['es_administrador'] = '0'
+                    print("B")
                     query = 'INSERT INTO USUARIO (correo, contrasenia, nombres, apellidos, foto, fecha_nacimiento, es_administrador) VALUES (%s, %s, %s, %s, %s, %s, %s)'
                     # Ejecuta la consulta de inserción en tu base de datos aquí
                             #(parametro['correo'], parametro['contrasenia'], parametro['nombres'], parametro['apellidos'], parametro['foto'], parametro['fecha_nacimiento'], parametro['es_administrador'])
                     values = (parametro['correo'], parametro['contrasenia'], parametro['nombres'], parametro['apellidos'], parametro['foto'], parametro['fecha_nacimiento'], parametro['es_administrador'])
                     
                     # Recorrer values para verificar que no existan valores vacios
+                    print("C")
                     for value in values:
                         print(value)
 
@@ -106,10 +112,13 @@ def register_user():
                     # Devuelve la respuesta adecuada
                     return jsonify({"success": True, "mensaje": "Usuario creado correctamente"})
                 else:
+                    print("Error al subir el archivo a S3")
                     return jsonify({"success": False, "mensaje": "Error al subir el archivo a S3"}), 500
             else:
+
                 return jsonify({"success": False, "mensaje": "Formato de archivo no permitido"}), 400
         else:
+            print("Error al encriptar la contraseña")
             return jsonify({"success": False, "mensaje": "Ha ocurrido un error al encriptar la contraseña"}), 500
     except Exception as e:
         return jsonify({"success": False, "mensaje": str(e)}), 500
@@ -117,6 +126,7 @@ def register_user():
 @app.route('/usuarios/login', methods=['POST'])
 def login_user():
     try:
+        print("A")
         # Se recibe los parametros
         correo = request.json.get('correo')
         contrasenia = request.json.get('contrasenia')
@@ -148,7 +158,9 @@ def login_user():
         } """
 
         extra = { 'id_usuario': result[0], 'es_administrador': result[2] }
+        print(extra)
         if compare_password(contrasenia, contrasenia_bd):
+            print(extra)
             return jsonify({'success': True, 'mensaje': 'Bienvenido', 'extra': extra}), 200
         else:
             return jsonify({'success': False, 'mensaje': 'Credenciales incorrectas'}), 401
@@ -161,7 +173,7 @@ def login_user():
 @app.route('/usuario/<int:id>', methods=['GET'])
 def obtener_usuario(id):
     try:
-        query = "SELECT nombres, apellidos, foto, correo, fecha_nacimiento FROM USUARIO WHERE id = %s"
+        query = "SELECT nombres, apellidos, foto, correo, fecha_nacimiento, es_administrador FROM USUARIO WHERE id = %s"
         cursor.execute(query, (id,))
         result = cursor.fetchone()
 
@@ -177,7 +189,8 @@ def obtener_usuario(id):
                 'apellidos': result[1],
                 'foto': result[2],
                 'correo': result[3],
-                'fecha_nacimiento': fecha
+                'fecha_nacimiento': fecha,
+                'es_administrador': result[5]
             }
             return jsonify({'success': True, 'usuario': usuario})
         else:

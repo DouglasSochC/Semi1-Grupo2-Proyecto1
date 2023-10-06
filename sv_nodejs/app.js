@@ -1139,6 +1139,36 @@ app.get('/historial', (req, res) => {
     });
 });
 
+/**
+ * 
+{
+	"success": true,
+	"artistas": [
+		{
+			"id": 3,
+			"nombre": "Artista 1",
+			"url_imagen": "https://multimediasemi1-g2.s3.amazonaws.com/Fotos/1696479587839.jpg",
+			"fecha_nacimiento": "01/01/2023",
+			"fecha_formateada": "2023-01-01"
+		}
+	]
+}
+
+
+{
+	"artistas": [
+		{
+			"fecha_formateada": "2023-01-01",
+			"fecha_nacimiento": "01/01/2023",
+			"id": 3,
+			"nombre": "Artista 1",
+			"url_imagen": "https://multimediasemi1-g2.s3.amazonaws.com/Fotos/1696479587839.jpg"
+		}
+	],
+	"success": true
+}
+ */
+
 /** Inicia el servidor y hace que escuche en el puerto especificado */
 app.listen(port, host, () => {
     console.log(`La API está escuchando en http://${host}:${port}`);
