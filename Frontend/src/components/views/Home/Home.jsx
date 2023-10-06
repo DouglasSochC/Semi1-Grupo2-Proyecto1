@@ -18,6 +18,7 @@ import Favorites from "./Favorites/Favorites";
 import CRUDSong from "../Song/Song"
 import CRUDAlbum from "../Album/Album"
 import CRUDArtist from "../Artist/Artist"
+import CRUDPlayList from "../Playlist/Playlist"
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 import { useHistory } from 'react-router'
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
@@ -41,24 +42,24 @@ const Home = () => {
   };
 
   const changeRandom = () => {
-    if(!random){
+    if (!random) {
       setListaReproduccion(shuffle(listaReproduccion));
-    }else{
+    } else {
       setListaReproduccion(listaCanciones);
     }
     setRandom(!random);
   }
 
   const shuffle = (array) => {
-    let currentIndex = array.length,  randomIndex;
-  
+    let currentIndex = array.length, randomIndex;
+
     // While there remain elements to shuffle.
     while (currentIndex > 0) {
-  
+
       // Pick a remaining element.
       randomIndex = Math.floor(Math.random() * currentIndex);
       currentIndex--;
-  
+
       // And swap it with the current element.
       [array[currentIndex], array[randomIndex]] = [
         array[randomIndex], array[currentIndex]];
@@ -99,7 +100,7 @@ const Home = () => {
         setListaCanciones([]);
         setListaReproduccion([]);
         return;
-      }else{
+      } else {
         if (reproduccion === id_cancion) {
           Next()
         }
@@ -147,17 +148,17 @@ const Home = () => {
 
   const playAList = (ids) => {
     setListaCanciones(ids);
-    if(random){
+    if (random) {
       console.log(random);
       setListaReproduccion(shuffle([].concat(ids)));
-    }else{
+    } else {
       setListaReproduccion(ids);
     }
     setPlayerState(true);
     setReproduccion(ids[0]);
   }
 
-  const playRadio= (ids) => {
+  const playRadio = (ids) => {
     setListaCanciones(ids);
     setRandom(true);
     setCiclico(true)
@@ -201,7 +202,7 @@ const Home = () => {
     <Router>
       <Container>
         <div className="spotify__body">
-          <Sidebar isAdmin={usuario.es_administrador} setSearch={setSearch} playRadio={playRadio}/>
+          <Sidebar isAdmin={usuario.es_administrador} setSearch={setSearch} playRadio={playRadio} />
           <Route path="/app">
             <div className="body" >
               <Navbar search={search} setSearch={setSearch} Salir={Salir} Name={usuario.nombres} />
@@ -220,17 +221,17 @@ const Home = () => {
           </Route>
           <Route path="/song">
             <div className="body" >
-              <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Cancion:"}/>
+              <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Cancion:"} />
               <div className="body__contents">
-                <Song headerBackground={headerBackground} addToPlayback={addToPlayback} play={play} setSearch={setSearch}/>
+                <Song headerBackground={headerBackground} addToPlayback={addToPlayback} play={play} setSearch={setSearch} />
               </div>
             </div>
           </Route>
           <Route path="/album">
             <div className="body" >
-              <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Album:"}/>
+              <NavBarGen search={search} Salir={Salir} Name={usuario.nombres} Type={"Album:"} />
               <div className="body__contents">
-                <Album headerBackground={headerBackground} setSearch={setSearch} playAList={playAList} addListToPlayback={addListToPlayback}/>
+                <Album headerBackground={headerBackground} setSearch={setSearch} playAList={playAList} addListToPlayback={addListToPlayback} />
               </div>
             </div>
           </Route>
@@ -253,41 +254,48 @@ const Home = () => {
           <Route path="/CRUDCanciones">
             <div className="body">
               <div className="body__contents">
-                <CRUDSong/>
+                <CRUDSong />
               </div>
             </div>
           </Route>
           <Route path="/CRUDAlbums">
             <div className="body">
               <div className="body__contents">
-                <CRUDAlbum/>
+                <CRUDAlbum />
               </div>
             </div>
           </Route>
           <Route path="/CRUDArtistas">
             <div className="body">
               <div className="body__contents">
-                <CRUDArtist/>
+                <CRUDArtist />
               </div>
             </div>
           </Route>
           <Route path="/Historical">
             <div className="body">
               <div className="body__contents">
-                <Historico headerBackground={headerBackground} reproduccion={reproduccion} changeSong={changeSong}/>
+                <Historico headerBackground={headerBackground} reproduccion={reproduccion} changeSong={changeSong} />
               </div>
             </div>
           </Route>
           <Route path="/Favorites">
             <div className="body">
               <div className="body__contents">
-                <Favorites headerBackground={headerBackground} playAList={playAList} addListToPlayback={addListToPlayback}/>
+                <Favorites headerBackground={headerBackground} playAList={playAList} addListToPlayback={addListToPlayback} />
+              </div>
+            </div>
+          </Route>
+          <Route path="/Playlist">
+            <div className="body">
+              <div className="body__contents">
+                <CRUDPlayList />
               </div>
             </div>
           </Route>
         </div>
         <div className="spotify__footer">
-          <Footer playerState={playerState} setPlayerState={setPlayerState} changeCiclico={changeCiclico} changeRandom={changeRandom} ciclico={ciclico} random={random} reproduccion={reproduccion} Next={Next} Prev={Prev} listaReproduccion={listaReproduccion} changeSong={changeSong} setChangeSong={setChangeSong}/>
+          <Footer playerState={playerState} setPlayerState={setPlayerState} changeCiclico={changeCiclico} changeRandom={changeRandom} ciclico={ciclico} random={random} reproduccion={reproduccion} Next={Next} Prev={Prev} listaReproduccion={listaReproduccion} changeSong={changeSong} setChangeSong={setChangeSong} />
         </div>
       </Container>
     </Router>

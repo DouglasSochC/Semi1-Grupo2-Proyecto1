@@ -57,6 +57,10 @@ export default function Sidebar({ isAdmin, setSearch, playRadio }) {
     push('/Favorites')
   }
 
+  const irPlaylist = () => {
+    push('/Playlist')
+  }
+
   return (
     <Container>
       <div className="top__links">
@@ -76,7 +80,7 @@ export default function Sidebar({ isAdmin, setSearch, playRadio }) {
             <BsCollectionPlayFill />
             <span>Reproduciendo</span>
           </li>
-          <li>
+          <li onClick={irPlaylist}>
             <BiSolidPlaylist />
             <span>Playlists</span>
           </li>

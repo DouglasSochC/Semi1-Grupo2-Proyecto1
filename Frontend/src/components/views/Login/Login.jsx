@@ -58,7 +58,7 @@ const Login = () => {
         })
     }
 
-    if (localStorage.getItem('SoundStream_UserID') > -1){
+    if (localStorage.getItem('SoundStream_UserID') && localStorage.getItem('SoundStream_UserID') > -1){
         push('/app')
         console.log(localStorage.getItem('SoundStream_UserID'))
     }

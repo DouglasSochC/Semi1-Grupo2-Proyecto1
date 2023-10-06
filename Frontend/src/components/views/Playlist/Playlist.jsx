@@ -39,7 +39,6 @@ const Playlist = () => {
     const [id, setId] = useState('');
     const [name, setName] = useState('');
     const [file, setFile] = useState(null);
-    const [idUser, setIdUser] = useState(0);
     const [isEditMode, setIsEditMode] = useState(false);  // Estado para controlar el modo de edicion
     const [titleModal, setTitleModal] = useState(false);
 
@@ -91,7 +90,7 @@ const Playlist = () => {
         const formData = new FormData();
         formData.append('nombre', name);
         formData.append('archivo', file);
-        formData.append('id_usuario', idUser);
+        formData.append('id_usuario', localStorage.getItem('SoundStream_UserID'));
 
         if (name === '') {
             alert("El campo nombre es obligatorio");
