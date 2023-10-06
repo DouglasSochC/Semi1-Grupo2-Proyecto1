@@ -935,7 +935,7 @@ def obtener_canciones_favoritas(id_usuario):
         cursor.execute(query, (id_usuario,))
         result = cursor.fetchall()
 
-        return jsonify({'success': True, 'canciones_favoritas': result})
+        return jsonify({'success': True, 'canciones_favoritas': canciones_favoritas})
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
 
