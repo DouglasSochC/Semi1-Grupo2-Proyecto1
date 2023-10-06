@@ -47,6 +47,7 @@ const Album = () => {
     const [filePhoto, setFilePhoto] = useState(null);
     const [titleModal, setTitleModal] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);  // Estado para controlar el modo de edicion
+    const [changes, setChanges] = useState(false) 
 
     /* Para setear el archivo y nombre de la foto a subir */
     const [filenamePhoto, setFilenamePhoto] = useState("");
@@ -58,18 +59,21 @@ const Album = () => {
         setFilePhoto(filePhoto);
         const { name } = filePhoto;
         setFilenamePhoto(name);
+        setChanges(!changes)
     };
 
     /* Para setear el id del artista seleccionado */
     const [idArtist, setIdArtist] = useState('');
     const handleChange = (event) => {
         setIdArtist(event.target.value);
+        setChanges(!changes)
     };
 
     /* Para setear el id del album seleccionado */
     const [idAlbum, setIdAlbum] = useState('');
     const handleChangeAlbum = (event) => {
         setIdAlbum(event.target.value);
+        setChanges(!changes)
     };
 
     /* Para el funcionamiento del modal que realiza un registro/modificacion */
@@ -88,6 +92,7 @@ const Album = () => {
     const handleClose = () => {
         handleClear();
         setOpen(false)
+        setChanges(!changes)
     };
 
     /* FUNCIONALIDAD PARA CARGAR LOS ALBUMES */
@@ -104,7 +109,7 @@ const Album = () => {
         };
 
         fetchData();
-    }, [albumes]);
+    }, [changes]);
 
     /* FUNCIONALIDAD PARA CARGAR LOS ARTISTAS */
     const [artists, setArtists] = useState([]);
@@ -120,7 +125,7 @@ const Album = () => {
         };
 
         fetchData();
-    }, []);
+    }, [changes]);
 
     /* FUNCIONALIDAD DE LA TABLA ALBUM */
     const [tableData, setTableData] = useState([]);
@@ -135,7 +140,7 @@ const Album = () => {
         };
 
         fetchData();
-    }, [tableData]);
+    }, [changes]);
 
     /** FUNCIONALIDAD DEL BOTON DEL DETALLE DE UN ALBUM */
     const [tableSongAdded, setTableSongAdded] = useState([]);
@@ -158,7 +163,7 @@ const Album = () => {
                         console.error('Error al obtener los datos:', error);
                     });
             }
-    }, [idAlbum, tableSongAdded, tableSongToAdd]);
+    }, [changes]);
     ;
 
     /** FUNCIONALIDAD DEL BOTON DE GUARDADO */
@@ -183,6 +188,7 @@ const Album = () => {
                     // Cierra el modal
                     setOpen(false);
                     handleClear();
+                    setChanges(!changes)
                 })
                 .catch(error => {
                     console.error('Error al enviar los datos:', error);
@@ -212,6 +218,7 @@ const Album = () => {
                     // Cierra el modal
                     setOpen(false);
                     handleClear();
+                    setChanges(!changes)
                 })
                 .catch(error => {
                     console.error('Error al enviar los datos:', error);
@@ -232,6 +239,7 @@ const Album = () => {
                         axios.delete('/albumes/' + id)
                             .then(response => {
                                 alert(response.data.mensaje);
+                                setChanges(!changes)
                             })
                             .catch(error => {
                                 console.error('Error al enviar los datos:', error);
@@ -260,6 +268,7 @@ const Album = () => {
         axios.delete('/canciones-album/' + id_cancion)
             .then(response => {
                 alert(response.data.mensaje);
+                setChanges(!changes)
             })
             .catch(error => {
                 console.error('Error al enviar los datos:', error);
@@ -279,6 +288,7 @@ const Album = () => {
             axios.put('/canciones-album/' + id_cancion, data)
                 .then(response => {
                     alert(response.data.mensaje);
+                    setChanges(!changes)
                 })
                 .catch(error => {
                     console.error('Error al enviar los datos:', error);

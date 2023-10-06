@@ -43,6 +43,7 @@ const Artist = () => {
     const [file, setFile] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);  // Estado para controlar el modo de edicion
     const [titleModal, setTitleModal] = useState(false);
+    const [changes, setChanges] = useState(false) 
 
     /* Para setear el nombre del archivo a subir */
     const [filename, setFilename] = useState("");
@@ -54,6 +55,7 @@ const Artist = () => {
         setFile(file);
         const { name } = file;
         setFilename(name);
+        setChanges(!changes)
     };
 
     /* Para el modal que realiza un registro */
@@ -67,10 +69,12 @@ const Artist = () => {
         setTitleModal(titleModal);
         setIsEditMode(isEditMode);  // Actualiza el estado para indicar si estamos en modo de edición
         setOpen(true);
+        setChanges(!changes)
     };
     const handleClose = () => {
         handleClear();
         setOpen(false)
+        setChanges(!changes)
     };
 
     /* Para utilizar el estilo de una fecha */
@@ -100,7 +104,7 @@ const Artist = () => {
         };
 
         fetchData();
-    }, [artistData]);
+    }, [changes]);
 
     /** FUNCIONALIDAD DEL BOTON DE GUARDADO */
     const handleSave = () => {
@@ -119,6 +123,7 @@ const Artist = () => {
                     alert(response.data.mensaje);
                     setOpen(false);
                     handleClear();
+                    setChanges(!changes)
                 })
                 .catch(error => {
                     console.error('Error al enviar los datos:', error);
@@ -144,6 +149,7 @@ const Artist = () => {
                     // Cierra el modal
                     setOpen(false);
                     handleClear();
+                    setChanges(!changes)
                 })
                 .catch(error => {
                     console.error('Error al enviar los datos:', error);
@@ -165,6 +171,7 @@ const Artist = () => {
                         axios.delete('/artistas/' + id)
                             .then(response => {
                                 alert(response.data.mensaje);
+                                setChanges(!changes)
                             })
                             .catch(error => {
                                 console.error('Error al enviar los datos:', error);

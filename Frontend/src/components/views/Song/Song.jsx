@@ -46,6 +46,7 @@ const Song = () => {
     const [fileAudio, setFileAudio] = useState(null);
     const [titleModal, setTitleModal] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);  // Estado para controlar el modo de edicion
+    const [changes, setChanges] = useState(false) 
 
     /* Para setear el archivo y nombre de la foto a subir */
     const [filenamePhoto, setFilenamePhoto] = useState("");
@@ -57,6 +58,7 @@ const Song = () => {
         setFilePhoto(filePhoto);
         const { name } = filePhoto;
         setFilenamePhoto(name);
+        setChanges(!changes)
     };
 
     /* Para setear el archivo y nombre del audio a subir */
@@ -79,6 +81,7 @@ const Song = () => {
             const durationInSeconds = Math.round(audio.duration);
             setAudioDuration(durationInSeconds);
         };
+        setChanges(!changes)
     };
 
     /* Para setear el id del artista seleccionado */
@@ -101,10 +104,12 @@ const Song = () => {
         setTitleModal(titleModal);
         setIsEditMode(isEditMode);  // Actualiza el estado para indicar si estamos en modo de edición
         setOpen(true);
+        setChanges(!changes)
     };
     const handleClose = () => {
         handleClear();
         setOpen(false)
+        setChanges(!changes)
     };
 
     /* FUNCIONALIDAD PARA CARGAR LOS ARTISTAS */
@@ -121,7 +126,7 @@ const Song = () => {
         };
 
         fetchData();
-    }, []);
+    }, [changes]);
 
     /* FUNCIONALIDAD DE LA TABLA */
     const [tableData, setTableData] = useState([]);
@@ -129,14 +134,13 @@ const Song = () => {
         const fetchData = async () => {
             try {
                 const response = await axios.get('/canciones');
-                setTableData(response.data.canciones); // Actualizar el estado con los datos del endpoint
+                setTableData(response.data.canciones)
             } catch (error) {
                 console.error('Error al obtener los datos:', error);
             }
         };
-
         fetchData();
-    }, [tableData]);
+    }, [changes]);
 
     /** FUNCIONALIDAD DEL BOTON DE GUARDADO */
     const handleSave = () => {
@@ -161,13 +165,13 @@ const Song = () => {
                     // Cierra el modal
                     setOpen(false);
                     handleClear();
+                    setChanges(!changes)
                 })
                 .catch(error => {
                     console.error('Error al enviar los datos:', error);
+                    setChanges(!changes)
                 });
         }
-
-
     };
 
     function segundosAFormatoTiempo(segundos) {
@@ -205,6 +209,7 @@ const Song = () => {
                     // Cierra el modal
                     setOpen(false);
                     handleClear();
+                    setChanges(!changes)
                 })
                 .catch(error => {
                     console.error('Error al enviar los datos:', error);
@@ -217,6 +222,7 @@ const Song = () => {
         axios.delete('/canciones/' + id)
             .then(response => {
                 alert(response.data.mensaje);
+                setChanges(!changes)
             })
             .catch(error => {
                 console.error('Error al enviar los datos:', error);

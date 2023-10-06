@@ -590,7 +590,6 @@ def eliminar_album(id_album):
         query = 'DELETE FROM ALBUM WHERE id = %s'
         cursor.execute(query, (id_album,))
         db.commit()
-        cursor.close()
 
         return jsonify({'success': True, 'mensaje': 'Álbum eliminado correctamente'}), 200
 
@@ -616,7 +615,6 @@ def crear_cancion():
         query = 'INSERT INTO CANCION (nombre, fotografia, duracion, archivo_mp3, id_artista) VALUES (%s, %s, %s, %s, %s)'
         cursor.execute(query, (nombre, url_imagen, duracion, url_audio, id_artista))
         db.commit()
-        cursor.close()
 
         return jsonify({'success': True, 'mensaje': 'Canción creada correctamente'}), 200
 
@@ -718,10 +716,9 @@ def actualizar_cancion(id_cancion):
         if result is None:
             cursor.close()
             return jsonify({'success': False, 'mensaje': 'No se encontró la canción'}), 404
-
         url_fotografia = result[0]
         url_archivo_mp3 = result[1]
-
+        
         # Elimina la imagen anterior de S3
         delete_file_from_s3(url_fotografia)
 
@@ -729,16 +726,14 @@ def actualizar_cancion(id_cancion):
         delete_file_from_s3(url_archivo_mp3)
 
         # Sube la nueva imagen de portada a S3
-        imagen_portada = request.files['fotografia']
+        imagen_portada = request.files['imagen_portada']
         url_nueva_fotografia = upload_file_to_s3(imagen_portada, os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
-
         # Sube el nuevo archivo MP3 a S3
         archivo_mp3 = request.files['archivo_mp3']
         url_nuevo_archivo_mp3 = upload_file_to_s3(archivo_mp3, os.environ.get('AWS_BUCKET_FOLDER_CANCIONES'))
-
         # Actualiza la canción en la base de datos
-        query = 'UPDATE CANCION SET nombre = %s, fotografia = %s, duracion = %s, archivo_mp3 = %s, id_artista = %s, id_album = %s WHERE id = %s'
-        cursor.execute(query, (nombre, url_nueva_fotografia, duracion, url_nuevo_archivo_mp3, id_artista, id_album, id_cancion))
+        query = 'UPDATE CANCION SET nombre = %s, fotografia = %s, duracion = %s, archivo_mp3 = %s, id_artista = %s WHERE id = %s'
+        cursor.execute(query, (nombre, url_nueva_fotografia, duracion, url_nuevo_archivo_mp3, id_artista, id_cancion))
         db.commit()
         cursor.close()
 
