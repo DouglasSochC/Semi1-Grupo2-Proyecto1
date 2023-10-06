@@ -1199,4 +1199,6 @@ def historial():
         return jsonify({'success': False, 'mensaje': "Ha ocurrido un error al obtener los datos"})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    print('Iniciando servidor...')
+    print('Host:', settings['PY_HOST'])
+    app.run(port=settings['PY_PORT'], debug=True)
