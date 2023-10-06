@@ -1297,7 +1297,22 @@ def obtener_historial(id_usuario):
         cursor.execute(query, (id_usuario,))
         result = cursor.fetchall()
 
-        return jsonify({'success': True, 'data': result})
+        data = []
+        for row in result:
+            cancion = {
+                'id_cancion': row[0],
+                'nombre_cancion': row[1],
+                'url_imagen_cancion': row[2],
+                'duracion_cancion': str(row[3]),
+                'fecha_registro': row[4],
+                'id_album': row[5],
+                'nombre_album': row[6],
+                'id_artista': row[7],
+                'nombre_artista': row[8]
+            }
+            data.append(cancion)
+
+        return jsonify({'success': True, 'data': data})
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
 
