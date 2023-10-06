@@ -35,7 +35,7 @@ export default function Song({ headerBackground, addToPlayback, play, setSearch 
           IrAUsuario();
         }
       })
-  }, [cancion]);
+  }, []);
 
   const IrAUsuario = () => {
     push('/app')

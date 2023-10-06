@@ -35,7 +35,7 @@ export default function Album({ headerBackground, setSearch, playAList, addListT
                     IrAUsuario();
                 }
             })
-    }, [album]);
+    }, []);
 
     useEffect(() => {
         axios.get('/canciones-album/' + localStorage.getItem('SoundStream_AlbumID'))
@@ -47,7 +47,7 @@ export default function Album({ headerBackground, setSearch, playAList, addListT
             .catch(error => {
                 console.error("Error al obtener datos de canciones:", error);
             });
-    }, [canciones]);
+    }, [album]);
 
     const IrAUsuario = () => {
         push('/app')

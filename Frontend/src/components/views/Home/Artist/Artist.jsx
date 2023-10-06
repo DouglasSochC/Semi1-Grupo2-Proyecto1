@@ -28,7 +28,7 @@ export default function Artist({ headerBackground, setSearch }) {
                     IrAUsuario();
                 }
             })
-    }, [artista]);
+    }, []);
 
     useEffect(() => {
         axios.get('/albumes-artista/' + localStorage.getItem('SoundStream_ArtistID'))
@@ -40,7 +40,7 @@ export default function Artist({ headerBackground, setSearch }) {
             .catch(error => {
                 console.error("Error al obtener datos de canciones:", error);
             });
-    }, [albumes]);
+    }, [artista]);
 
     const IrAUsuario = () => {
         push('/app')
