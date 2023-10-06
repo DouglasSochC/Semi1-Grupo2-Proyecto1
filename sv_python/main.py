@@ -916,7 +916,9 @@ def obtener_canciones_favoritas(id_usuario):
             WHERE 
                 f.id_usuario = %s;
         """.format(os.environ.get('AWS_BUCKET_NAME'))
-
+        cursor.execute(query, (id_usuario,))
+        result = cursor.fetchall()
+        
         canciones_favoritas = []
         for row in result:
             cancion_favorita = {
@@ -932,8 +934,7 @@ def obtener_canciones_favoritas(id_usuario):
             }
             canciones_favoritas.append(cancion_favorita)
 
-        cursor.execute(query, (id_usuario,))
-        result = cursor.fetchall()
+        
 
         return jsonify({'success': True, 'canciones_favoritas': canciones_favoritas})
     except Exception as e:
