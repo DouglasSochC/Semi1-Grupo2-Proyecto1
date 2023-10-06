@@ -1275,7 +1275,7 @@ def obtener_historial(id_usuario):
                 c.nombre, 
                 c.fotografia, 
                 c.duracion, 
-                DATE_FORMAT(h.fecha_registro, '%d/%m/%Y %H:%i:%s') AS fecha_registro, 
+                DATE_FORMAT(h.fecha_registro, ''%'d/%m/%Y %H:'%'i:'%'s') AS fecha_registro, 
                 a.id AS id_album, 
                 a.nombre AS nombre_album, 
                 art.id AS id_artista, 
