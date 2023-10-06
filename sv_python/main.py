@@ -1018,6 +1018,41 @@ def obtener_playlists():
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
 
+# Actualizar una playlist por su ID
+@app.route('/playlists/<int:id_playlist>', methods=['PUT'])
+def actualizar_playlist(id_playlist):
+    try:
+        nombre = request.form.get('nombre')
+
+        query_select_fotografia = 'SELECT fondo_portada FROM PLAYLIST WHERE id = %s'
+        cursor.execute(query_select_fotografia, (id_playlist,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({'success': False, 'mensaje': 'Playlist no encontrada'})
+
+        url_fondo_portada = result[0]
+
+        delete_file_from_s3(url_fondo_portada)
+
+        if 'archivo' in request.files:
+            file = request.files['archivo']
+            if file:
+                url_imagen = upload_file_to_s3(file, os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
+                query = 'UPDATE PLAYLIST SET nombre = %s, fondo_portada = %s WHERE id = %s'
+                cursor.execute(query, (nombre, url_imagen, id_playlist))
+                db.commit()
+                return jsonify({'success': True, 'mensaje': 'Playlist actualizada correctamente'})
+            else:
+                return jsonify({'success': False, 'mensaje': 'Archivo no encontrado'})
+        else:
+            query = 'UPDATE PLAYLIST SET nombre = %s WHERE id = %s'
+            cursor.execute(query, (nombre, id_playlist))
+            db.commit()
+            return jsonify({'success': True, 'mensaje': 'Playlist actualizada correctamente'})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
 
 # Actualizar una playlist por su ID
 @app.route('/playlists/<int:id>', methods=['PUT'])
