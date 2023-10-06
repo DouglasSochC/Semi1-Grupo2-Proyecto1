@@ -80,10 +80,12 @@ const Playlist = ({playAList}) => {
         setTitleModal(titleModal);
         setIsEditMode(isEditMode);  // Actualiza el estado para indicar si estamos en modo de edición
         setOpen(true);
+        setChanges(!changes)
     };
     const handleClose = () => {
         handleClear();
         setOpen(false)
+        setChanges(!changes)
     };
 
     /* FUNCIONALIDAD DE LA TABLA */
@@ -99,7 +101,7 @@ const Playlist = ({playAList}) => {
         };
 
         fetchData();
-    }, [artistData]);
+    }, [changes]);
 
     /* FUNCIONALIDAD PARA CARGAR LAS PLAYLISTS */
     const [playlists, setPlaylists] = useState([]);
@@ -125,6 +127,7 @@ const Playlist = ({playAList}) => {
             axios.get('/canciones-playlist/' + idPlaylist)
                 .then(response => {
                     setTableSongAdded(response.data.canciones_playlist);
+                    setChanges(!changes)
                 })
                 .catch(error => {
                     console.error('Error al obtener los datos:', error);
@@ -133,6 +136,7 @@ const Playlist = ({playAList}) => {
                 .then(response => {
                     console.log(response.data);
                     setTableSongToAdd(response.data.canciones_playlist);
+                    setChanges(!changes)
                 })
                 .catch(error => {
                     console.error('Error al obtener los datos:', error);
@@ -157,6 +161,7 @@ const Playlist = ({playAList}) => {
                     alert(response.data.mensaje);
                     setOpen(false);
                     handleClear();
+                    setChanges(!changes)
                 })
                 .catch(error => {
                     console.error('Error al enviar los datos:', error);
@@ -181,6 +186,7 @@ const Playlist = ({playAList}) => {
                     // Cierra el modal
                     setOpen(false);
                     handleClear();
+                    setChanges(!changes)
                 })
                 .catch(error => {
                     console.error('Error al enviar los datos:', error);
@@ -195,6 +201,7 @@ const Playlist = ({playAList}) => {
         axios.delete('/playlists/' + id)
             .then(response => {
                 alert(response.data.mensaje);
+                setChanges(!changes)
             })
             .catch(error => {
                 console.error('Error al enviar los datos:', error);
