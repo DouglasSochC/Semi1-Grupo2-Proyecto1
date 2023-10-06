@@ -874,13 +874,14 @@ app.get('/favoritos/:id_usuario', (req, res) => {
     });
 });
 
-/** Eliminar una cancion de un album */
-app.delete('/favoritos/:id_favorito', (req, res) => {
+/** Eliminar una cancion de favoritos */
+app.delete('/favoritos/:id_cancion/:id_usuario', (req, res) => {
 
-    const id_favorito = req.params.id_favorito;
-    const query = "DELETE FROM FAVORITO WHERE id = ?";
+    const id_cancion = req.params.id_cancion;
+    const id_usuario = req.params.id_usuario;
+    const query = "DELETE FROM FAVORITO WHERE id_cancion = ? AND id_usuario = ?";
 
-    db.query(query, [id_favorito], (err, result) => {
+    db.query(query, [id_cancion, id_usuario], (err, result) => {
         if (err) {
             console.error('Error al eliminar la canción de favoritos:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al eliminar la canción de favoritos" });

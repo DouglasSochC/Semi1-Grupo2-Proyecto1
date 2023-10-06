@@ -73,3 +73,5 @@ CREATE TABLE HISTORICO (
     FOREIGN KEY (id_usuario) REFERENCES USUARIO(id),
     FOREIGN KEY (id_cancion) REFERENCES CANCION(id) ON DELETE CASCADE
 );
+
+INSERT INTO USUARIO (correo, contrasenia, nombres, apellidos, foto, fecha_nacimiento, es_administrador) VALUES ('admin@gmail.com', '$2b$10$zHfR3HEypzrsJmO8ddz0xesfIPAoB3Hapo4u7yzBlGJzeiW5Pms2a', 'Administrador', 'General', null, '2023-01-01', TRUE);
