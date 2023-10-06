@@ -917,6 +917,21 @@ def obtener_canciones_favoritas(id_usuario):
                 f.id_usuario = %s;
         """.format(os.environ.get('AWS_BUCKET_NAME'))
 
+        canciones_favoritas = []
+        for row in result:
+            cancion_favorita = {
+                'id_favorito': row[0],
+                'id_cancion': row[1],
+                'nombre_cancion': row[2],
+                'url_imagen_cancion': row[3],
+                'duracion_cancion': str(row[4]),
+                'nombre_artista': row[5],
+                'id_album': row[6],
+                'nombre_album': row[7],
+                'id_artista_album': row[8]
+            }
+            canciones_favoritas.append(cancion_favorita)
+
         cursor.execute(query, (id_usuario,))
         result = cursor.fetchall()
 
