@@ -17,7 +17,7 @@ export default function Body({ headerBackground }) {
         track_number,
       })
       .then((res) => {
-        console.log(res);
+        alert(res);
       });
   }
 

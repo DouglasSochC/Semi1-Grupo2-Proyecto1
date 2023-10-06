@@ -93,7 +93,7 @@ const Register = () => {
                 push('/login');
             })
             .catch(({ response }) => {
-                console.log(response.data);
+                alert(response.data);
             });
     };
 

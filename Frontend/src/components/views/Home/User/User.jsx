@@ -33,7 +33,6 @@ export default function User({ headerBackground, User, setUsuario }) {
   };
 
   const onSubmit = () => {
-    console.log(formData.contrasenia);
     if (formData.contrasenia !== "") {
       const formDataToSend = new FormData();
       for (const key in formData) {
@@ -51,7 +50,7 @@ export default function User({ headerBackground, User, setUsuario }) {
             })
         })
         .catch(({ response }) => {
-          console.log(response.data);
+          alert(response.data.mensaje);
         });
     } else {
       alert("Por favor introduzca su contraseña")
