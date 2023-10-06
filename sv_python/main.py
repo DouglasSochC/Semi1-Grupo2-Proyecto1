@@ -1301,7 +1301,7 @@ def obtener_historial(id_usuario):
         for row in result:
             cancion = {
                 'id_cancion': row[0],
-                'nombre_cancion': row[1],
+                'nombre': row[1],
                 'url_imagen_cancion': row[2],
                 'duracion_cancion': str(row[3]),
                 'fecha_registro': row[4],
