@@ -1058,7 +1058,7 @@ def actualizar_playlist(id_playlist):
 @app.route('/playlists/<int:id>', methods=['DELETE'])
 def eliminar_playlist(id):
     try:
-        query = 'DELETE FROM PLAYLIST WHERE id = ?'
+        query = 'DELETE FROM PLAYLIST WHERE id = %s'
 
         cursor = db.cursor()
         cursor.execute(query, (id,))
