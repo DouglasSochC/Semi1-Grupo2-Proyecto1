@@ -895,24 +895,58 @@ def agregar_cancion_a_favoritos():
 def obtener_canciones_favoritas(id_usuario):
     try:
         query = """
-        SELECT f.id AS id_favorito, c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://{}s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
-        c.duracion AS duracion_cancion, a.nombre AS nombre_artista
-        FROM FAVORITO f
-        INNER JOIN CANCION c ON c.id = f.id_cancion
-        INNER JOIN ARTISTA a ON a.id = c.id_artista
-        WHERE f.id_usuario = ?
+            SELECT 
+                f.id AS id_favorito, 
+                c.id AS id_cancion, 
+                c.nombre AS nombre_cancion, 
+                CONCAT('https://{}.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
+                c.duracion AS duracion_cancion, 
+                a.nombre AS nombre_artista,
+                al.id AS id_album,
+                al.nombre AS nombre_album,
+                al.id_artista AS id_artista_album
+            FROM 
+                FAVORITO f
+            INNER JOIN 
+                CANCION c ON c.id = f.id_cancion
+            INNER JOIN 
+                ARTISTA a ON a.id = c.id_artista
+            INNER JOIN 
+                ALBUM al ON al.id = c.id_album
+            WHERE 
+                f.id_usuario = %s;
         """.format(os.environ.get('AWS_BUCKET_NAME'))
-        
-        cursor = g.cursor
+
         cursor.execute(query, (id_usuario,))
         result = cursor.fetchall()
-        cursor.close()
 
-        return jsonify({'success': True, 'canciones_favoritas': result}), 200
-
+        return jsonify({'success': True, 'canciones_favoritas': result})
     except Exception as e:
-        print('Error:', str(e))
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
+@app.route('/favorito-usuario/<int:id_usuario>/<int:id_cancion>', methods=['GET'])
+def verificar_favorito_usuario(id_usuario, id_cancion):
+    try:
+        query = """
+            SELECT f.id AS id_favorito, c.id AS id_cancion, c.nombre AS nombre_cancion, 
+            CONCAT('https://{}.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
+            c.duracion AS duracion_cancion, a.nombre AS nombre_artista
+            FROM FAVORITO f
+            INNER JOIN CANCION c ON c.id = f.id_cancion
+            INNER JOIN ARTISTA a ON a.id = c.id_artista
+            WHERE f.id_usuario = %s AND f.id_cancion = %s
+        """.format(os.environ.get('AWS_BUCKET_NAME'))
+
+        cursor.execute(query, (id_usuario, id_cancion))
+        result = cursor.fetchall()
+
+        if len(result) <= 0:
+            return jsonify({'success': True, 'es_favorita': False})
+        else:
+            return jsonify({'success': True, 'es_favorita': True})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
 
 # Eliminar una cancion de un album
 @app.route('/favoritos/<int:id_favorito>', methods=['DELETE'])
