@@ -1,33 +1,51 @@
-import React from "react";
-import styled from "styled-components";
+import axios from "axios";
+import React, {useRef} from "react";
+import styled, {useState} from "styled-components";
 import { MdHomeFilled, MdOutlineLibraryMusic } from "react-icons/md";
 import { AiFillHeart } from "react-icons/ai";
 import { BiSolidBookBookmark, BiSolidRadio, BiSolidPlaylist } from "react-icons/bi";
 import { BsCollectionPlayFill, BsFillDiscFill } from "react-icons/bs";
 import { FiUsers } from "react-icons/fi";
 import { useHistory } from 'react-router'
-export default function Sidebar({ isAdmin, setSearch }) {
+export default function Sidebar({ isAdmin, setSearch, playRadio }) {
 
   const { push } = useHistory()
 
-  const Inicio = () =>{
+  const playAListRef = useRef();
+  playAListRef.current = playRadio;
+
+  const setRadio = () => {
+    axios.get("/canciones")
+      .then(response => {
+        // Extrae los datos relevantes de la respuesta
+        const data = response.data.canciones;
+        const formattedCanciones = []
+        data.map(item => (formattedCanciones.push(item.id_cancion)));
+        playAListRef.current(formattedCanciones);
+      })
+      .catch(error => {
+        console.error("Error al obtener datos de canciones:", error);
+      });
+  }
+
+  const Inicio = () => {
     push('/app')
     setSearch("")
   }
 
-  const irReproduccion = () =>{
+  const irReproduccion = () => {
     push('/playing')
   }
 
-  const irCRUDCanciones = () =>{
+  const irCRUDCanciones = () => {
     push('/CRUDCanciones')
   }
 
-  const irCRUDAlbums = () =>{
+  const irCRUDAlbums = () => {
     push('/CRUDAlbums')
   }
 
-  const irCRUDArtistas = () =>{
+  const irCRUDArtistas = () => {
     push('/CRUDArtistas')
   }
 
@@ -62,7 +80,7 @@ export default function Sidebar({ isAdmin, setSearch }) {
             <BiSolidBookBookmark />
             <span>Historico</span>
           </li>
-          <li>
+          <li onClick={setRadio}>
             <BiSolidRadio />
             <span>Radio</span>
           </li>
