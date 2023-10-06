@@ -979,21 +979,23 @@ def buscar_entrada(entrada):
 @app.route('/playlists', methods=['POST'])
 def crear_playlist():
     try:
-        nombre = request.json['nombre']
-        fondo_portada = request.json['fondo_portada']
-        id_usuario = request.json['id_usuario']
-        query = 'INSERT INTO PLAYLIST (nombre, fondo_portada, id_usuario) VALUES (?, ?, ?)'
+        nombre = request.form.get('nombre')
+        id_usuario = request.form.get('id_usuario')
 
-        cursor = db.cursor()
-        cursor.execute(query, (nombre, fondo_portada, id_usuario))
-        db.commit()
-        cursor.close()
-
-        return jsonify({'success': True, 'mensaje': 'Playlist creada correctamente'}), 200
-
+        if 'archivo' in request.files:
+            file = request.files['archivo']
+            if file:
+                url_fondo_portada = upload_file_to_s3(file, os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
+                query_insert = 'INSERT INTO PLAYLIST (nombre, fondo_portada, id_usuario) VALUES (%s, %s, %s)'
+                cursor.execute(query_insert, (nombre, url_fondo_portada, id_usuario))
+                db.commit()
+                return jsonify({'success': True, 'mensaje': 'Playlist creada correctamente'})
+            else:
+                return jsonify({'success': False, 'mensaje': 'Archivo no encontrado'})
+        else:
+            return jsonify({'success': False, 'mensaje': 'Archivo no encontrado'})
     except Exception as e:
-        print('Error:', str(e))
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
 
 # Actualizar una playlist por su ID
 @app.route('/playlists/<int:id>', methods=['PUT'])
