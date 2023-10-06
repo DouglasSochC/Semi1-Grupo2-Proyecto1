@@ -1,5 +1,5 @@
 import mysql.connector
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 from dotenv import dotenv_values
 import boto3
@@ -8,7 +8,6 @@ import mimetypes
 import time
 from util import check_password, hash_password, compare_password
 from datetime import datetime
-
 
 app = Flask(__name__)
 CORS(app)
@@ -67,6 +66,21 @@ def allowed_file(filename):
 db = mysql.connector.connect(**db_config)
 cursor = db.cursor()
 
+@app.before_request
+def before_request():
+    g.db = mysql.connector.connect(**db_config)
+    g.cursor = g.db.cursor()
+
+@app.teardown_request
+def teardown_request(exception=None):
+    db = getattr(g, 'db', None)
+    cursor = getattr(g, 'cursor', None)
+
+    if cursor:
+        cursor.close()
+    if db:
+        db.close()
+
 @app.route('/', methods=['GET'])
 def hello():
     return "Hola, ¡esta es tu API en Python!"
@@ -89,23 +103,18 @@ def register_user():
             if file and allowed_file(file.filename):
                 folder_name = os.environ.get('AWS_BUCKET_FOLDER_FOTOS')
                 foto_key = upload_file_to_s3(file, folder_name)
-                print("A")
                 if foto_key:
-                    print("Ba")
                     parametro['foto'] = foto_key
-                    print("B")
                     parametro['es_administrador'] = '0'
-                    print("B")
                     query = 'INSERT INTO USUARIO (correo, contrasenia, nombres, apellidos, foto, fecha_nacimiento, es_administrador) VALUES (%s, %s, %s, %s, %s, %s, %s)'
                     # Ejecuta la consulta de inserción en tu base de datos aquí
                             #(parametro['correo'], parametro['contrasenia'], parametro['nombres'], parametro['apellidos'], parametro['foto'], parametro['fecha_nacimiento'], parametro['es_administrador'])
                     values = (parametro['correo'], parametro['contrasenia'], parametro['nombres'], parametro['apellidos'], parametro['foto'], parametro['fecha_nacimiento'], parametro['es_administrador'])
                     
                     # Recorrer values para verificar que no existan valores vacios
-                    print("C")
                     for value in values:
                         print(value)
-
+                    cursor = g.cursor
                     cursor.execute(query, values)
                     db.commit()
 
@@ -133,6 +142,7 @@ def login_user():
 
         # Se define el query que obtendra la contrasenia encriptada
         query = 'SELECT id, contrasenia, es_administrador FROM USUARIO WHERE correo = %s'
+        cursor = g.cursor
         cursor.execute(query, (correo,))
         result = cursor.fetchone()
 
@@ -158,9 +168,7 @@ def login_user():
         } """
 
         extra = { 'id_usuario': result[0], 'es_administrador': result[2] }
-        print(extra)
         if compare_password(contrasenia, contrasenia_bd):
-            print(extra)
             return jsonify({'success': True, 'mensaje': 'Bienvenido', 'extra': extra}), 200
         else:
             return jsonify({'success': False, 'mensaje': 'Credenciales incorrectas'}), 401
@@ -174,9 +182,9 @@ def login_user():
 def obtener_usuario(id):
     try:
         query = "SELECT nombres, apellidos, foto, correo, fecha_nacimiento, es_administrador FROM USUARIO WHERE id = %s"
+        cursor = g.cursor
         cursor.execute(query, (id,))
         result = cursor.fetchone()
-
         """
         fecha_nacimiento en formato de base de datos: "2023-01-01T06:00:00.000Z"
         """
@@ -196,7 +204,7 @@ def obtener_usuario(id):
         else:
             return jsonify({'success': False, 'mensaje': 'Usuario no encontrado'})
     except Exception as e:
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al obtener el usuario', 'error': str(e)})
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al obtener el usuario', 'error': str(e)}), 500
 
 # Actualizar un usuario por su ID 
 @app.route('/usuarios/<int:id_usuario>/<contrasenia>', methods=['PUT'])
@@ -208,6 +216,7 @@ def update_user(id_usuario, contrasenia):
         correo = request.form['correo']
 
         query_select = 'SELECT foto, contrasenia FROM USUARIO WHERE id = %s'
+        cursor = g.cursor
         cursor.execute(query_select, (id_usuario,))
         result = cursor.fetchone()
 
@@ -220,11 +229,15 @@ def update_user(id_usuario, contrasenia):
 
                 # Sube el nuevo archivo a S3
                 url_imagen = upload_file_to_s3(request.files['archivo'], os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
-
+    
                 if url_imagen:
-                    query = 'UPDATE USUARIO SET nombres = %s, apellidos = %s, foto = %s, correo = %s WHERE id = %s;'
-                    cursor.execute(query, (nombres, apellidos, url_imagen, correo, id_usuario))
+                    query = 'UPDATE USUARIO SET nombres = "' + nombres + '", apellidos = "' + apellidos + '", foto = "' + url_imagen + '", correo = "' + correo + '" WHERE id = ' + str(id_usuario) + ';'
+                    print(query)
+                    cursor = g.cursor
+                    cursor.execute(query)
+                    result = cursor.fetchone()
                     db.commit()
+                    print(result)
                     return jsonify({"success": True, "mensaje": "Usuario actualizado correctamente"})
 
                 return jsonify({"success": False, "mensaje": "Ha ocurrido un error al subir el archivo"}), 500
@@ -252,6 +265,7 @@ def create_artist():
                 fotografiaURL = foto_key
                 query = 'INSERT INTO ARTISTA (nombre, fotografia, fecha_nacimiento) VALUES (%s, %s, %s)'
                 values = (nombre, fotografiaURL, fecha_nacimiento)
+                cursor = g.cursor
                 cursor.execute(query, values)
                 db.commit()
                 return jsonify({"success": True, "mensaje": "Usuario creado correctamente"})
@@ -275,6 +289,7 @@ def verificar_contrasenia():
     query = "SELECT id, contrasenia FROM USUARIO WHERE es_administrador = TRUE"
 
     try:
+        cursor = g.cursor
         cursor.execute(query)
         result = cursor.fetchall()
 
@@ -304,6 +319,7 @@ def get_artists():
     DATE_FORMAT(a.fecha_nacimiento, '%d/%m/%Y') AS fecha_nacimiento,
     DATE_FORMAT(a.fecha_nacimiento, '%Y-%m-%d') AS fecha_formateada
     FROM ARTISTA a'''
+        cursor = g.cursor
         cursor.execute(query)
         result = cursor.fetchall()
 
@@ -322,7 +338,7 @@ def get_artists():
 
         #result['artistas'] = artistas_formateados
         result = artistas_formateados
-        return jsonify({'success': True, 'artistas': result}), 200
+        return jsonify({'success': True, 'artistas': result})
 
     except Exception as e:
         print("Error:", e)
@@ -344,6 +360,7 @@ def crear_artista():
 
         # Insertar el nuevo artista en la base de datos
         query_insert = 'INSERT INTO ARTISTA (nombre, fotografia, fecha_nacimiento) VALUES (%s, %s, %s)'
+        cursor = g.cursor
         cursor.execute(query_insert, (nombre, url_archivo, fecha_nacimiento))
         db.commit()
 
@@ -363,6 +380,7 @@ def update_artist(id_artista):
 
         # Se realiza una consulta para obtener la URL de la fotografía actual del artista
         query_select_fotografia = 'SELECT fotografia FROM ARTISTA WHERE id = %s'
+        cursor = g.cursor
         cursor.execute(query_select_fotografia, (id_artista,))
         result = cursor.fetchone()
 
@@ -381,6 +399,7 @@ def update_artist(id_artista):
 
                 # Actualiza los datos del artista en la base de datos
                 query = 'UPDATE ARTISTA SET nombre = %s, fotografia = %s, fecha_nacimiento = %s WHERE id = %s'
+                cursor = g.cursor
                 cursor.execute(query, (nombre, url_imagen, fecha_nacimiento, id_artista))
                 db.commit()
                 return jsonify({"success": True, "mensaje": "Artista actualizado correctamente"})
@@ -397,12 +416,14 @@ def delete_artist(id_artista):
     try:
         # Consulta para eliminar un artista por su ID
         query_select = 'SELECT fotografia FROM ARTISTA WHERE id = %s'
+        cursor = g.cursor
         cursor.execute(query_select, (id_artista,))
         result = cursor.fetchone()
 
         if result:
             delete_file_from_s3(result[0])
             query = 'DELETE FROM ARTISTA WHERE id = %s'
+            cursor = g.cursor
             cursor.execute(query, (id_artista,))
             db.commit()
             return jsonify({"success": True, "mensaje": "Artista eliminado correctamente"})
@@ -421,12 +442,11 @@ def obtener_albumes():
                     CONCAT('https://""" + os.environ.get('AWS_BUCKET_NAME') + """.s3.amazonaws.com/', c.imagen_portada) AS url_imagen
                     FROM ALBUM c
                     INNER JOIN ARTISTA a ON a.id = c.id_artista"""
-
+        cursor = g.cursor
         cursor.execute(query)
         result = cursor.fetchall()
 
         albumes = []
-
         for row in result:
             album = {
                 'id_album': row[0],
@@ -436,8 +456,6 @@ def obtener_albumes():
                 'nombre_artista': row[4],
                 'url_imagen': row[5]
             }
-            albumes.append(album)
-
         return jsonify({'success': True, 'albumes': albumes})
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
@@ -456,7 +474,7 @@ def obtener_album_por_id(id):
         FROM ALBUM ALB
         JOIN ARTISTA ART ON ALB.id_artista = ART.id
         WHERE ALB.id = %s;"""
-
+        cursor = g.cursor
         cursor.execute(query, (id,))
         result = cursor.fetchone()
 
@@ -488,7 +506,7 @@ def obtener_albumes_por_artista(id):
             ALB.id_artista AS Artista_ID
         FROM ALBUM ALB
         WHERE ALB.id_artista = %s;"""
-
+        cursor = g.cursor
         cursor.execute(query, (id,))
         result = cursor.fetchall()
 
@@ -525,6 +543,7 @@ def crear_album():
         url_imagen = upload_file_to_s3(archivo, os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
 
         query = 'INSERT INTO ALBUM (nombre, descripcion, imagen_portada, id_artista) VALUES (%s, %s, %s, %s)'
+        cursor = g.cursor
         cursor.execute(query, (nombre, descripcion, url_imagen, id_artista))
         db.commit()
 
@@ -544,6 +563,7 @@ def actualizar_album(id_album):
         query_select_imagen = 'SELECT imagen_portada FROM ALBUM WHERE id = %s'
 
         cursor = db.cursor()
+        cursor = g.cursor
         cursor.execute(query_select_imagen, (id_album,))
         result = cursor.fetchone()
 
@@ -560,6 +580,7 @@ def actualizar_album(id_album):
 
         # Actualiza el álbum en la base de datos
         query = 'UPDATE ALBUM SET nombre = %s, descripcion = %s, imagen_portada = %s, id_artista = %s WHERE id = %s'
+        cursor = g.cursor
         cursor.execute(query, (nombre, descripcion, imagen_subida, id_artista, id_album))
         db.commit()
         cursor.close()
@@ -577,6 +598,7 @@ def eliminar_album(id_album):
         query_select_imagen = 'SELECT imagen_portada FROM ALBUM WHERE id = %s'
 
         cursor = db.cursor()
+        cursor = g.cursor
         cursor.execute(query_select_imagen, (id_album,))
         result = cursor.fetchone()
 
@@ -591,6 +613,7 @@ def eliminar_album(id_album):
 
         # Elimina el álbum de la base de datos
         query = 'DELETE FROM ALBUM WHERE id = %s'
+        cursor = g.cursor
         cursor.execute(query, (id_album,))
         db.commit()
         cursor.close()
@@ -621,6 +644,7 @@ def crear_cancion():
         # Inserta la canción en la base de datos
         query = 'INSERT INTO CANCION (nombre, fotografia, duracion, archivo_mp3, id_artista, id_album) VALUES (%s, %s, %s, %s, %s, %s)'
         cursor = db.cursor()
+        cursor = g.cursor
         cursor.execute(query, (nombre, url_imagen, duracion, url_audio, id_artista, id_album))
         db.commit()
         cursor.close()
@@ -640,16 +664,14 @@ def obtener_canciones():
                     CONCAT('https://""" + os.environ.get('AWS_BUCKET_NAME') + """.s3.amazonaws.com/', c.archivo_mp3) AS url_audio
                     FROM CANCION c
                     INNER JOIN ARTISTA a ON a.id = c.id_artista"""
-
+        cursor = g.cursor
         cursor.execute(query)
         result = cursor.fetchall()
-        print(result)
         """
         Formato de result:
         [(1, 'Cancion 2', datetime.timedelta(seconds=120), 3, 'Artista 1', 'https://multimediasemi1-g2.s3.amazonaws.com/Fotos/1696481857_cancion1.jpeg', 'https://multimediasemi1-g2.s3.amazonaws.com/Canciones/1696481858_audio3.mp3')
         """
         canciones = []
-        
         for row in result:
             cancion = {
                 'id_cancion': row[0],
@@ -662,11 +684,10 @@ def obtener_canciones():
             }
             canciones.append(cancion)
 
-        print("Llego aqui")
         return jsonify({'success': True, 'canciones': canciones}), 200
 
     except Exception as e:
-        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'}), 500
 
 
 # Obtener una cancion por su ID
@@ -687,7 +708,7 @@ def obtener_cancion_por_id(id):
         JOIN ARTISTA ART ON CAN.id_artista = ART.id
         LEFT JOIN ALBUM ALB ON CAN.id_album = ALB.id
         WHERE CAN.id = %s;"""
-
+        cursor = g.cursor
         cursor.execute(query, (id,))
         result = cursor.fetchone()
 
@@ -721,7 +742,8 @@ def actualizar_cancion(id_cancion):
 
         # Obtener las URL de los archivos a modificar
         query_select = 'SELECT fotografia, archivo_mp3 FROM CANCION WHERE id = %s'
-        cursor = db.cursor()
+        #cursor = db.cursor()
+        cursor = g.cursor
         cursor.execute(query_select, (id_cancion,))
         result = cursor.fetchone()
 
@@ -748,6 +770,7 @@ def actualizar_cancion(id_cancion):
 
         # Actualiza la canción en la base de datos
         query = 'UPDATE CANCION SET nombre = %s, fotografia = %s, duracion = %s, archivo_mp3 = %s, id_artista = %s, id_album = %s WHERE id = %s'
+        cursor = g.cursor
         cursor.execute(query, (nombre, url_nueva_fotografia, duracion, url_nuevo_archivo_mp3, id_artista, id_album, id_cancion))
         db.commit()
         cursor.close()
@@ -764,7 +787,8 @@ def eliminar_cancion(id_cancion):
     try:
         # Obtener las URL de los archivos a eliminar
         query_select = 'SELECT fotografia, archivo_mp3 FROM CANCION WHERE id = %s'
-        cursor = db.cursor()
+        #cursor = db.cursor()
+        cursor = g.cursor
         cursor.execute(query_select, (id_cancion,))
         result = cursor.fetchone()
 
@@ -783,6 +807,7 @@ def eliminar_cancion(id_cancion):
 
         # Elimina la canción de la base de datos
         query = 'DELETE FROM CANCION WHERE id = %s'
+        cursor = g.cursor
         cursor.execute(query, (id_cancion,))
         db.commit()
         cursor.close()
@@ -805,7 +830,8 @@ def obtener_canciones_artista(id_artista):
         WHERE c.id_artista = ? AND c.id_album IS NULL
         """.format(os.environ.get('AWS_BUCKET_NAME'))
 
-        cursor = db.cursor(dictionary=True)
+        #cursor = db.cursor(dictionary=True)
+        cursor = g.cursor
         cursor.execute(query, (id_artista,))
         result = cursor.fetchall()
         cursor.close()

@@ -175,7 +175,8 @@ const Home = () => {
           Salir()
         }
       })
-  }, [usuario]);
+  }, []);
+
   return (
     <Router>
       <Container>
@@ -193,7 +194,7 @@ const Home = () => {
             <div className="body" >
               <NavBarUsr search={search} Salir={Salir} setSearch={setSearch} />
               <div className="body__contents">
-                <User headerBackground={headerBackground} User={usuario} />
+                <User headerBackground={headerBackground} User={usuario} setUsuario={setUsuario} />
               </div>
             </div>
           </Route>

@@ -42,7 +42,7 @@ export default function Body({ headerBackground, search }) {
       axios.get("/canciones")
       .then(response => {
         // Extrae los datos relevantes de la respuesta
-        const data = response.data.canciones;
+        const data = response.data.canciones; 
         const formattedCanciones = data.map(item => ({
           id: item.id_cancion,
           nombre: item.nombre_cancion,

@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { TextField, Button } from '@material-ui/core'
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
-export default function User({ headerBackground, User }) {
+export default function User({ headerBackground, User, setUsuario }) {
 
   const [formData, setFormData] = useState({
     nombres: User.nombres,
@@ -43,11 +43,17 @@ export default function User({ headerBackground, User }) {
         .put('/usuarios/' + localStorage.getItem('SoundStream_UserID') + '/' + formData.contrasenia, formDataToSend)
         .then(({ data }) => {
           alert(data.mensaje);
+          axios.get('/usuario/' + localStorage.getItem('SoundStream_UserID'))
+            .then(({ data }) => {
+              if (data !== undefined && data !== null) {
+                setUsuario(data.usuario)
+              }
+            })
         })
         .catch(({ response }) => {
           console.log(response.data);
         });
-    }else{
+    } else {
       alert("Por favor introduzca su contraseña")
     }
 
