@@ -117,7 +117,6 @@ const Artist = () => {
             axios.post('/artistas', formData)
                 .then(response => {
                     alert(response.data.mensaje);
-                    // Cierra el modal
                     setOpen(false);
                     handleClear();
                 })

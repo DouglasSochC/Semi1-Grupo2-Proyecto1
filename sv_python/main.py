@@ -231,34 +231,7 @@ def update_user(id_usuario, contrasenia):
 
     except Exception as e:
         return jsonify({"success": False, "mensaje": str(e)}), 500
-
-@app.route('/artistas', methods=['POST'])
-def create_artist():
-    try:
-        # Obtén los datos del cuerpo de la solicitud
-        data = request.json
-        nombre = data.get('nombre')
-        fecha_nacimiento = data.get('fecha_nacimiento')
-        fotografiaURL = data.get('fotografia')
-        file = data.get('fotografia')
-        if file and allowed_file(file.filename):
-            folder_name = os.environ.get('AWS_BUCKET_FOLDER_FOTOS')
-            foto_key = upload_file_to_s3(file, folder_name)
-            if foto_key:
-                fotografiaURL = foto_key
-                query = 'INSERT INTO ARTISTA (nombre, fotografia, fecha_nacimiento) VALUES (%s, %s, %s)'
-                values = (nombre, fotografiaURL, fecha_nacimiento)
-                cursor.execute(query, values)
-                db.commit()
-                return jsonify({"success": True, "mensaje": "Usuario creado correctamente"})
-            else:
-                return jsonify({"success": False, "mensaje": "Error al subir el archivo a S3"}), 500
-        return jsonify({'success': True, 'mensaje': 'Artista creado correctamente'}), 200
-
-    except Exception as e:
-        print("Error:", e)
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al insertar el artista'}), 500
-
+    
 """
 Verificacion de un usuario administrador por medio de su contrasenia para que asi se pueda realizar alguna transaccion segun sea el caso
 """
@@ -289,6 +262,34 @@ def verificar_contrasenia():
     except Exception as e:
         print('Error al validar la contraseña:', str(e))
         return jsonify({"success": False, "mensaje": "Ha ocurrido un error al validar la contraseña"})
+
+
+# Crear un nuevo artista
+@app.route('/artistas', methods=['POST'])
+def crear_artista():
+    try:
+        # Se obtienen los datos del cuerpo de la solicitud
+        nombre = request.form['nombre']
+        fecha_nacimiento = request.form['fecha_nacimiento']
+        archivo = request.files['archivo']
+        if not nombre or not fecha_nacimiento or not archivo:
+            return jsonify({'success': False, 'mensaje': 'Faltan campos requeridos'})
+
+        # Se sube la imagen a S3
+        url_imagen = upload_file_to_s3(archivo, os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
+
+        # Verifica si la fecha de nacimiento es nula o está en blanco y la ajusta en consecuencia
+        fecha_nacimiento = fecha_nacimiento if fecha_nacimiento not in ('', 'null') else None
+
+        # Se inserta el artista en la base de datos
+        query = 'INSERT INTO ARTISTA (nombre, fotografia, fecha_nacimiento) VALUES (%s, %s, %s)'
+        cursor.execute(query, (nombre, url_imagen, fecha_nacimiento))
+        db.commit()
+        return jsonify({'success': True, 'mensaje': 'Artista creado correctamente'}), 200
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al insertar el artista'}), 500
 
 #Obtener todos los artistas */
 @app.route('/artistas', methods=['GET'])
@@ -325,31 +326,32 @@ def get_artists():
         print("Error:", e)
         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error al obtener los artistas'}), 500
 
-# Crear un nuevo artista
-@app.route('/artistas', methods=['POST'])
-def crear_artista():
-    nombre = request.form.get('nombre')
-    fecha_nacimiento = request.form.get('fecha_nacimiento')
-    archivo = request.files['archivo']
-
+@app.route('/artista/<int:id>', methods=['GET'])
+def obtener_artista(id):
     try:
-        # Subir el archivo a Amazon S3
-        url_archivo = upload_file_to_s3(archivo, os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
+        query = """SELECT a.id AS Artista_ID, a.nombre AS Artista_Nombre,
+            CONCAT('https://', %s, '.s3.amazonaws.com/', a.fotografia) AS url_imagen,
+            DATE_FORMAT(a.fecha_nacimiento, '%d/%m/%Y') AS fecha_nacimiento
+            FROM ARTISTA a
+            WHERE a.id = %s;"""
 
-        # Verificar si fecha_nacimiento es nulo o vacío
-        fecha_nacimiento = None if fecha_nacimiento == '' or fecha_nacimiento == 'null' else fecha_nacimiento
+        cursor.execute(query, (os.environ.get('AWS_BUCKET_NAME'), id))
+        result = cursor.fetchone()
 
-        # Insertar el nuevo artista en la base de datos
-        query_insert = 'INSERT INTO ARTISTA (nombre, fotografia, fecha_nacimiento) VALUES (%s, %s, %s)'
-        cursor = g.cursor
-        cursor.execute(query_insert, (nombre, url_archivo, fecha_nacimiento))
-        db.commit()
+        if result:
+            artista_info = {
+                "Artista_ID": result[0],
+                "Artista_Nombre": result[1],
+                "url_imagen": result[2],
+                "fecha_nacimiento": result[3]
+            }
 
-        return jsonify({"success": True, "mensaje": "Artista creado correctamente"})
+            return jsonify(success=True, artista=artista_info)
+        else:
+            return jsonify(success=False, mensaje="El artista no existe")
 
     except Exception as e:
-        print('Error al crear el artista:', str(e))
-        return jsonify({"success": False, "mensaje": "Ha ocurrido un error al crear el artista"})
+        return jsonify(success=False, mensaje=str(e))
 
 # Actualizar un artista por su ID
 @app.route('/artistas/<int:id_artista>', methods=['PUT'])
@@ -600,23 +602,19 @@ def eliminar_album(id_album):
 @app.route('/canciones', methods=['POST'])
 def crear_cancion():
     try:
+        
         nombre = request.form['nombre']
         duracion = request.form['duracion']
         id_artista = request.form['id_artista']
-        id_album = request.form['id_album']
-
         # Sube la imagen de portada a S3
         imagen_portada = request.files['imagen_portada']
         url_imagen = upload_file_to_s3(imagen_portada, os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
-
         # Sube el archivo de audio MP3 a S3
         archivo_mp3 = request.files['archivo_mp3']
         url_audio = upload_file_to_s3(archivo_mp3, os.environ.get('AWS_BUCKET_FOLDER_CANCIONES'))
-
         # Inserta la canción en la base de datos
-        query = 'INSERT INTO CANCION (nombre, fotografia, duracion, archivo_mp3, id_artista, id_album) VALUES (%s, %s, %s, %s, %s, %s)'
-        cursor = g.cursor
-        cursor.execute(query, (nombre, url_imagen, duracion, url_audio, id_artista, id_album))
+        query = 'INSERT INTO CANCION (nombre, fotografia, duracion, archivo_mp3, id_artista) VALUES (%s, %s, %s, %s, %s)'
+        cursor.execute(query, (nombre, url_imagen, duracion, url_audio, id_artista))
         db.commit()
         cursor.close()
 
@@ -786,27 +784,36 @@ def eliminar_cancion(id_cancion):
         return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
 
 # Obtener todas las canciones que pertenezcan al artista y que no esten agregadas a otro album falta testeo no tengo datos suficientes
-@app.route('/canciones-artista/<int:id_artista>', methods=['GET'])
-def obtener_canciones_artista(id_artista):
+@app.route('/canciones-artista/<int:id_album>', methods=['GET'])
+def obtener_canciones_artista(id_album):
     try:
-        query = """
-        SELECT c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://{}s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion, 
-        c.duracion AS duracion_cancion, a.nombre AS nombre_artista
-        FROM CANCION c
-        INNER JOIN ARTISTA a ON a.id = c.id_artista
-        WHERE c.id_artista = ? AND c.id_album IS NULL
-        """.format(os.environ.get('AWS_BUCKET_NAME'))
-        
-        cursor = g.cursor
-        cursor.execute(query, (id_artista,))
-        result = cursor.fetchall()
-        cursor.close()
+        query = """SELECT c.id AS id_cancion, c.nombre AS nombre_cancion,
+            CONCAT('https://', %s, '.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
+            CONCAT(
+                LPAD(HOUR(c.duracion), 2, '0'), ':', 
+                LPAD(MINUTE(c.duracion), 2, '0'), ':', 
+                LPAD(SECOND(c.duracion), 2, '0')
+            ) AS duracion_cancion, a.nombre AS nombre_artista
+            FROM CANCION c
+            INNER JOIN ARTISTA a ON a.id = c.id_artista
+            WHERE c.id_artista = (SELECT id_artista FROM ALBUM WHERE id = %s) AND c.id_album IS NULL;"""
+        cursor.execute(query, (os.environ.get('AWS_BUCKET_NAME'), id_album))
 
-        return jsonify({'success': True, 'canciones_artista': result}), 200
+        result = cursor.fetchall()
+        canciones_artista = []
+        for row in result:
+            cancion_info = {
+                "id_cancion": row[0],
+                "nombre_cancion": row[1],
+                "url_imagen_cancion": row[2],
+                "duracion_cancion": row[3],
+                "nombre_artista": row[4]
+            }
+            canciones_artista.append(cancion_info)
+        return jsonify(success=True, canciones_artista=canciones_artista)
 
     except Exception as e:
-        print('Error:', str(e))
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+        return jsonify(success=False, mensaje=str(e))
 
 # Obtener todas las canciones que pertenezca a un album 
 @app.route('/canciones-album/<int:id_album>', methods=['GET'])
