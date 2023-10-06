@@ -898,7 +898,7 @@ def canciones_no_playlist(id_playlist):
             }
             data.append(cancion)
 
-        return jsonify({'success': True, 'canciones_no_playlist': data})
+        return jsonify({'success': True, 'canciones_playlist': data})
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
 

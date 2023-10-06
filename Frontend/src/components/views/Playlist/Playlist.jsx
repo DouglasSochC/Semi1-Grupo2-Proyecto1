@@ -131,6 +131,7 @@ const Playlist = ({playAList}) => {
                 });
             axios.get('/canciones-no-playlist/' + idPlaylist)
                 .then(response => {
+                    console.log(response.data);
                     setTableSongToAdd(response.data.canciones_playlist);
                 })
                 .catch(error => {
