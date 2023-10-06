@@ -53,6 +53,10 @@ export default function Sidebar({ isAdmin, setSearch, playRadio }) {
     push('/Historical')
   }
 
+  const irFavorites = () => {
+    push('/Favorites')
+  }
+
   return (
     <Container>
       <div className="top__links">
@@ -76,7 +80,7 @@ export default function Sidebar({ isAdmin, setSearch, playRadio }) {
             <BiSolidPlaylist />
             <span>Playlists</span>
           </li>
-          <li>
+          <li onClick={irFavorites}>
             <AiFillHeart />
             <span>Favorites</span>
           </li>

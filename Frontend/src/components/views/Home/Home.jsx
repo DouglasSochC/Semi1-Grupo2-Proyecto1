@@ -14,6 +14,7 @@ import Album from "./Album/Album";
 import Artist from "./Artist/Artist";
 import Playing from "./Playing/Playing"
 import Historico from "./Historico/Historico"
+import Favorites from "./Favorites/Favorites";
 import CRUDSong from "../Song/Song"
 import CRUDAlbum from "../Album/Album"
 import CRUDArtist from "../Artist/Artist"
@@ -274,6 +275,13 @@ const Home = () => {
             <div className="body">
               <div className="body__contents">
                 <Historico headerBackground={headerBackground} reproduccion={reproduccion} changeSong={changeSong}/>
+              </div>
+            </div>
+          </Route>
+          <Route path="/Favorites">
+            <div className="body">
+              <div className="body__contents">
+                <Favorites headerBackground={headerBackground} playAList={playAList} addListToPlayback={addListToPlayback}/>
               </div>
             </div>
           </Route>

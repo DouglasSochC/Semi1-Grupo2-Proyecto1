@@ -1,8 +1,8 @@
 import axios from "axios";
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-import { TextField, Button } from '@material-ui/core'
 import { useHistory } from 'react-router'
+import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 axios.defaults.baseURL = process.env.REACT_APP_REQUEST_URL;
 
 export default function Song({ headerBackground, addToPlayback, play, setSearch }) {
@@ -24,12 +24,26 @@ export default function Song({ headerBackground, addToPlayback, play, setSearch 
     Album_ID: -1,
     Album_Nombre: ''
   })
+  const [favorito, setFavorito] = useState(false)
 
   useEffect(() => {
     axios.get('/cancion/' + localStorage.getItem('SoundStream_SongID'))
       .then(({ data }) => {
         if (data !== undefined && data !== null) {
           setCancion(data.cancion)
+        } else {
+          localStorage.setItem('SoundStream_SongID', -1)
+          IrAUsuario();
+        }
+      })
+  }, []);
+
+  useEffect(() => {
+    axios.get('/favorito-usuario/' + localStorage.getItem('SoundStream_UserID') + '/' + localStorage.getItem('SoundStream_SongID'))
+      .then(({ data }) => {
+        if (data !== undefined && data !== null) {
+          console.log(data.es_favorita)
+          setFavorito(data.es_favorita)
         } else {
           localStorage.setItem('SoundStream_SongID', -1)
           IrAUsuario();
@@ -52,8 +66,27 @@ export default function Song({ headerBackground, addToPlayback, play, setSearch 
     push('/album')
   }
 
-  const add = () =>{
+  const add = () => {
     addToPlayback(cancion.Cancion_ID)
+  }
+
+  const addFav = () => {
+    axios
+      .post('/favoritos', {
+        id_cancion: localStorage.getItem('SoundStream_SongID'),
+        id_usuario: localStorage.getItem('SoundStream_UserID'),
+      })
+      .then(() => {
+        setFavorito(true)
+      });
+  }
+
+  const removeFav = () => {
+    axios
+      .delete('/favoritos/' + localStorage.getItem('SoundStream_SongID') + '/' + localStorage.getItem('SoundStream_UserID'))
+      .then(() => {
+        setFavorito(false)
+      });
   }
 
   return (
@@ -71,18 +104,24 @@ export default function Song({ headerBackground, addToPlayback, play, setSearch 
           </div>
         </div>
         <div className="sides">
-          <div className="buttons" onClick={() => {playRef.current(cancion.Cancion_ID)}}>
+          <div className="buttons" onClick={() => { playRef.current(cancion.Cancion_ID) }}>
             Reproducir
           </div>
           <div className="buttons" onClick={add}>
             Agregar a reproduccion actual
           </div>
-          <div className="buttons">
-            Agregar a playlist
-          </div>
-          <div className="buttons">
-            Agregar a favoritos
-          </div>
+          {favorito ? (
+            <div className="buttons" onClick={removeFav}>
+              <AiFillHeart/>
+              Quitar de favoritos
+            </div>
+          ) : (
+            <div className="buttons" onClick={addFav}>
+              <AiOutlineHeart/>
+              Agregar a favoritos
+            </div>
+          )
+          }
         </div>
       </div>
     </Container>
@@ -117,7 +156,7 @@ const Container = styled.div`
     padding: 10px;
   }
   .buttons{
-    flex: 25%; /* Ocupa el 33% del ancho */
+    flex: 33%; /* Ocupa el 33% del ancho */
     background-color: black;
     padding: 10px;
     display: flex;

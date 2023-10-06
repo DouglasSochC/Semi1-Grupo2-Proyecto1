@@ -857,12 +857,27 @@ app.post('/favoritos', (req, res) => {
 /** Obtener todas las canciones favoritas de un usuario */
 app.get('/favoritos/:id_usuario', (req, res) => {
     const id_usuario = req.params.id_usuario;
-    const query = `SELECT f.id AS id_favorito, c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
-    c.duracion AS duracion_cancion, a.nombre AS nombre_artista
-    FROM FAVORITO f
-    INNER JOIN CANCION c ON c.id = f.id_cancion
-    INNER JOIN ARTISTA a ON a.id = c.id_artista
-    WHERE f.id_usuario = ?`;
+    const query = `SELECT 
+            f.id AS id_favorito, 
+            c.id AS id_cancion, 
+            c.nombre AS nombre_cancion, 
+            CONCAT('https://` + process.env.AWS_BUCKET_NAME + `.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
+            c.duracion AS duracion_cancion, 
+            a.nombre AS nombre_artista,
+            al.id AS id_album,
+            al.nombre AS nombre_album,
+            al.id_artista AS id_artista_album
+        FROM 
+            FAVORITO f
+        INNER JOIN 
+            CANCION c ON c.id = f.id_cancion
+        INNER JOIN 
+            ARTISTA a ON a.id = c.id_artista
+        INNER JOIN 
+            ALBUM al ON al.id = c.id_album
+        WHERE 
+            f.id_usuario = ?;
+        `;
 
     db.query(query, [id_usuario], (err, result) => {
         if (err) {
@@ -890,7 +905,11 @@ app.get('/favorito-usuario/:id_usuario/:id_cancion', (req, res) => {
             console.error('Error al obtener la cancion favorita:', err);
             res.json({ success: false, mensaje: "Ha ocurrido un error al obtener la cancion favorita" });
         } else {
-            res.json({ success: true, cancion_favorita: result });
+            if (result.length <= 0){
+                res.json({ success: true, es_favorita: false });
+            }else{
+                res.json({ success: true, es_favorita: true });
+            }
         }
     });
 });
