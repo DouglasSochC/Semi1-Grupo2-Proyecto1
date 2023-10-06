@@ -877,7 +877,7 @@ def agregar_cancion_a_favoritos():
     try:
         id_cancion = request.json['id_cancion']
         id_usuario = request.json['id_usuario']
-        query = 'INSERT INTO FAVORITO (id_cancion, id_usuario) VALUES (?, ?)'
+        query = 'INSERT INTO FAVORITO (id_cancion, id_usuario) VALUES (%s, %s)'
 
         cursor = db.cursor()
         cursor.execute(query, (id_cancion, id_usuario))
@@ -895,30 +895,64 @@ def agregar_cancion_a_favoritos():
 def obtener_canciones_favoritas(id_usuario):
     try:
         query = """
-        SELECT f.id AS id_favorito, c.id AS id_cancion, c.nombre AS nombre_cancion, CONCAT('https://{}s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
-        c.duracion AS duracion_cancion, a.nombre AS nombre_artista
-        FROM FAVORITO f
-        INNER JOIN CANCION c ON c.id = f.id_cancion
-        INNER JOIN ARTISTA a ON a.id = c.id_artista
-        WHERE f.id_usuario = ?
+            SELECT 
+                f.id AS id_favorito, 
+                c.id AS id_cancion, 
+                c.nombre AS nombre_cancion, 
+                CONCAT('https://{}.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
+                c.duracion AS duracion_cancion, 
+                a.nombre AS nombre_artista,
+                al.id AS id_album,
+                al.nombre AS nombre_album,
+                al.id_artista AS id_artista_album
+            FROM 
+                FAVORITO f
+            INNER JOIN 
+                CANCION c ON c.id = f.id_cancion
+            INNER JOIN 
+                ARTISTA a ON a.id = c.id_artista
+            INNER JOIN 
+                ALBUM al ON al.id = c.id_album
+            WHERE 
+                f.id_usuario = %s;
         """.format(os.environ.get('AWS_BUCKET_NAME'))
-        
-        cursor = g.cursor
+
         cursor.execute(query, (id_usuario,))
         result = cursor.fetchall()
-        cursor.close()
 
-        return jsonify({'success': True, 'canciones_favoritas': result}), 200
-
+        return jsonify({'success': True, 'canciones_favoritas': result})
     except Exception as e:
-        print('Error:', str(e))
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
+@app.route('/favorito-usuario/<int:id_usuario>/<int:id_cancion>', methods=['GET'])
+def verificar_favorito_usuario(id_usuario, id_cancion):
+    try:
+        query = """
+            SELECT f.id AS id_favorito, c.id AS id_cancion, c.nombre AS nombre_cancion, 
+            CONCAT('https://{}.s3.amazonaws.com/', c.fotografia) AS url_imagen_cancion,
+            c.duracion AS duracion_cancion, a.nombre AS nombre_artista
+            FROM FAVORITO f
+            INNER JOIN CANCION c ON c.id = f.id_cancion
+            INNER JOIN ARTISTA a ON a.id = c.id_artista
+            WHERE f.id_usuario = %s AND f.id_cancion = %s
+        """.format(os.environ.get('AWS_BUCKET_NAME'))
+
+        cursor.execute(query, (id_usuario, id_cancion))
+        result = cursor.fetchall()
+
+        if len(result) <= 0:
+            return jsonify({'success': True, 'es_favorita': False})
+        else:
+            return jsonify({'success': True, 'es_favorita': True})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
 
 # Eliminar una cancion de un album
 @app.route('/favoritos/<int:id_favorito>', methods=['DELETE'])
 def eliminar_cancion_de_favoritos(id_favorito):
     try:
-        query = "DELETE FROM FAVORITO WHERE id = ?"
+        query = "DELETE FROM FAVORITO WHERE id = %s"
 
         cursor = db.cursor()
         cursor.execute(query, (id_favorito,))
@@ -996,31 +1030,69 @@ def crear_playlist():
             return jsonify({'success': False, 'mensaje': 'Archivo no encontrado'})
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
-
-# Actualizar una playlist por su ID
-@app.route('/playlists/<int:id>', methods=['PUT'])
-def actualizar_playlist(id):
+    
+# Obtener todas las playlist de un usuario
+@app.route('/playlists', methods=['GET'])
+def obtener_playlists():
     try:
-        nombre = request.json['nombre']
-        fondo_portada = request.json['fondo_portada']
-        query = 'UPDATE PLAYLIST SET nombre = ?, fondo_portada = ? WHERE id = ?'
+        query = "SELECT p.id, p.nombre, CONCAT('https://{}.s3.amazonaws.com/', p.fondo_portada) AS url_imagen FROM PLAYLIST p".format(os.environ.get('AWS_BUCKET_NAME'))
+        cursor.execute(query)
+        result = cursor.fetchall()
+        playlists = []
 
-        cursor = db.cursor()
-        cursor.execute(query, (nombre, fondo_portada, id))
-        db.commit()
-        cursor.close()
+        for row in result:
+            playlist = {
+                'id': row[0],
+                'nombre': row[1],
+                'url_imagen': row[2]
+            }
+            playlists.append(playlist)
 
-        return jsonify({'success': True, 'mensaje': 'Playlist actualizada correctamente'}), 200
-
+        return jsonify({'success': True, 'playlists': playlists})
     except Exception as e:
-        print('Error:', str(e))
-        return jsonify({'success': False, 'mensaje': 'Ha ocurrido un error'}), 500
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
+# Actualizar una playlist por su ID mio
+@app.route('/playlists/<int:id_playlist>', methods=['PUT'])
+def actualizar_playlist(id_playlist):
+    try:
+        nombre = request.form.get('nombre')
+
+        query_select_fotografia = 'SELECT fondo_portada FROM PLAYLIST WHERE id = %s'
+        cursor.execute(query_select_fotografia, (id_playlist,))
+        result = cursor.fetchone()
+
+        if not result:
+            return jsonify({'success': False, 'mensaje': 'Playlist no encontrada'})
+
+        url_fondo_portada = result[0]
+
+        delete_file_from_s3(url_fondo_portada)
+
+        if 'archivo' in request.files:
+            file = request.files['archivo']
+            if file:
+                url_imagen = upload_file_to_s3(file, os.environ.get('AWS_BUCKET_FOLDER_FOTOS'))
+                query = 'UPDATE PLAYLIST SET nombre = %s, fondo_portada = %s WHERE id = %s'
+                cursor.execute(query, (nombre, url_imagen, id_playlist))
+                db.commit()
+                return jsonify({'success': True, 'mensaje': 'Playlist actualizada correctamente'})
+            else:
+                return jsonify({'success': False, 'mensaje': 'Archivo no encontrado'})
+        else:
+            query = 'UPDATE PLAYLIST SET nombre = %s WHERE id = %s'
+            cursor.execute(query, (nombre, id_playlist))
+            db.commit()
+            return jsonify({'success': True, 'mensaje': 'Playlist actualizada correctamente'})
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Ha ocurrido un error: {str(e)}'})
+
 
 # Eliminar una playlist por su ID
 @app.route('/playlists/<int:id>', methods=['DELETE'])
 def eliminar_playlist(id):
     try:
-        query = 'DELETE FROM PLAYLIST WHERE id = ?'
+        query = 'DELETE FROM PLAYLIST WHERE id = %s'
 
         cursor = db.cursor()
         cursor.execute(query, (id,))
@@ -1039,7 +1111,7 @@ def agregar_cancion_a_playlist():
     try:
         id_playlist = request.json['id_playlist']
         id_cancion = request.json['id_cancion']
-        query = 'INSERT INTO DETALLE_PLAYLIST (id_playlist, id_cancion) VALUES (?, ?)'
+        query = 'INSERT INTO DETALLE_PLAYLIST (id_playlist, id_cancion) VALUES (%s, %s)'
 
         cursor = db.cursor()
         cursor.execute(query, (id_playlist, id_cancion))
@@ -1061,7 +1133,7 @@ def obtener_detalle_de_playlist(id):
         FROM PLAYLIST p
         INNER JOIN DETALLE_PLAYLIST dp ON dp.id_playlist = p.id
         INNER JOIN CANCION c ON c.id = dp.id_cancion
-        WHERE p.id = ?
+        WHERE p.id = %s
         """
 
         cursor = g.cursor
@@ -1082,7 +1154,7 @@ def obtener_detalle_de_playlist(id):
 @app.route('/playlist-canciones/<int:id_cancion>', methods=['DELETE'])
 def eliminar_cancion_de_playlist(id_cancion):
     try:
-        query = 'DELETE FROM DETALLE_PLAYLIST WHERE id = ?'
+        query = 'DELETE FROM DETALLE_PLAYLIST WHERE id = %s'
 
         cursor = db.cursor()
         cursor.execute(query, (id_cancion,))
@@ -1200,5 +1272,5 @@ def historial():
 
 if __name__ == '__main__':
     print('Iniciando servidor...')
-    print('Host:', settings['PY_HOST'])
-    app.run(port=settings['PY_PORT'], debug=True)
+    print('Host:', settings['PY_HOST'], 'Port:', settings['PY_PORT'])
+    app.run(host=settings['PY_HOST'], port=settings['PY_PORT'], debug=True)
